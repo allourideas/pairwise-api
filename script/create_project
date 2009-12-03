@@ -78,11 +78,6 @@ unless installed?("nokogiri")
   run "sudo gem install nokogiri --version='1.3.3'"
 end
 
-# need to install tpope-pickler for the 'pickler' command
-unless installed?("tpope-pickler")
-  run "sudo gem install tpope-pickler"
-end
-
 # need to install heroku gem for the 'heroku' commands
 unless installed?("heroku")
   run "sudo gem install heroku"

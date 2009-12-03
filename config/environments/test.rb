@@ -23,10 +23,9 @@ config.action_mailer.delivery_method = :test
 
 # rake gems:install RAILS_ENV=test
 
-config.gem 'thoughtbot-factory_girl', 
-  :lib     => 'factory_girl',
-  :source  => 'http://gems.github.com',
-  :version => '>= 1.2.1'
+config.gem 'factory_girl', 
+  :source  => 'http://gemcutter.org',
+  :version => '>= 1.2.3'
 config.gem 'thoughtbot-shoulda',
   :lib     => 'shoulda',
   :source  => 'http://gems.github.com',
@@ -44,10 +43,9 @@ config.gem 'jferris-mocha',
 
 HOST = 'localhost'
 
-begin
-  require 'factory_girl'
-  require 'redgreen'
-  require 'fakeweb'
-rescue LoadError
-end
+AUTHORIZE_NET_API_LOGIN_ID    = ''
+AUTHORIZE_NET_TRANSACTION_KEY = ''
+PAYPAL_API_LOGIN              = ''
+PAYPAL_API_PASSWORD           = ''
+PAYPAL_API_SIGNATURE          = ''
 
