@@ -67,7 +67,7 @@ class Question < ActiveRecord::Base
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
   
   def ensure_at_least_two_choices
-    the_ideas = (self.ideas.blank? || self.ideas.empty?) ? ['sample idea 1', 'sample idea 2'] : self.ideas.lines
+    the_ideas = (self.ideas.blank? || self.ideas.empty?) ? ['sample idea 1', 'sample idea 2'] : self.ideas
     if self.choices.empty?
       the_ideas.each { |choice_text|
         item = Item.create!({:data => choice_text, :creator => creator})
