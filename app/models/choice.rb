@@ -2,9 +2,13 @@ class Choice < ActiveRecord::Base
   belongs_to :question
   belongs_to :item
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
+  
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
   validates_presence_of :question, :on => :create, :message => "can't be blank"
+  
   has_many :votes, :as => :voteable 
+  has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id"
+  has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
   
   attr_accessor :data
   
@@ -12,9 +16,6 @@ class Choice < ActiveRecord::Base
     item.data
   end
   
-  
-  has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id"
-  has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
   def wins_plus_losses
     (prompts_on_the_left.collect(&:votes_count).sum + prompts_on_the_right.collect(&:votes_count).sum)
   end

@@ -8,7 +8,6 @@ class ChoicesController < InheritedResources::Base
     if params[:limit]
       @question = Question.find(params[:question_id])#, :include => :choices)
       @choices = Choice.find(:all, :conditions => {:question_id => @question.id}, :limit => params[:limit].to_i, :order => 'score DESC')
-      #@choices = @question.choices(true).sort_by {|c| 0 - c.score }.first(params[:limit].to_i)#.active
     else
       @question = Question.find(params[:question_id], :include => :choices) #eagerloads ALL choices
       @choices = @question.choices(true)#.sort_by {|c| 0 - c.score }
@@ -18,24 +17,6 @@ class ChoicesController < InheritedResources::Base
       format.json { render :json => params[:data].blank? ? @choices.to_json : @choices.to_json(:include => [:items]) }
     end
 
-    # index! do |format|
-    #   if !params[:voter_id].blank?
-    #     format.xml { render :xml => User.find(params[:voter_id]).prompts_voted_on.to_xml(:include => [:items, :votes], 
-    #                                                                                       :methods => [ :active_items_count, 
-    #                                                                                                     :all_items_count, 
-    #                                                                                                     :votes_count ]) }
-    #     format.json { render :json => User.find(params[:voter_id]).prompts_voted_on.to_json(:include => [:items, :votes], 
-    #                                                                         :methods => [ :active_items_count, 
-    #                                                                                       :all_items_count, 
-    #                                                                                       :votes_count ]) }
-    #   else
-    #     format.xml { render :xml => params[:data].blank? ? 
-    #                                 @prompts.to_xml : 
-    #                                 @prompts.to_xml(:include => [:items]) 
-    #                                 }
-    #     format.json { render :json => params[:data].blank? ? @prompts.to_json : @prompts.to_json(:include => [:items]) }
-    #   end
-    # end
   end
   
   def show
@@ -62,9 +43,6 @@ class ChoicesController < InheritedResources::Base
     logger.info "inside create_from_abroad"
 
     @question = Question.find params[:question_id]
-    # @visitor = Visitor.find_or_create_by_identifier(params['params']['sid'])
-    # @item = current_user.items.create({:data => params['params']['data'], :creator => @visitor}
-    # @choice = @question.choices.build(:item => @item, :creator => @visitor)
 
     respond_to do |format|
       if @choice = current_user.create_choice(params['params']['data'], @question, {:data => params['params']['data'], :local_identifier => params['params']['local_identifier']})

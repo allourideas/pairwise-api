@@ -14,7 +14,9 @@ class Question < ActiveRecord::Base
   end
   has_many :votes, :as => :voteable 
   
+  #before_create :create_choices_from_ideas
   after_save :ensure_at_least_two_choices
+  attr_accessor :ideas
     
   def item_count
     choice_count
@@ -65,9 +67,19 @@ class Question < ActiveRecord::Base
   validates_presence_of :site, :on => :create, :message => "can't be blank"
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
   
+  # def create_choices_from_ideas
+  #   the_ideas = (self.ideas.blank? || self.ideas.empty?) ? ['sample idea 1', 'sample idea 2'] : self.ideas
+  #   
+  #   the_ideas.each { |idea| 
+  #     item = Item.create!({:data => idea, :creator => creator})
+  #     choice = choices.build(:item => item, :creator => creator)
+  #     } 
+  # end
+  
   def ensure_at_least_two_choices
+    the_ideas = (self.ideas.blank? || self.ideas.empty?) ? ['sample idea 1', 'sample idea 2'] : self.ideas
     if self.choices.empty?
-      ["sample choice 1", "sample choice 2"].each { |choice_text|
+      the_ideas.each { |choice_text|
         item = Item.create!({:data => choice_text, :creator => creator})
         puts item.inspect
         choice = choices.create!(:item => item, :creator => creator)
