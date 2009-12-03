@@ -8,7 +8,7 @@ class Choice < ActiveRecord::Base
   
   attr_accessor :data
   
-  def data
+  def item_data
     item.data
   end
   

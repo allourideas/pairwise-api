@@ -14,7 +14,7 @@ class ChoicesController < InheritedResources::Base
       @choices = @question.choices(true)#.sort_by {|c| 0 - c.score }
     end
     index! do |format|
-      format.xml { render :xml => params[:data].blank? ? @choices.to_xml(:methods => [:data, :votes_count]) : @choices.to_xml(:include => [:items], :methods => [:data, :votes_count])}
+      format.xml { render :xml => params[:data].blank? ? @choices.to_xml(:methods => [:item_data, :votes_count]) : @choices.to_xml(:include => [:items], :methods => [:data, :votes_count])}
       format.json { render :json => params[:data].blank? ? @choices.to_json : @choices.to_json(:include => [:items]) }
     end
 
@@ -67,7 +67,7 @@ class ChoicesController < InheritedResources::Base
     # @choice = @question.choices.build(:item => @item, :creator => @visitor)
 
     respond_to do |format|
-      if @choice = current_user.create_choice(params['params']['data'], @question, {:data => params['params']['data']})
+      if @choice = current_user.create_choice(params['params']['data'], @question, {:data => params['params']['data'], :local_identifier => params['params']['local_identifier']})
         saved_choice_id = Proc.new { |options| options[:builder].tag!('saved_choice_id', @choice.id) }
         logger.info "successfully saved the choice #{@choice.inspect}"
         format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id]), :status => :ok }

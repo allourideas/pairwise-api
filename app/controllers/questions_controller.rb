@@ -14,7 +14,8 @@ class QuestionsController < InheritedResources::Base
   
   def create
     authenticate
-    if @question = current_user.create_question(params[:visitor_identifier], params.except[:visitor_identifier])
+    logger.info "vi is #{params['question']['visitor_identifier']} and local are #{params['question']['local_identifier']}.  all params are #{params.inspect}"
+    if @question = current_user.create_question(params['question']['visitor_identifier'], :name => params['question']['name'], :local_identifier => params['question']['local_identifier'])
       respond_to do |format|
         format.xml { render :xml => @question.to_xml}
       end

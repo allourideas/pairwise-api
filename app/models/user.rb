@@ -10,14 +10,17 @@ class User < ActiveRecord::Base
   end
   
   def create_question(visitor_identifier, question_params)
+    puts "the question_params are #{question_params.inspect}"
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
     question = visitor.questions.create(question_params.merge(:site => self))
   end
   
-  def create_choice(visitor_identifier, question, choice_params)
+  def create_choice(visitor_identifier, question, choice_params = {})
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
     raise "Question not found" if question.nil?
     if visitor.owns?(question)
+      choice = question.choices.create!(choice_params.merge(:active => true, :creator => visitor))
+    elsif question.local_identifier == choice_params[:local_identifier]
       choice = question.choices.create!(choice_params.merge(:active => true, :creator => visitor))
     else
       choice = question.choices.create!(choice_params.merge(:active => false, :creator => visitor))
