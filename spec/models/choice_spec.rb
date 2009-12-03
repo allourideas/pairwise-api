@@ -13,7 +13,8 @@ describe Choice do
     
     @valid_attributes = {
       :creator => @johndoe,
-      :question => @question
+      :question => @question,
+      :data => 'hi there'
     }
   end
 

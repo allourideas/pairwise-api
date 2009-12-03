@@ -11,8 +11,10 @@ class Choice < ActiveRecord::Base
   
   after_create :generate_prompts
   def before_create
-    @item = Item.create!(:creator => creator, :data => data)
-    self.item = @item
+    unless item
+      @item = Item.create!(:creator => creator, :data => data)
+      self.item = @item
+    end
   end
   
   protected

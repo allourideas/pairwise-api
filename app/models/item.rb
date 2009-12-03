@@ -13,4 +13,5 @@ class Item < ActiveRecord::Base
   #   has_and_belongs_to_many :prompt_requests
 
   validates_presence_of :creator_id
+  validates_presence_of :data, :on => :create, :message => "can't be blank"
 end
