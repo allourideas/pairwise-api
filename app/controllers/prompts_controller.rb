@@ -93,17 +93,19 @@ class PromptsController < InheritedResources::Base
   
   
   def skip
-    voter = User.auto_create_user_object_from_sid(params['params']['auto'])
-    logger.info "#{voter.inspect} is skipping."
+    authenticate
+    logger.info "#{current_user.inspect} is skipping."
     @question = Question.find(params[:question_id])
     @prompt = @question.prompts.find(params[:id])
+    
+
     respond_to do |format|
-      if @skip = voter.skip(@prompt)
+      if @skip = current_user.record_skip(params['params']['auto'], @prompt)
         format.xml { render :xml =>  @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text]), :status => :ok }
         format.json { render :json => @question.picked_prompt.to_json, :status => :ok }
       else
-        format.xml { render :xml => c, :status => :unprocessable_entity }
-        format.json { render :json => c, :status => :unprocessable_entity }
+        format.xml { render :xml => @skip, :status => :unprocessable_entity }
+        format.json { render :json => @skip, :status => :unprocessable_entity }
       end
     end
   end
