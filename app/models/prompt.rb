@@ -26,6 +26,10 @@ class Prompt < ActiveRecord::Base
   validates_presence_of :left_choice, :on => :create, :message => "can't be blank"
   validates_presence_of :right_choice, :on => :create, :message => "can't be blank"
   
+  def votes_count
+    votes(true).size
+  end
+  
   def choices
     [left_choice, right_choice]
   end
