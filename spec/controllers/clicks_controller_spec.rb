@@ -1,6 +1,15 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe ClicksController do
+  
+    def sign_in_as(user)
+      @controller.current_user = user
+      return user
+    end
+    
+    before(:each) do
+      sign_in_as(@user = Factory(:email_confirmed_user))
+    end
 
   def mock_click(stubs={})
     @mock_click ||= mock_model(Click, stubs)

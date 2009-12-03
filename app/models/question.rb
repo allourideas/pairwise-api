@@ -19,6 +19,10 @@ class Question < ActiveRecord::Base
   def item_count
     choice_count
   end
+  
+  def prompt_count
+    Prompt.count(:all, :conditions => {:question_id => id})
+  end
 
    def choice_count
      Choice.count(:all, :conditions => {:question_id => id})
@@ -30,6 +34,12 @@ class Question < ActiveRecord::Base
    
    def picked_prompt
      prompts[rand(prompts.count-1)]#Prompt.find(picked_prompt_id)
+   end
+   
+   def picked_prompt_id
+     lambda {@picked ||= prompts(true)[rand(prompts.count-1)].id}.call
+
+     lambda { prompts(true)[rand(prompts.count-1)].id }.call
    end
    
    def left_choice_text(prompt = nil)

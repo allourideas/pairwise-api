@@ -40,7 +40,9 @@ class ClicksController < ApplicationController
   # POST /clicks
   # POST /clicks.xml
   def create
-    @click = Click.new(params[:click])
+    authenticate
+    p = params[:click].except(:sid).merge(:visitor_id => current_user.visitors.find_or_create_by_identifier(params[:click][:sid]).id)
+    @click = Click.new(p)
 
     respond_to do |format|
       if @click.save
