@@ -1,0 +1,18 @@
+<p>
+  <b>Site:</b>
+  <%=h @visitor.site_id %>
+</p>
+
+<p>
+  <b>Identifier:</b>
+  <%=h @visitor.identifier %>
+</p>
+
+<p>
+  <b>Tracking:</b>
+  <%=h @visitor.tracking %>
+</p>
+
+
+<%= link_to 'Edit', edit_visitor_path(@visitor) %> |
+<%= link_to 'Back', visitors_path %>

@@ -1,0 +1,24 @@
+<h1>Listing visitors</h1>
+
+<table>
+  <tr>
+    <th>Site</th>
+    <th>Identifier</th>
+    <th>Tracking</th>
+  </tr>
+
+<% @visitors.each do |visitor| %>
+  <tr>
+    <td><%=h visitor.site_id %></td>
+    <td><%=h visitor.identifier %></td>
+    <td><%=h visitor.tracking %></td>
+    <td><%= link_to 'Show', visitor %></td>
+    <td><%= link_to 'Edit', edit_visitor_path(visitor) %></td>
+    <td><%= link_to 'Destroy', visitor, :confirm => 'Are you sure?', :method => :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New visitor', new_visitor_path %>

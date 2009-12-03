@@ -1,0 +1,12 @@
+<h1>Editing choice</h1>
+
+<% form_for(@choice) do |f| %>
+  <%= f.error_messages %>
+
+  <p>
+    <%= f.submit 'Update' %>
+  </p>
+<% end %>
+
+<%= link_to 'Show', @choice %> |
+<%= link_to 'Back', choices_path %>

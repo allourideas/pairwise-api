@@ -1,0 +1,12 @@
+<h1>Editing prompt</h1>
+
+<% form_for(@prompt) do |f| %>
+  <%= f.error_messages %>
+
+  <p>
+    <%= f.submit 'Update' %>
+  </p>
+<% end %>
+
+<%= link_to 'Show', @prompt %> |
+<%= link_to 'Back', prompts_path %>
