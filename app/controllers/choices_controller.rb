@@ -1,85 +1,46 @@
-class ChoicesController < ApplicationController
-  # GET /choices
-  # GET /choices.xml
-  def index
-    @choices = Choice.all
+class ChoicesController < InheritedResources::Base
+  respond_to :xml, :json
+  actions :show, :index, :create, :update
+  belongs_to :question
+  has_scope :active, :boolean => true, :only => :index
+  
+  
+  def create_from_abroad
+    authenticate
+    logger.info "inside create_from_abroad"
+
+    @question = Question.find params[:question_id]
+    # @visitor = Visitor.find_or_create_by_identifier(params['params']['sid'])
+    # @item = current_user.items.create({:data => params['params']['data'], :creator => @visitor}
+    # @choice = @question.choices.build(:item => @item, :creator => @visitor)
 
     respond_to do |format|
-      format.html # index.html.erb
-      format.xml  { render :xml => @choices }
-    end
-  end
-
-  # GET /choices/1
-  # GET /choices/1.xml
-  def show
-    @choice = Choice.find(params[:id])
-
-    respond_to do |format|
-      format.html # show.html.erb
-      format.xml  { render :xml => @choice }
-    end
-  end
-
-  # GET /choices/new
-  # GET /choices/new.xml
-  def new
-    @choice = Choice.new
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.xml  { render :xml => @choice }
-    end
-  end
-
-  # GET /choices/1/edit
-  def edit
-    @choice = Choice.find(params[:id])
-  end
-
-  # POST /choices
-  # POST /choices.xml
-  def create
-    @choice = Choice.new(params[:choice])
-
-    respond_to do |format|
-      if @choice.save
-        flash[:notice] = 'Choice was successfully created.'
-        format.html { redirect_to(@choice) }
-        format.xml  { render :xml => @choice, :status => :created, :location => @choice }
+      if @choice = current_user.create_choice(params['params']['data'], @question, {:data => params['params']['data']})
+        saved_choice_id = Proc.new { |options| options[:builder].tag!('saved_choice_id', @choice.id) }
+        logger.info "successfully saved the choice #{@choice.inspect}"
+        format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id]), :status => :ok }
+        format.json { render :json => @question.picked_prompt.to_json, :status => :ok }
       else
-        format.html { render :action => "new" }
-        format.xml  { render :xml => @choice.errors, :status => :unprocessable_entity }
+        format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
+        format.json { render :json => @choice.errors, :status => :unprocessable_entity }
       end
     end
   end
-
-  # PUT /choices/1
-  # PUT /choices/1.xml
-  def update
-    @choice = Choice.find(params[:id])
-
+    
+  
+  def skip
+    voter = User.by_sid(params['params']['auto'])
+    logger.info "#{voter.inspect} is skipping."
+    @question = Question.find(params[:question_id])
+    @prompt = @question.prompts.find(params[:id])
     respond_to do |format|
-      if @choice.update_attributes(params[:choice])
-        flash[:notice] = 'Choice was successfully updated.'
-        format.html { redirect_to(@choice) }
-        format.xml  { head :ok }
+      if @skip = voter.skip(@prompt)
+        format.xml { render :xml =>  @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text]), :status => :ok }
+        format.json { render :json => @question.picked_prompt.to_json, :status => :ok }
       else
-        format.html { render :action => "edit" }
-        format.xml  { render :xml => @choice.errors, :status => :unprocessable_entity }
+        format.xml { render :xml => c, :status => :unprocessable_entity }
+        format.json { render :json => c, :status => :unprocessable_entity }
       end
-    end
-  end
-
-  # DELETE /choices/1
-  # DELETE /choices/1.xml
-  def destroy
-    @choice = Choice.find(params[:id])
-    @choice.destroy
-
-    respond_to do |format|
-      format.html { redirect_to(choices_url) }
-      format.xml  { head :ok }
     end
   end
 end

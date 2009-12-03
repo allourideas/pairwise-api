@@ -3,6 +3,7 @@ class User < ActiveRecord::Base
   has_many :visitors, :class_name => "Visitor", :foreign_key => "site_id"
   has_many :questions, :class_name => "Question", :foreign_key => "site_id"
   has_many :clicks, :class_name => "Click", :foreign_key => "site_id"
+  has_many :items, :class_name => "Item", :foreign_key => "site_id"
   
   def default_visitor
     visitors.find(:first, :conditions => {:identifier => 'owner'})
@@ -17,11 +18,12 @@ class User < ActiveRecord::Base
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
     raise "Question not found" if question.nil?
     if visitor.owns?(question)
-      choice = question.choices.create(choice_params.merge(:active => true))
+      choice = question.choices.create!(choice_params.merge(:active => true, :creator => visitor))
     else
-      choice = question.choices.create(choice_params.merge(:active => false))
+      choice = question.choices.create!(choice_params.merge(:active => false, :creator => visitor))
     end
     notify_question_owner_that_new_choice_has_been_added(choice)
+    return choice
   end
   
   def record_vote(visitor_identifier, prompt, ordinality)
