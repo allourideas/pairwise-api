@@ -21,17 +21,20 @@ class Question < ActiveRecord::Base
     choices_count
   end
   
+  def range_rand(min,max)
+    min + rand(max-min)
+  end
+  
+  
    def picked_prompt
      begin
-       pc = self.prompts_count == 0 ? 2 : self.prompts_count
-       return p = prompts.find(pc)
+       return p = prompts.find(prompt_ids.rand)
      end until p.active?
    end
  
    def picked_prompt_id
      begin
-       pc = self.prompts_count == 0 ? 2 : self.prompts_count
-       return i = rand(pc-1)
+       return i = prompt_ids.rand
      end until prompts.find(i).active?
    end
  
