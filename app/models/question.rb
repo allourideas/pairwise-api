@@ -33,8 +33,9 @@ class Question < ActiveRecord::Base
    end
  
    def picked_prompt_id
+     pc = self.prompts_count < 1 ? 2 : self.prompts_count
      begin
-       return i = prompt_ids.rand
+       return rand(pc-1) + prompts.first.id
      end until prompts.find(i).active?
    end
  
