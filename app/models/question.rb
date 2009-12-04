@@ -23,14 +23,16 @@ class Question < ActiveRecord::Base
   
    def picked_prompt
      begin
-       return p = Prompt.find(rand(prompts_count-1))
+       pc = self.prompts_count == 0 ? 2 : self.prompts_count
+       return p = prompts.find(pc)
      end until p.active?
    end
  
    def picked_prompt_id
      begin
-       return i = rand(prompts_count-1)
-     end until Prompt.find(i).active?
+       pc = self.prompts_count == 0 ? 2 : self.prompts_count
+       return i = rand(pc-1)
+     end until prompts.find(i).active?
    end
  
    def left_choice_text(prompt = nil)
