@@ -18,31 +18,18 @@ class Question < ActiveRecord::Base
   attr_accessor :ideas
     
   def item_count
-    choice_count
+    choices_count
   end
   
-  def prompt_count
-    Prompt.count(:all, :conditions => {:question_id => id})
-  end
-
-   def choice_count
-     Choice.count(:all, :conditions => {:question_id => id})
-   end
-
-   def votes_count
-     Vote.count(:all, :conditions => {:voteable_id => id, :voteable_type => 'Question'})
-   end
-   
    def picked_prompt
-     prompts[rand(prompts.count-1)]#Prompt.find(picked_prompt_id)
+     #prompts[rand(prompts.count-1)]#Prompt.find(picked_prompt_id)
+     Prompt.find(rand(prompts_count-1))
    end
-   
+ 
    def picked_prompt_id
-     lambda {@picked ||= prompts(true)[rand(prompts.count-1)].id}.call
-
-     lambda { prompts(true)[rand(prompts.count-1)].id }.call
+     rand(prompts_count-1)
    end
-   
+ 
    def left_choice_text(prompt = nil)
      prompt ||= prompts.first#prompts.pick
      picked_prompt.left_choice.item.data

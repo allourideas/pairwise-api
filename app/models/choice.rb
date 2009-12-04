@@ -17,17 +17,13 @@ class Choice < ActiveRecord::Base
   end
   
   def wins_plus_losses
-    (prompts_on_the_left.collect(&:votes_count).sum + prompts_on_the_right.collect(&:votes_count).sum)
+    #(prompts_on_the_left.collect(&:votes_count).sum + prompts_on_the_right.collect(&:votes_count).sum)
+    Prompt.sum('votes_count', :conditions => "left_choice_id = #{id} OR right_choice_id = #{id}")
   end
   
   def wins
     votes_count
   end
-  
-  def votes_count
-    votes(true).size
-  end
-  
   
   after_create :generate_prompts
   def before_create

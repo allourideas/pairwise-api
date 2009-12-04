@@ -2,12 +2,12 @@ class Prompt < ActiveRecord::Base
   #has_many :choices, :order => 'position DESC'
 
   has_many :skips
-  has_many :votes, :as => :voteable 
+  has_many :votes, :as => :voteable
   
   
-  belongs_to :question
-  belongs_to :left_choice, :class_name => "Choice", :foreign_key => "left_choice_id"
-  belongs_to :right_choice, :class_name => "Choice", :foreign_key => "right_choice_id"
+  belongs_to :question, :counter_cache => true
+  belongs_to :left_choice, :class_name => "Choice", :foreign_key => "left_choice_id", :counter_cache => true
+  belongs_to :right_choice, :class_name => "Choice", :foreign_key => "right_choice_id", :counter_cache => true
   
   named_scope :with_left_choice, lambda { |*args| {:conditions => ["left_choice_id = ?", (args.first.id)]} }
   named_scope :with_right_choice, lambda { |*args| {:conditions => ["right_choice_id = ?", (args.first.id)]} }
@@ -25,10 +25,6 @@ class Prompt < ActiveRecord::Base
   
   validates_presence_of :left_choice, :on => :create, :message => "can't be blank"
   validates_presence_of :right_choice, :on => :create, :message => "can't be blank"
-  
-  def votes_count
-    votes(true).size
-  end
   
   def choices
     [left_choice, right_choice]
