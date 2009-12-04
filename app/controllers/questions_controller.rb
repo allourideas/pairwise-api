@@ -8,7 +8,7 @@ class QuestionsController < InheritedResources::Base
       session['prompts_ids'] ||= []
       format.xml { 
         #render :xml => @question.to_xml(:methods => [:item_count, :left_choice_text, :right_choice_text, :picked_prompt_id, :votes_count, :creator_id])
-        render :xml => @question.to_xml(:methods => [:item_count, :left_choice_text, :right_choice_text, :picked_prompt_id])
+        render :xml => @question.to_xml(:methods => [:item_count, :left_choice_text, :right_choice_text, :picked_prompt_id, :votes_count])
         }
     end
   end

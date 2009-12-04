@@ -47,6 +47,10 @@ class Question < ActiveRecord::Base
    def voted_on_by_user?(u)
      u.questions_voted_on.include? self
    end
+   
+   def votes_count
+     Vote.count(:all, :conditions => {:voteable_id => id, :voteable_type => 'Question'})
+   end
 
    
   
