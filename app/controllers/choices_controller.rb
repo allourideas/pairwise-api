@@ -5,6 +5,7 @@ class ChoicesController < InheritedResources::Base
   has_scope :active, :boolean => true, :only => :index
   
   def index
+    Choice.all.each {|c| c.compute_score!}
     if params[:limit]
       @question = Question.find(params[:question_id])#, :include => :choices)
       @question.reload

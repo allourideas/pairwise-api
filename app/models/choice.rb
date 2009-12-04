@@ -55,6 +55,11 @@ class Choice < ActiveRecord::Base
     end
   end
   
+  def compute_score!
+    self.score = compute_score
+    save!
+  end
+  
   protected
 
   
