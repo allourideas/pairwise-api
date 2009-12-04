@@ -2,7 +2,7 @@ class ClicksController < ApplicationController
   # GET /clicks
   # GET /clicks.xml
   def index
-    @clicks = Click.all
+    @clicks = Click.find(:all, :order => 'created_at DESC')
 
     respond_to do |format|
       format.html # index.html.erb
