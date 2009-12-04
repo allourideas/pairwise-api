@@ -32,6 +32,7 @@ class User < ActiveRecord::Base
   def record_vote(visitor_identifier, prompt, ordinality)
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
     visitor.vote_for!(prompt, ordinality)
+    prompt.choices.each {|c| c.score = c.compute_score; c.save!}
   end
   
   def record_skip(visitor_identifier, prompt)
