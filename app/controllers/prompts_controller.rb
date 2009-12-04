@@ -60,10 +60,10 @@ class PromptsController < InheritedResources::Base
       raise "need to specify either ':left' or ':right' as a direction"
     end
     
-    
+    @prompt.choices.each {|c| c.score = c.compute_score; c.save!}
     respond_to do |format|
       if successful
-        format.xml { render :xml =>  @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+        format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
         format.json { render :json => @question.picked_prompt.to_json(:methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
       else
         format.xml { render :xml => c, :status => :unprocessable_entity }
