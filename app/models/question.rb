@@ -48,11 +48,6 @@ class Question < ActiveRecord::Base
      u.questions_voted_on.include? self
    end
    
-   def votes_count
-     Vote.count(:all, :conditions => {:voteable_id => id, :voteable_type => 'Question'})
-   end
-
-   
   
   validates_presence_of :site, :on => :create, :message => "can't be blank"
   validates_presence_of :creator, :on => :create, :message => "can't be blank"

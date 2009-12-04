@@ -5,6 +5,7 @@ class Visitor < ActiveRecord::Base
   has_many :skips, :class_name => "Skip", :foreign_key => "skipper_id"
   has_many :items, :class_name => "Item", :foreign_key => "creator_id"
   has_many :clicks
+  
   validates_presence_of :site, :on => :create, :message => "can't be blank"
   validates_uniqueness_of :identifier, :on => :create, :message => "must be unique", :scope => :site_id
   
@@ -13,10 +14,15 @@ class Visitor < ActiveRecord::Base
   end
   
   def vote_for!(prompt, ordinality)
+    question_vote = votes.create!(:voteable => prompt.question)
+    logger.info "Visitor: #{self.inspect} voted for Question: #{prompt.question.inspect}"
+    
+    
     choices = prompt.choices
     choice = choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
     prompt_vote = votes.create!(:voteable => prompt)
     logger.info "Visitor: #{self.inspect} voted for Prompt: #{prompt.inspect}"
+    
     choice_vote = votes.create!(:voteable => choice)
     logger.info "Visitor: #{self.inspect} voted for Choice: #{choice.inspect}"
     choice.save!
