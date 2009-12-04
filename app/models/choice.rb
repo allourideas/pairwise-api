@@ -1,4 +1,6 @@
 class Choice < ActiveRecord::Base
+  include Activation
+  
   belongs_to :question
   belongs_to :item
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"

@@ -57,6 +57,55 @@ class ChoicesController < InheritedResources::Base
       end
     end
   end
+  
+  def update_from_abroad
+    authenticate
+    @question = current_user.questions.find(params[:question_id])
+    @choice = @question.choices.find(params[:id])
+    
+    respond_to do |format|
+      if @choice.activate!
+        logger.info "successfully activated choice #{@choice.inspect}"
+        format.xml { render :xml => true }
+        format.json { render :json => true }
+      else
+         logger.info "failed to activate choice  #{@choice.inspect}"
+        format.xml { render :xml => @choice.to_xml(:methods => [:data, :votes_count, :wins_plus_losses])}
+        format.json { render :json => @choice.to_json(:methods => [:data])}
+      end
+    end
+  end
+  
+  def activate
+      authenticate
+      @question = current_user.questions.find(params[:question_id])
+      @choice = @question.choices.find(params[:id])
+      respond_to do |format|
+        if @choice.activate!
+          format.xml { render :xml => @choice.to_xml, :status => :created }
+          format.json { render :json => @choice.to_json, :status => :created }
+        else
+          format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
+          format.json { render :json => @choice.to_json }
+        end
+      end
+    end
+
+
+    def suspend
+      authenticate
+      @question = current_user.questions.find(params[:question_id])
+      @choice = @question.choices.find(params[:id])
+      respond_to do |format|
+        if @choice.suspend!
+          format.xml { render :xml => @choice.to_xml, :status => :created }
+          format.json { render :json => @choice.to_json, :status => :created }
+        else
+          format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
+          format.json { render :json => @choice.to_json }
+        end
+      end
+    end
     
   
   def skip
