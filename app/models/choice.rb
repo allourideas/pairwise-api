@@ -16,6 +16,11 @@ class Choice < ActiveRecord::Base
     item.data
   end
   
+  def lose!
+    self.loss_count += 1
+    save!
+  end
+  
   def wins_plus_losses
     #(prompts_on_the_left.collect(&:votes_count).sum + prompts_on_the_right.collect(&:votes_count).sum)
     Prompt.sum('votes_count', :conditions => "left_choice_id = #{id} OR right_choice_id = #{id}")

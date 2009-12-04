@@ -13,12 +13,16 @@ class Visitor < ActiveRecord::Base
   end
   
   def vote_for!(prompt, ordinality)
-    choice = prompt.choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
+    choices = prompt.choices
+    choice = choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
     prompt_vote = votes.create!(:voteable => prompt)
     choice_vote = votes.create!(:voteable => choice)
     choice.save!
     choice.score = choice.compute_score
     choice.save!
+    
+    other_choices = choices - [choice]
+    other_choices.each {|c| c.lose! }
   end
   
   def skip!(prompt)
