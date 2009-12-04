@@ -10,7 +10,7 @@ class ChoicesController < InheritedResources::Base
       @choices = Choice.find(:all, :conditions => {:question_id => @question.id}, :limit => params[:limit].to_i, :order => 'score DESC')
     else
       @question = Question.find(params[:question_id], :include => :choices) #eagerloads ALL choices
-      @choices = @question.choices(true)#.sort_by {|c| 0 - c.score }
+      @choices = @question.choices(true)
     end
     index! do |format|
       format.xml { render :xml => params[:data].blank? ? @choices.to_xml(:methods => [:item_data, :votes_count]) : @choices.to_xml(:include => [:items], :methods => [:data, :votes_count])}

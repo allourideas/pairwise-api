@@ -44,7 +44,7 @@ class Choice < ActiveRecord::Base
   
   def compute_score
     if wins_plus_losses == 0
-      raise 'wtfbbq'#return 0
+      return 0
     else
       (wins.to_f / wins_plus_losses ) * 100
     end
