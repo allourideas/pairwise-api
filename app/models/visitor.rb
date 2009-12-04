@@ -13,18 +13,17 @@ class Visitor < ActiveRecord::Base
   end
   
   def vote_for!(prompt, ordinality)
-    logger.info 'testing'
     choices = prompt.choices
     choice = choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
     prompt_vote = votes.create!(:voteable => prompt)
-    puts "Visitor: #{self.inspect} voted for Prompt: #{prompt.inspect}"
+    logger.info "Visitor: #{self.inspect} voted for Prompt: #{prompt.inspect}"
     choice_vote = votes.create!(:voteable => choice)
-    puts "Visitor: #{self.inspect} voted for Choice: #{choice.inspect}"
+    logger.info "Visitor: #{self.inspect} voted for Choice: #{choice.inspect}"
     choice.save!
     choice.score = choice.compute_score
-    puts "Just computed the score for that choice and it's apparently #{choice.score}"
+    logger.info "Just computed the score for that choice and it's apparently #{choice.score}"
     choice.save!
-    puts "Saved. That choice's score is still #{choice.score}"
+    logger.info "Saved. That choice's score is still #{choice.score}"
     other_choices = choices - [choice]
     other_choices.each {|c| c.lose! }
   end
