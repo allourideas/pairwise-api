@@ -68,5 +68,3 @@ class Question < ActiveRecord::Base
   end
 
 end
-#@site = User.create!(:email => 'pius+7@alum.mit.edu', :password => 'password', :password_confirmation => 'password')
-#@site.questions.create!(:name => 'what do you want?', :creator => @site.default_visitor)

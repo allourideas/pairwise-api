@@ -27,3 +27,11 @@ class QuestionsController < InheritedResources::Base
   end
   
 end
+
+
+class String
+  unless defined? "".lines
+    alias lines to_a
+    #Ruby version compatibility
+  end
+end
