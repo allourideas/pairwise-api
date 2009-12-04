@@ -9,8 +9,6 @@ ActionController::Routing::Routes.draw do |map|
   map.resources :algorithms
   map.connect "/questions/:question_id/prompts/:id/vote/:index", :controller => 'prompts', :action => 'vote'
   
-  map.root :controller => "home"
-  
   
   
   map.learn '/learn', :controller => 'home', :action => 'learn'
