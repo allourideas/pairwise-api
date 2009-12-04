@@ -16,12 +16,12 @@ class Prompt < ActiveRecord::Base
   #named_scope :voted_on_by, :include => :choices, :conditions => 
   #named_scope :voted_on_by, proc {|u| { :conditions => { :methodology => methodology } } }
   
+  named_scope :active, :include => [:left_choice, :right_choice], :conditions => { 'left_choice.active' => true, 'right_choice.active' => true }
+  
+  
   def self.voted_on_by(u)
     select {|z| z.voted_on_by_user?(u)}
   end
-  
-  
-  named_scope :visible, :include => :category, :conditions => { 'categories.hidden' => false }
   
   validates_presence_of :left_choice, :on => :create, :message => "can't be blank"
   validates_presence_of :right_choice, :on => :create, :message => "can't be blank"
@@ -45,7 +45,11 @@ class Prompt < ActiveRecord::Base
   def right_choice_id
     right_choice.id
   end
-    
+  
+  def active?
+    left_choice.active? and right_choice.active?
+  end
+  
   
   def right_choice_text(prompt = nil)
     right_choice.item.data

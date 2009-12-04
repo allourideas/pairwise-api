@@ -22,12 +22,15 @@ class Question < ActiveRecord::Base
   end
   
    def picked_prompt
-     #prompts[rand(prompts.count-1)]#Prompt.find(picked_prompt_id)
-     Prompt.find(rand(prompts_count-1))
+     begin
+       return p = Prompt.find(rand(prompts_count-1))
+     end until p.active?
    end
  
    def picked_prompt_id
-     rand(prompts_count-1)
+     begin
+       return i = rand(prompts_count-1)
+     end until Prompt.find(i).active?
    end
  
    def left_choice_text(prompt = nil)
