@@ -71,9 +71,9 @@ class Choice < ActiveRecord::Base
     #do this in a new process (via delayed jobs)
     previous_choices = (self.question.choices - [self])
     return if previous_choices.empty?
-    for c in previous_choices
+    previous_choices.each { |c|
       question.prompts.create!(:left_choice => c, :right_choice => self)
       question.prompts.create!(:left_choice => self, :right_choice => c)
-    end
+    }
   end
 end
