@@ -16,6 +16,7 @@ class Visitor < ActiveRecord::Base
     choice = prompt.choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
     prompt_vote = votes.create!(:voteable => prompt)
     choice_vote = votes.create!(:voteable => choice)
+    choice.save!
     choice.score = choice.compute_score
     choice.save!
   end
