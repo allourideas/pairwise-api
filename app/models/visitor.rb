@@ -13,6 +13,7 @@ class Visitor < ActiveRecord::Base
   end
   
   def vote_for!(prompt, ordinality)
+    logger.info 'testing'
     choices = prompt.choices
     choice = choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
     prompt_vote = votes.create!(:voteable => prompt)
