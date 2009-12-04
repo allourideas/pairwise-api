@@ -31,9 +31,6 @@ class Choice < ActiveRecord::Base
       @item = Item.create!(:creator => creator, :data => data)
       self.item = @item
     end
-  end
-  
-  def before_save
     unless self.score
       self.score = 0.0
     end
