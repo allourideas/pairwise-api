@@ -17,7 +17,7 @@ class Choice < ActiveRecord::Base
   end
   
   def lose!
-    self.loss_count += 1
+    self.loss_count += 1 rescue (self.loss_count = 1)
     save!
   end
   
