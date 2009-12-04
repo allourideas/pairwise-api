@@ -31,11 +31,19 @@ class Question < ActiveRecord::Base
        return p = prompts.find(prompt_ids.rand)
      end until p.active?
    end
+   
+   def picked_prompt
+     pc = self.prompts_count < 1 ? 2 : self.prompts_count
+     begin
+       return p = prompts.find(rand(pc-1) + prompts.first.id)
+     end until p.active?
+   end
+   
  
    def picked_prompt_id
      pc = self.prompts_count < 1 ? 2 : self.prompts_count
      begin
-       return rand(pc-1) + prompts.first.id
+       return i = rand(pc-1) + prompts.first.id #try caching this first prompt value at some point
      end until prompts.find(i).active?
    end
  
