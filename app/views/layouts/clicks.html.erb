@@ -3,11 +3,71 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/javascripts/highcharts.js"></script>
+	<!--[if IE]>
+		<script type="text/javascript" src="/javascripts/excanvas.compiled.js"></script>
+	<![endif]-->
   <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
   <title>Clicks: <%= controller.action_name %></title>
   <%= stylesheet_link_tag 'scaffold' %>
-</head>
-<body>
+  	<script type="text/javascript">
+		$(document).ready(function() {
+      			var chart = new Highcharts.Chart({
+			   chart: {
+			      renderTo: 'container',
+			      defaultSeriesType: 'line'
+			   },
+			   title: {
+			      text: 'Clickstream'
+			   },
+			   subtitle: {
+			      text: 'Source: AllOurIdeas.org (dummy data)'
+			   },
+			   xAxis: {
+			      categories: ['Home#index', 'Question#show', 'Vote#left', 'Vote#right', 'Skip', 'Results'],
+			      title: {
+			         text: 'Page Category'
+			      }
+			   },
+			   yAxis: {
+			      title: {
+			         text: 'Avg. Clicks per Day'
+			      }
+			   },
+			   tooltip: {
+			      enabled: false,
+			      formatter: function() {
+			         return '<b>'+ this.series.name +'</b><br/>'+
+			            this.x +': '+ this.y +'°C';
+			      }
+			   },
+			   plotOptions: {
+			      line: {
+			         dataLabels: {
+			            enabled: true
+			         }
+			      }
+			   },
+			   series: [{
+			      name: 'Logged In',
+			      data: [7.0, 6.9, 9.5, 14.5, 18.4, 21.5]
+			   }, {
+			      name: 'Unregistered or Not Logged In',
+			      data: [3.9, 4.2, 5.7, 8.5, 11.9, 15.2]
+			   }]
+			});
+			
+			
+		});
+		</script>
+		
+	</head>
+	<body>
+		
+		<!-- 3. Add the container -->
+		<div id="container" style="width: 800px; height: 400px"></div>
+		
 
 <p style="color: green"><%= flash[:notice] %></p>
 

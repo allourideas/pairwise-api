@@ -1,4 +1,6 @@
-<h1>Listing clicks</h1>
+
+
+<h1>Clickstream</h1>
 
 <table>
   <tr>
@@ -11,9 +13,8 @@
   <tr>
     <td><%=h click.site_id %></td>
     <td><%=h click.visitor_id %></td>
-    <td><%=h click.additional_info %></td>
+    <td><%=h click.what_was_clicked %></td>
     <td><%= link_to 'Show', click %></td>
-    <td><%= link_to 'Edit', edit_click_path(click) %></td>
     <td><%= link_to 'Destroy', click, :confirm => 'Are you sure?', :method => :delete %></td>
   </tr>
 <% end %>
