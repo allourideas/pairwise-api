@@ -13,7 +13,7 @@ class Click < ActiveRecord::Base
   
   def to_html
     if ip
-      return what_was_clicked.gsub('ip', "http://api.hostip.info/get_html.php?ip=#{ip}")
+      return what_was_clicked.gsub('ip', "<a href='http://api.hostip.info/get_html.php?ip=#{ip}'#{ip}</a>")
     else
       return what_was_clicked
     end
