@@ -10,6 +10,10 @@ class Click < ActiveRecord::Base
     "<a href='http://api.hostip.info/get_html.php?ip=#{ip}'>#{ip}</a>"
   end
   
+  def geoip_url
+    "http://api.hostip.info/get_html.php?ip=#{ip}"
+  end
+  
   def ip
     ip = what_was_clicked.split('[ip: ')[1].split(']').first rescue nil
   end
