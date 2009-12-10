@@ -22,20 +22,14 @@ class Question < ActiveRecord::Base
   end
 
    def picked_prompt
-     pc = self.prompts_count < 1 ? 2 : self.prompts_count
      begin
-       @p = prompts.find(rand(pc-1) + prompts.first.id)
+       @p = prompts.first(:order => 'RANDOM()')
      end until @p.active?
      return @p
    end
-   
  
    def picked_prompt_id
-     pc = self.prompts_count < 1 ? 2 : self.prompts_count
-     begin
-       @i = rand(pc-1) + prompts.first.id #try caching this first prompt value at some point
-     end until prompts.find(@i).active?
-     return @i
+     picked_prompt.id
    end
  
    def left_choice_text(prompt = nil)
