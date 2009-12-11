@@ -152,7 +152,7 @@ class PromptsController < InheritedResources::Base
   
   def show
     @question = Question.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id]), :include => [{ :left_choice => :item }, { :right_choice => :item }])
+    @prompt = @question.prompts.find(params[:id], :include => [{ :left_choice => :item }, { :right_choice => :item }])
     show! do |format|
       format.xml { render :xml => @prompt.to_xml(:methods => [:left_choice_text, :right_choice_text])}
       format.json { render :json => @prompt.to_json(:methods => [:left_choice_text, :right_choice_text])}
