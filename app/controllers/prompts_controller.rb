@@ -48,7 +48,7 @@ class PromptsController < InheritedResources::Base
   def vote_direction(direction)
     authenticate
   
-    logger.info "#{current_user.inspect} is voting #{direction}."
+    logger.info "#{current_user.inspect} is voting #{direction} at #{Time.now}."
     @question = Question.find(params[:question_id])
     @prompt = @question.prompts.find(params[:id])
     case direction
