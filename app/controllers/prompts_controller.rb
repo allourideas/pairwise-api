@@ -49,8 +49,6 @@ class PromptsController < InheritedResources::Base
     authenticate
   
     logger.info "#{current_user.inspect} is voting #{direction} at #{Time.now}."
-    p = params[:click].except(:sid).merge(:visitor_id => current_user.visitors.find_or_create_by_identifier(params[:click][:sid]).id)
-    
     @question = Question.find(params[:question_id])
     @prompt = @question.prompts.find(params[:id])
     
