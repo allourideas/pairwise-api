@@ -157,23 +157,7 @@ class PromptsController < InheritedResources::Base
       format.json { render :json => @prompt.to_json(:methods => [:left_choice_text, :right_choice_text])}
     end
   end
-  
-  def single
-    @question = current_user.questions.find(params[:question_id])
-    @prompt = @question.prompts.pick
-    show! do |format|
-      format.xml { render :xml => @prompt.to_xml}
-      format.json { render :json => @prompt.to_json}
-    end
-  end
-  
-  # 
-  # def index
-  #   index! do |format|
-  #     format.xml { params[:data].blank? ? @prompts.to_xml : @prompts.to_xml(:include => [:items]) }
-  #     format.json { params[:data].blank? ? @prompts.to_json : @prompts.to_json(:include => [:items]) }
-  #   end
-  # end
+
   
   protected
     def begin_of_association_chain
