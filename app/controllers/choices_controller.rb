@@ -8,9 +8,11 @@ class ChoicesController < InheritedResources::Base
     if params[:limit]
       @question = Question.find(params[:question_id])#, :include => :choices)
       @question.reload
+      @question.choices.each(&:compute_score!)
       @choices = Choice.find(:all, :conditions => {:question_id => @question.id, :active => true}, :limit => params[:limit].to_i, :order => 'score DESC', :include => :item)
     else
       @question = Question.find(params[:question_id], :include => :choices) #eagerloads ALL choices
+      @question.choices.each(&:compute_score!)
       @choices = @question.choices(true).active.find(:all, :include => :item)
     end
     index! do |format|
