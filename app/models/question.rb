@@ -23,7 +23,7 @@ class Question < ActiveRecord::Base
 
    def picked_prompt
      begin
-       @p = prompts.first(:order => 'RANDOM()')
+       @p = prompts.first(:order => 'RANDOM()', :include => [{ :left_choice => :item }, { :right_choice => :item }])
      end until @p.active?
      return @p
    end

@@ -50,7 +50,7 @@ class PromptsController < InheritedResources::Base
   
     logger.info "#{current_user.inspect} is voting #{direction}."
     @question = Question.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id])
+    @prompt = @question.prompts.find(params[:id], :include => :choices)
     case direction
     when :left
       successful = c = current_user.record_vote(params['params']['auto'], @prompt, 0)
@@ -81,11 +81,11 @@ class PromptsController < InheritedResources::Base
     @prompt = @question.prompts.find(params[:id])
     respond_to do |format|
       if @prompt.suspend!
-        format.xml { render :xml => @choice.to_xml, :status => :created }
-        format.json { render :json => @choice.to_json, :status => :created }
+        format.xml { render :xml => @prompt.to_xml, :status => :created }
+        format.json { render :json => @prompt.to_json, :status => :created }
       else
-        format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
-        format.json { render :json => @choice.to_json }
+        format.xml { render :xml => @prompt.errors, :status => :unprocessable_entity }
+        format.json { render :json => @prompt.to_json }
       end
     end
   end
@@ -96,7 +96,7 @@ class PromptsController < InheritedResources::Base
     authenticate
     logger.info "#{current_user.inspect} is skipping."
     @question = Question.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id])
+    @prompt = @question.prompts.find(params[:id], :include => [{ :left_choice => :item }, { :right_choice => :item }])
     
 
     respond_to do |format|
@@ -152,8 +152,7 @@ class PromptsController < InheritedResources::Base
   
   def show
     @question = Question.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id])
-    show! do |format|
+    @prompt = @question.prompts.find(params[:id], :include => [{ :left_choice => :item }, { :right_choice => :item }])
       format.xml { render :xml => @prompt.to_xml(:methods => [:left_choice_text, :right_choice_text])}
       format.json { render :json => @prompt.to_json(:methods => [:left_choice_text, :right_choice_text])}
     end
