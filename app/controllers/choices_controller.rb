@@ -9,11 +9,11 @@ class ChoicesController < InheritedResources::Base
       @question = Question.find(params[:question_id])#, :include => :choices)
       @question.reload
       @choices = Choice.find(:all, :conditions => {:question_id => @question.id, :active => true}, :limit => params[:limit].to_i, :order => 'score DESC')
-      @choices.each {|c| c.compute_score!}
+      #@choices.each {|c| c.compute_score!}
     else
       @question = Question.find(params[:question_id], :include => :choices) #eagerloads ALL choices
       @choices = @question.choices(true).active
-      @choices.each {|c| c.compute_score!}
+      #@choices.each {|c| c.compute_score!}
     end
     index! do |format|
       format.xml { render :xml => params[:data].blank? ? @choices.to_xml(:methods => [:item_data, :votes_count]) : @choices.to_xml(:include => [:items], :methods => [:data, :votes_count])}
