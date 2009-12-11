@@ -30,6 +30,8 @@ class User < ActiveRecord::Base
   end
   
   def record_vote(visitor_identifier, prompt, ordinality)
+    @click = Click.new(:what_was_clicked => 'on the API level, inside record_vote' + " with prompt id #{prompt.id}, ordinality #{ordinality.to_s}")
+    @click.save!
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
     visitor.vote_for!(prompt, ordinality)
     #prompt.choices.each {|c| c.compute_score; c.save!}
