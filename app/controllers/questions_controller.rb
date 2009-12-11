@@ -25,7 +25,6 @@ class QuestionsController < InheritedResources::Base
       end
     end
   end
-  
 end
 
 
