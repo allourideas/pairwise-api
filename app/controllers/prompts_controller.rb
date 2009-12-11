@@ -50,7 +50,7 @@ class PromptsController < InheritedResources::Base
   
     logger.info "#{current_user.inspect} is voting #{direction}."
     @question = Question.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id], :include => :choices)
+    @prompt = @question.prompts.find(params[:id])
     case direction
     when :left
       successful = c = current_user.record_vote(params['params']['auto'], @prompt, 0)
