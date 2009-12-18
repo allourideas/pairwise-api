@@ -1,5 +1,7 @@
 class Question < ActiveRecord::Base
   require 'set'
+  extend ActiveSupport::Memoizable
+  
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
   belongs_to :site, :class_name => "User", :foreign_key => "site_id"
   
@@ -29,6 +31,7 @@ class Question < ActiveRecord::Base
      choice_id_array = distinct_array_of_choice_ids(rank)
      @p = prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1])
    end
+   memoize :picked_prompt
    
    def distinct_array_of_choice_ids(rank = 2, only_active = true)
      begin
