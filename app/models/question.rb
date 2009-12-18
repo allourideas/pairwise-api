@@ -20,12 +20,29 @@ class Question < ActiveRecord::Base
   def item_count
     choices_count
   end
-
-   def picked_prompt
+   
+   #TODO: generalize for prompts of rank > 2
+   #TODO: add index for rapid finding
+   def picked_prompt(rank = 2)
+     logger.info "inside picked_prompt with rank #{rank}"
+     raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
+     logger.info "didn't raise"
+     choice_id_array = distinct_array_of_choice_ids(rank)
+     logger.info "choice id array is #{choice_id_array}"
+     logger.info "about to do the dynamic find_or_create ..."
+     @p = prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1])
+   end
+   
+   def distinct_array_of_choice_ids(rank = 2, only_active = true)
+     logger.info "inside #distinct_array_of_choice_ids"
+     logger.info "there are #{choices.active.count} available choices"
      begin
-       @p = prompts.first(:order => 'RANDOM()', :include => [{ :left_choice => :item }, { :right_choice => :item }])
-     end until @p.active?
-     return @p
+       @the_choice_ids = Set.new
+       @the_choice_ids << choices.active.first(:order => 'RANDOM()', :select => 'id').id
+       @the_choice_ids << choices.active.last(:order => 'RANDOM()', :select => 'id').id
+     end until @the_choice_ids.size == rank
+     logger.info "set populated and looks like #{@the_choice_ids.inspect}"
+     return @the_choice_ids.to_a
    end
  
    def picked_prompt_id
