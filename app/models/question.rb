@@ -1,4 +1,5 @@
 class Question < ActiveRecord::Base
+  require 'set'
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
   belongs_to :site, :class_name => "User", :foreign_key => "site_id"
   
@@ -21,11 +22,20 @@ class Question < ActiveRecord::Base
     choices_count
   end
 
-   def picked_prompt
+   #TODO: generalize for prompts of rank > 2
+   #TODO: add index for rapid finding
+   def picked_prompt(rank = 2)
+     raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
+     choice_id_array = distinct_array_of_choice_ids(rank)
+     @p = prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1])
+   end
+   
+   def distinct_array_of_choice_ids(rank = 2, only_active = true)
      begin
-       @p = prompts.first(:order => 'RANDOM()', :include => [{ :left_choice => :item }, { :right_choice => :item }])
-     end until @p.active?
-     return @p
+       @the_choice_ids = Set.new
+       rank.times { @the_choice_ids << choices.active.first(:order => 'RANDOM()', :select => 'id').id }
+     end until @the_choice_ids.size == rank
+     @the_choice_ids.to_a
    end
  
    def picked_prompt_id

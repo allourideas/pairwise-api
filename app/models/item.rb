@@ -14,4 +14,10 @@ class Item < ActiveRecord::Base
 
   validates_presence_of :creator_id
   validates_presence_of :data, :on => :create, :message => "can't be blank"
+  
+  def self.mass_insert!(creator_id, data_array)
+    #alpha
+    inserts = data_array.collect{|i| "(#{connection.quote i}, #{connection.quote creator_id})"}.join(", ")
+    connection.insert("INSERT INTO items(data, creator_id) VALUES (#{inserts})")
+  end
 end

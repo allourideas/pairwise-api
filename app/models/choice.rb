@@ -38,7 +38,7 @@ class Choice < ActiveRecord::Base
     votes_count || 0
   end
   
-  after_create :generate_prompts
+  #after_create :generate_prompts
   def before_create
     unless item
       @item = Item.create!(:creator => creator, :data => data)
