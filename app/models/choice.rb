@@ -15,6 +15,10 @@ class Choice < ActiveRecord::Base
   
   attr_accessor :data
   
+  def question_name
+    question.name
+  end
+  
   def item_data
     item.data
   end
