@@ -21,7 +21,7 @@ class Question < ActiveRecord::Base
   def item_count
     choices_count
   end
-
+   
    #TODO: generalize for prompts of rank > 2
    #TODO: add index for rapid finding
    def picked_prompt(rank = 2)
@@ -33,9 +33,11 @@ class Question < ActiveRecord::Base
    def distinct_array_of_choice_ids(rank = 2, only_active = true)
      begin
        @the_choice_ids = Set.new
-       rank.times { @the_choice_ids << choices.active.first(:order => 'RANDOM()', :select => 'id').id }
+       @the_choice_ids << choices.active.first(:order => 'RANDOM()', :select => 'id').id
+       @the_choice_ids << choices.active.last(:order => 'RANDOM()', :select => 'id').id
      end until @the_choice_ids.size == rank
-     @the_choice_ids.to_a
+     logger.info "set populated and looks like #{@the_choice_ids.inspect}"
+     return @the_choice_ids.to_a
    end
  
    def picked_prompt_id
