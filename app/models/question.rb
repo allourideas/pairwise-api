@@ -33,8 +33,8 @@ class Question < ActiveRecord::Base
    def distinct_array_of_choice_ids(rank = 2, only_active = true)
      begin
        @the_choice_ids = Set.new
-       @the_choice_ids << choices.active.first(:order => 'RANDOM()', :select => 'id').id
-       @the_choice_ids << choices.active.last(:order => 'RANDOM()', :select => 'id').id
+       @the_choice_ids << choices.active.first(:order => 'RAND()', :select => 'id').id
+       @the_choice_ids << choices.active.last(:order => 'RAND()', :select => 'id').id
      end until @the_choice_ids.size == rank
      logger.info "set populated and looks like #{@the_choice_ids.inspect}"
      return @the_choice_ids.to_a
