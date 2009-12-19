@@ -5,7 +5,7 @@
 # Make sure the secret is at least 30 characters and all random, 
 # no regular words or you'll be exposed to dictionary attacks.
 ActionController::Base.session = {
-  :session_key => "_rebirth_session",
+  :session_key => "_rebirth_session_key",
   :secret      => "f86c832870682bd056afe09e8b328b1b"
 }
 
