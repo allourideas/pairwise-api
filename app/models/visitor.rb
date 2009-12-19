@@ -14,16 +14,16 @@ class Visitor < ActiveRecord::Base
   end
   
   def vote_for!(prompt, ordinality)
-    question_vote = votes.create!(:voteable => prompt.question)
-    logger.info "Visitor: #{self.inspect} voted for Question: #{prompt.question.inspect}"
+    question_vote = votes.create!(:voteable_id => prompt.question_id, :voteable_type => "Question")
+    logger.info "Visitor: #{self.inspect} voted for Question: #{prompt.question_id}"
     
     
     choices = prompt.choices
     choice = choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
     prompt_vote = votes.create!(:voteable => prompt)
     logger.info "Visitor: voted for Prompt: #{prompt.id.to_s}"
-    @click = Click.new(:what_was_clicked => "on the API level, inside visitor#vote_for! with prompt id #{prompt.id}, ordinality #{ordinality.to_s}, choice: #{choice.item.data} (id: #{choice.id})")
-    @click.save!
+    # @click = Click.new(:what_was_clicked => "on the API level, inside visitor#vote_for! with prompt id #{prompt.id}, ordinality #{ordinality.to_s}, choice: #{choice.item.data} (id: #{choice.id})")
+    # @click.save!
     
     choice_vote = votes.create!(:voteable => choice)
     # logger.info "Visitor: voted for Prompt: #{prompt.id.to_s} for choice #{choice.item.data}"
