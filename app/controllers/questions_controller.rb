@@ -4,10 +4,15 @@ class QuestionsController < InheritedResources::Base
   #has_scope :voted_on_by
 
   def show
+    @question = Question.find(params[:id])
+    @p = @question.picked_prompt
+    left_choice_text = Proc.new { |options| options[:builder].tag!('left_choice_text', @p.left_choice.item.data) }
+    right_choice_text = Proc.new { |options| options[:builder].tag!('right_choice_text', @p.right_choice.item.data) }
+    picked_prompt_id = Proc.new { |options| options[:builder].tag!('picked_prompt_id', @p.id) }
     show! do |format|
       session['prompts_ids'] ||= []
       format.xml { 
-        render :xml => @question.to_xml(:methods => [:item_count, :left_choice_text, :right_choice_text, :picked_prompt_id])
+        render :xml => @question.to_xml(:methods => [:item_count], :procs => [left_choice_text, right_choice_text, picked_prompt_id])
         }
     end
   end
