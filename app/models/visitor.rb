@@ -31,7 +31,7 @@ class Visitor < ActiveRecord::Base
     # choice.score = choice.compute_score
     # logger.info "Just computed the score for that choice and it's apparently #{choice.score}"
     # choice.save!
-    logger.info "Saved. That choice's score is still #{choice.score}"
+    #logger.info "Saved. That choice's score is still #{choice.score}"
     other_choices = choices - [choice]
     other_choices.each {|c| c.lose! }
   end
