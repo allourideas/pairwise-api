@@ -26,11 +26,11 @@ class Visitor < ActiveRecord::Base
     @click.save!
     
     choice_vote = votes.create!(:voteable => choice)
-    logger.info "Visitor: voted for Prompt: #{prompt.id.to_s} for choice #{choice.item.data}"
-    choice.save!
-    choice.score = choice.compute_score
-    logger.info "Just computed the score for that choice and it's apparently #{choice.score}"
-    choice.save!
+    # logger.info "Visitor: voted for Prompt: #{prompt.id.to_s} for choice #{choice.item.data}"
+    # choice.save!
+    # choice.score = choice.compute_score
+    # logger.info "Just computed the score for that choice and it's apparently #{choice.score}"
+    # choice.save!
     logger.info "Saved. That choice's score is still #{choice.score}"
     other_choices = choices - [choice]
     other_choices.each {|c| c.lose! }
