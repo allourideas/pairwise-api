@@ -1,6 +1,6 @@
 class CreateMorePromptIndexes < ActiveRecord::Migration
   def self.up
-    add_index :prompts, [:left_choice_id, :right_choice_id, :question_id]
+    add_index :prompts, [:left_choice_id, :right_choice_id, :question_id], :name => "a_cool_index"
   end
 
   def self.down
