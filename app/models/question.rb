@@ -29,7 +29,7 @@ class Question < ActiveRecord::Base
    def picked_prompt(rank = 2)
      raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
      choice_id_array = distinct_array_of_choice_ids(rank)
-     @p = prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [{ :left_choice => :item }, { :right_choice => :item }])
+     @p ||= prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [{ :left_choice => :item }, { :right_choice => :item }])
    end
    memoize :picked_prompt
    
@@ -48,12 +48,10 @@ class Question < ActiveRecord::Base
    end
  
    def left_choice_text(prompt = nil)
-     prompt ||= prompts.first#prompts.pick
      picked_prompt.left_choice.item.data
    end
 
    def right_choice_text(prompt = nil)
-     prompt ||= prompts.first
      picked_prompt.right_choice.item.data
    end
 
