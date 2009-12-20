@@ -34,10 +34,12 @@ class Question < ActiveRecord::Base
    memoize :picked_prompt
    
    def distinct_array_of_choice_ids(rank = 2, only_active = true)
+     @choice_ids = choice_ids
+     @s = @choice_ids.size
      begin
-       @the_choice_ids = Set.new
-       @the_choice_ids << choices.active.first(:order => 'RAND()', :select => 'id').id
-       @the_choice_ids << choices.active.last(:order => 'RAND()', :select => 'id').id
+       @the_choice_ids = Set.new(@choice_ids.values_at(rand(@s), rand(@s)))
+       # @the_choice_ids << choices.active.first(:order => 'RAND()', :select => 'id').id
+       # @the_choice_ids << choices.active.last(:order => 'RAND()', :select => 'id').id
      end until @the_choice_ids.size == rank
      logger.info "set populated and looks like #{@the_choice_ids.inspect}"
      return @the_choice_ids.to_a
