@@ -24,23 +24,27 @@ class Question < ActiveRecord::Base
     choices_count
   end
    
-   #TODO: generalize for prompts of rank > 2
-   #TODO: add index for rapid finding
-   def picked_prompt(rank = 2)
-     raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
+ #TODO: generalize for prompts of rank > 2
+ #TODO: add index for rapid finding
+ def picked_prompt(rank = 2)
+   raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
+   begin
      choice_id_array = distinct_array_of_choice_ids(rank)
      @p ||= prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [{ :left_choice => :item }, { :right_choice => :item }])
-   end
-   memoize :picked_prompt
+   end until @p.active?
+   return @p
+ end
+ memoize :picked_prompt
    
    def distinct_array_of_choice_ids(rank = 2, only_active = true)
      @choice_ids = choice_ids
      @s = @choice_ids.size
      begin
-       @the_choice_ids = Set.new(@choice_ids.values_at(rand(@s), rand(@s)))
+       first_one, second_one = rand(@s), rand(@s)
+       @the_choice_ids = Set.new(@choice_ids.values_at(first_one, second_one))
        # @the_choice_ids << choices.active.first(:order => 'RAND()', :select => 'id').id
        # @the_choice_ids << choices.active.last(:order => 'RAND()', :select => 'id').id
-     end until @the_choice_ids.size == rank
+     end until (@the_choice_ids.size == rank) 
      logger.info "set populated and looks like #{@the_choice_ids.inspect}"
      return @the_choice_ids.to_a
    end
@@ -65,6 +69,9 @@ class Question < ActiveRecord::Base
      u.questions_voted_on.include? self
    end
    
+   def should_autoactivate_ideas?
+     it_should_autoactivate_ideas?
+   end
   
   validates_presence_of :site, :on => :create, :message => "can't be blank"
   validates_presence_of :creator, :on => :create, :message => "can't be blank"

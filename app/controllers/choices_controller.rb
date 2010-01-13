@@ -52,8 +52,11 @@ class ChoicesController < InheritedResources::Base
     respond_to do |format|
       if @choice = current_user.create_choice(params['params']['data'], @question, {:data => params['params']['data'], :local_identifier => params['params']['local_identifier']})
         saved_choice_id = Proc.new { |options| options[:builder].tag!('saved_choice_id', @choice.id) }
+        choice_status = Proc.new { |options| 
+          the_status = @choice.active? ? 'active' : 'inactive'
+          options[:builder].tag!('choice_status', the_status) }
         logger.info "successfully saved the choice #{@choice.inspect}"
-        format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id]), :status => :ok }
+        format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id, choice_status]), :status => :ok }
         format.json { render :json => @question.picked_prompt.to_json, :status => :ok }
       else
         format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
@@ -81,19 +84,19 @@ class ChoicesController < InheritedResources::Base
   end
   
   def activate
-      authenticate
-      @question = current_user.questions.find(params[:question_id])
-      @choice = @question.choices.find(params[:id])
-      respond_to do |format|
-        if @choice.activate!
-          format.xml { render :xml => @choice.to_xml, :status => :created }
-          format.json { render :json => @choice.to_json, :status => :created }
-        else
-          format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
-          format.json { render :json => @choice.to_json }
-        end
+    authenticate
+    @question = current_user.questions.find(params[:question_id])
+    @choice = @question.choices.find(params[:id])
+    respond_to do |format|
+      if @choice.activate!
+        format.xml { render :xml => @choice.to_xml, :status => :created }
+        format.json { render :json => @choice.to_json, :status => :created }
+      else
+        format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
+        format.json { render :json => @choice.to_json }
       end
     end
+  end
 
 
     def suspend

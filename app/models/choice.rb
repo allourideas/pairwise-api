@@ -7,6 +7,7 @@ class Choice < ActiveRecord::Base
   
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
   validates_presence_of :question, :on => :create, :message => "can't be blank"
+  #validates_length_of :item, :maximum => 140
   
   has_many :votes, :as => :voteable 
   has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id"
@@ -50,6 +51,9 @@ class Choice < ActiveRecord::Base
     end
     unless self.score
       self.score = 0.0
+    end
+    unless self.active?
+      question.should_autoactivate_ideas? ? self.active = true : self.active = false
     end
     return true #so active record will save
   end
