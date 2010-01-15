@@ -63,11 +63,12 @@ class Choice < ActiveRecord::Base
   end
   
   def compute_score
-    if wins_plus_losses == 0
-      return 0
-    else
-      (wins.to_f / wins_plus_losses ) * 100
-    end
+    # if wins_plus_losses == 0
+    #   return 0
+    # else
+    #   (wins.to_f / wins_plus_losses ) * 100
+    # end
+    (wins.to_f+1)/(wins+1+losses+1) * 100
   end
   
   def compute_score!
