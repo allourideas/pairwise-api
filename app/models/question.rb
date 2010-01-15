@@ -27,11 +27,12 @@ class Question < ActiveRecord::Base
  #TODO: generalize for prompts of rank > 2
  #TODO: add index for rapid finding
  def picked_prompt(rank = 2)
+   logger.info "inside Question#picked_prompt"
    raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
    begin
      choice_id_array = distinct_array_of_choice_ids(rank)
      @p ||= prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [{ :left_choice => :item }, { :right_choice => :item }])
-     puts "#{@p.inspect} is active? #{@p.active?}"
+     logger.info "#{@p.inspect} is active? #{@p.active?}"
    end until @p.active?
    return @p
  end
