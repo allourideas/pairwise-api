@@ -31,6 +31,7 @@ class Question < ActiveRecord::Base
    begin
      choice_id_array = distinct_array_of_choice_ids(rank)
      @p ||= prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [{ :left_choice => :item }, { :right_choice => :item }])
+     puts "#{@p.inspect} is active? #{@p.active?}"
    end until @p.active?
    return @p
  end

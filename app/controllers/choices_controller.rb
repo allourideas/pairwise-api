@@ -50,7 +50,8 @@ class ChoicesController < InheritedResources::Base
     @question = Question.find params[:question_id]
 
     respond_to do |format|
-      if @choice = current_user.create_choice(params['params']['data'], @question, {:data => params['params']['data'], :local_identifier => params['params']['local_identifier']})
+      if @choice = current_user.create_choice(params['params']['data'], @question, {:data => params['params']['data'], 
+                                                                                    :local_identifier => params['params']['local_identifier']})
         saved_choice_id = Proc.new { |options| options[:builder].tag!('saved_choice_id', @choice.id) }
         choice_status = Proc.new { |options| 
           the_status = @choice.active? ? 'active' : 'inactive'
@@ -58,7 +59,7 @@ class ChoicesController < InheritedResources::Base
         logger.info "successfully saved the choice #{@choice.inspect}"
         format.xml { render :xml => @choice.to_xml(:procs => [saved_choice_id, choice_status]), :status => :ok }
         # format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id, choice_status]), :status => :ok }
-        format.json { render :json => @question.picked_prompt.to_json, :status => :ok }
+        format.json { render :json => @question.to_json(:procs => [saved_choice_id, choice_status]), :status => :ok }
       else
         format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
         format.json { render :json => @choice.errors, :status => :unprocessable_entity }
