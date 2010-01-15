@@ -10,7 +10,7 @@ class User < ActiveRecord::Base
   end
   
   def create_question(visitor_identifier, question_params)
-    puts "the question_params are #{question_params.inspect}"
+    logger.info "the question_params are #{question_params.inspect}"
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
     question = visitor.questions.create(question_params.merge(:site => self))
   end
