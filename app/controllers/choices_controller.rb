@@ -56,7 +56,8 @@ class ChoicesController < InheritedResources::Base
           the_status = @choice.active? ? 'active' : 'inactive'
           options[:builder].tag!('choice_status', the_status) }
         logger.info "successfully saved the choice #{@choice.inspect}"
-        format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id, choice_status]), :status => :ok }
+        format.xml { render :xml => @choice.to_xml(:procs => [saved_choice_id, choice_status]), :status => :ok }
+        # format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id, choice_status]), :status => :ok }
         format.json { render :json => @question.picked_prompt.to_json, :status => :ok }
       else
         format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
