@@ -45,6 +45,7 @@ class Choice < ActiveRecord::Base
   
   #after_create :generate_prompts
   def before_create
+    puts "just got inside choice#before_create. is set to active? #{self.active?}"
     unless item
       @item = Item.create!(:creator => creator, :data => data)
       self.item = @item
@@ -53,7 +54,10 @@ class Choice < ActiveRecord::Base
       self.score = 0.0
     end
     unless self.active?
-      question.should_autoactivate_ideas? ? self.active = true : self.active = false
+      puts "this choice was not specifically set to active, so we are now asking if we should auto-activate"
+      self.active = question.should_autoactivate_ideas? ? true : false
+      puts "should question autoactivate? #{question.should_autoactivate_ideas?}"
+      puts "will this choice be active? #{self.active}"
     end
     return true #so active record will save
   end

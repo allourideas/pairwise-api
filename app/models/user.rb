@@ -19,9 +19,9 @@ class User < ActiveRecord::Base
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
     raise "Question not found" if question.nil?
     if visitor.owns?(question)
-      choice = question.choices.create!(choice_params.merge(:active => true, :creator => visitor))
+      choice = question.choices.create!(choice_params.merge(:active => false, :creator => visitor))
     elsif question.local_identifier == choice_params[:local_identifier]
-      choice = question.choices.create!(choice_params.merge(:active => true, :creator => visitor))
+      choice = question.choices.create!(choice_params.merge(:active => false, :creator => visitor))
     else
       choice = question.choices.create!(choice_params.merge(:active => false, :creator => visitor))
     end
