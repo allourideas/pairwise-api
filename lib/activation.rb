@@ -8,4 +8,9 @@ module Activation
     (self.active = false)
     self.save!
   end
+  
+  def deactivate!
+    (self.active = false)
+    self.save!
+  end
 end
