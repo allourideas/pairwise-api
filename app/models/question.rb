@@ -85,7 +85,7 @@ class Question < ActiveRecord::Base
       the_ideas.each { |choice_text|
         item = Item.create!({:data => choice_text, :creator => creator})
         puts item.inspect
-        choice = choices.create!(:item => item, :creator => creator, :active => true)
+        choice = choices.create!(:item => item, :creator => creator, :active => true, :data => choice_text)
         puts choice.inspect
       }
     end

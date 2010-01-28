@@ -14,7 +14,7 @@ class Choice < ActiveRecord::Base
   has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
   named_scope :active, :conditions => { :active => true }
   
-  attr_accessor :data
+  #attr_accessor :data
   
   def question_name
     question.name
