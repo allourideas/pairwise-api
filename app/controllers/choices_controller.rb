@@ -3,21 +3,29 @@ class ChoicesController < InheritedResources::Base
   actions :show, :index, :create, :update
   belongs_to :question
   has_scope :active, :boolean => true, :only => :index
+  #caches_page :index
   
   def index
     if params[:limit]
       @question = Question.find(params[:question_id])#, :include => :choices)
       @question.reload
       @question.choices.each(&:compute_score!)
-      @choices = Choice.find(:all, :conditions => {:question_id => @question.id, :active => true}, :limit => params[:limit].to_i, :order => 'score DESC', :include => :item)
+      unless params[:include_inactive]
+        @choices = Choice.find(:all, :conditions => {:question_id => @question.id, :active => true}, :limit => params[:limit].to_i, :order => 'score DESC', :include => :item)
+      else
+        @choices = Choice.find(:all, :conditions => {:question_id => @question.id}, :limit => params[:limit].to_i, :order => 'score DESC', :include => :item)
+      end
     else
       @question = Question.find(params[:question_id], :include => :choices) #eagerloads ALL choices
       @question.choices.each(&:compute_score!)
-      @choices = @question.choices(true).active.find(:all, :include => :item)
+      unless params[:include_inactive]
+        @choices = @question.choices(true).active.find(:all, :include => :item)
+      else
+        @choices = @question.choices(true)
+      end
     end
     index! do |format|
-      format.xml { render :xml => params[:data].blank? ? @choices.to_xml(:methods => [:item_data, :votes_count]) : @choices.to_xml(:include => [:items], :methods => [:data, :votes_count])}
-      format.json { render :json => params[:data].blank? ? @choices.to_json : @choices.to_json(:include => [:items]) }
+      format.xml { render :xml => @choices.to_xml(:only => [ :data, :score, :id ])}
     end
 
   end
@@ -45,6 +53,7 @@ class ChoicesController < InheritedResources::Base
   
   def create_from_abroad
     authenticate
+    expire_page :action => :index
     logger.info "inside create_from_abroad"
 
     @question = Question.find params[:question_id]
@@ -69,6 +78,7 @@ class ChoicesController < InheritedResources::Base
   
   def update_from_abroad
     authenticate
+    expire_page :action => :index
     @question = current_user.questions.find(params[:question_id])
     @choice = @question.choices.find(params[:id])
     
@@ -85,8 +95,28 @@ class ChoicesController < InheritedResources::Base
     end
   end
   
+  def deactivate_from_abroad
+    authenticate
+    expire_page :action => :index
+    @question = current_user.questions.find(params[:question_id])
+    @choice = @question.choices.find(params[:id])
+    
+    respond_to do |format|
+      if @choice.deactivate!
+        logger.info "successfully deactivated choice #{@choice.inspect}"
+        format.xml { render :xml => true }
+        format.json { render :json => true }
+      else
+         logger.info "failed to deactivate choice  #{@choice.inspect}"
+        format.xml { render :xml => @choice.to_xml(:methods => [:data, :votes_count, :wins_plus_losses])}
+        format.json { render :json => @choice.to_json(:methods => [:data])}
+      end
+    end
+  end
+  
   def activate
     authenticate
+    expire_page :action => :index
     @question = current_user.questions.find(params[:question_id])
     @choice = @question.choices.find(params[:id])
     respond_to do |format|
@@ -103,6 +133,7 @@ class ChoicesController < InheritedResources::Base
 
     def suspend
       authenticate
+      expire_page :action => :index
       @question = current_user.questions.find(params[:question_id])
       @choice = @question.choices.find(params[:id])
       respond_to do |format|
