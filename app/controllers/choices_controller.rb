@@ -25,7 +25,7 @@ class ChoicesController < InheritedResources::Base
       end
     end
     index! do |format|
-      format.xml { render :xml => @choices.to_xml(:only => [ :data, :score, :id ])}
+      format.xml { render :xml => @choices.to_xml(:only => [ :data, :score, :id, :active ])}
     end
 
   end
@@ -97,17 +97,20 @@ class ChoicesController < InheritedResources::Base
   
   def deactivate_from_abroad
     authenticate
-    expire_page :action => :index
     @question = current_user.questions.find(params[:question_id])
     @choice = @question.choices.find(params[:id])
     
     respond_to do |format|
-      if @choice.deactivate!
+      if @question.choices.active.size < 3
+        logger.info "will not deactivate choice because that would lead to fewer than two active choices for the question, #{@question.name}"
+        format.xml { render(:xml => false) and return}
+        format.json { render :json => false }
+      elsif @choice.deactivate!
         logger.info "successfully deactivated choice #{@choice.inspect}"
         format.xml { render :xml => true }
         format.json { render :json => true }
       else
-         logger.info "failed to deactivate choice  #{@choice.inspect}"
+        logger.info "failed to deactivate choice  #{@choice.inspect}"
         format.xml { render :xml => @choice.to_xml(:methods => [:data, :votes_count, :wins_plus_losses])}
         format.json { render :json => @choice.to_json(:methods => [:data])}
       end
@@ -116,7 +119,6 @@ class ChoicesController < InheritedResources::Base
   
   def activate
     authenticate
-    expire_page :action => :index
     @question = current_user.questions.find(params[:question_id])
     @choice = @question.choices.find(params[:id])
     respond_to do |format|
@@ -133,7 +135,6 @@ class ChoicesController < InheritedResources::Base
 
     def suspend
       authenticate
-      expire_page :action => :index
       @question = current_user.questions.find(params[:question_id])
       @choice = @question.choices.find(params[:id])
       respond_to do |format|
