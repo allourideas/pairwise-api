@@ -40,8 +40,30 @@ class QuestionsController < InheritedResources::Base
       end
     end
   end
-end
 
+  def set_autoactivate_ideas_from_abroad
+    authenticate
+    expire_page :action => :index
+    logger.info("INSIDE autoactivate ideas")
+
+    
+    @question = current_user.questions.find(params[:id])
+    @question.it_should_autoactivate_ideas = params[:question][:it_should_autoactivate_ideas]
+
+    respond_to do |format|
+      if @question.save
+        logger.info "successfully set this question to autoactive ideas #{@question.inspect}"
+        format.xml { render :xml => true }
+        format.json { render :json => true}
+      else
+        logger.info "Some error in saving question, #{@question.inspect}"
+        format.xml { render(:xml => false) and return}
+        format.json { render :json => false }
+      end
+    end
+
+  end
+end
 
 class String
   unless defined? "".lines
