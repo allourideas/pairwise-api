@@ -1,5 +1,7 @@
 namespace :test_api do
 
+   task :all => [:question_vote_consistency]
+
    desc "Description here"
    task(:question_vote_consistency => :environment) do
       questions = Question.find(:all)
@@ -9,6 +11,7 @@ namespace :test_api do
 
 	total_wins =0
 	total_votes =0
+	error_bool = false
 	question.choices.each do |choice|
 			
 	    if choice.wins
@@ -23,17 +26,31 @@ namespace :test_api do
 
 	
 	if (2*total_wins != total_votes)
-		 error_msg += "Error:"
+		 error_msg += "Error 1:"
+		 error_bool= true
 	end
 
 	if(total_votes % 2 != 0)
-		error_msg += "ERROR"
+		error_msg += "Error 2:"
+		error_bool= true
 	end
 
-	error_msg += "Question #{question.id}: 2*wins = #{2*total_wins}, total votes = #{total_votes}\n"
+	if(total_votes != question.votes_count)
+		error_msg += "Error 3:"
+		error_bool = true
+	end
+
+	if error_bool
+	   error_msg += "Question #{question.id}: 2*wins = #{2*total_wins}, total votes = #{total_votes}, vote_count = #{question.votes_count}\n"
+	end
+
+	error_bool = false
+
      end
      
-     CronMailer.deliver_error_message("This is a test", "")
+     if error_msg
+     	CronMailer.deliver_error_message("Data in api check error!", error_msg)
+     end
 
    end
 end
