@@ -46,7 +46,7 @@ namespace :test_api do
      end
      
      if error_msg.blank?
-	CronMailer.deliver_info_message(CRON_EMAIL, "Test of API Vote Consistency passed", "Examined #{questions.length} questions and found no irregulaties")
+	CronMailer.deliver_info_message(CRON_EMAIL, "Test of API Vote Consistency passed", "Examined #{questions.length} questions and found no irregularities")
      else
      	CronMailer.deliver_info_message("#{CRON_EMAIL},#{ERRORS_EMAIL}", "Error! Failure of API Vote Consistency " , error_msg)
      end
