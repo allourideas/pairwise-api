@@ -24,32 +24,31 @@ namespace :test_api do
 	    end
         end
 
-	
 	if (2*total_wins != total_votes)
-		 error_msg += "Error 1:"
+		 error_msg += "Error 1: 2 x Total Wins != Total votes"
 		 error_bool= true
 	end
 
 	if(total_votes % 2 != 0)
-		error_msg += "Error 2:"
+		error_msg += "Error 2: Total votes is not Even!"
 		error_bool= true
 	end
 
-	if(total_votes != question.votes_count)
-		error_msg += "Error 3:"
+	if(total_votes != 2* question.votes_count)
+		error_msg += "Error 3: Total votes != 2 x # vote objects"
 		error_bool = true
 	end
 
 	if error_bool
 	   error_msg += "Question #{question.id}: 2*wins = #{2*total_wins}, total votes = #{total_votes}, vote_count = #{question.votes_count}\n"
 	end
-
 	error_bool = false
-
      end
      
-     if error_msg
-     	CronMailer.deliver_error_message("Data in api check error!", error_msg)
+     if error_msg.blank?
+	CronMailer.deliver_info_message(CRON_EMAIL, "Test of API Vote Consistency passed", "Examined #{questions.count} questions and found no irregulaties")
+     else
+     	CronMailer.deliver_info_message("#{CRON_EMAIL},#{ERRORS_EMAIL}", "Error! Failure of API Vote Consistency " , error_msg)
      end
 
    end

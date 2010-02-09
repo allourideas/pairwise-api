@@ -1,8 +1,8 @@
 class CronMailer < ActionMailer::Base
 
-	def error_message(subject, message, sent_at= Time.now)
+	def info_message(recipients, subject, message, sent_at= Time.now)
+		@recipients = recipients
 		@from = 'cronjob@allourideas.org'
-		@recipients = "dhruv@allourideas.org"
 		@subject ="[All Our Ideas] " +  subject
 		@sent_on = sent_at
 		@body[:message] = message
