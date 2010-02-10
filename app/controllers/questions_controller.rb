@@ -1,5 +1,8 @@
+require 'fastercsv'
+
 class QuestionsController < InheritedResources::Base
   respond_to :xml, :json
+  respond_to :csv, :only => :export #leave the option for xml export here
   belongs_to :site, :optional => true
   #has_scope :voted_on_by
 
@@ -41,6 +44,8 @@ class QuestionsController < InheritedResources::Base
     end
   end
 
+
+
   def set_autoactivate_ideas_from_abroad
     authenticate
     expire_page :action => :index
@@ -62,6 +67,64 @@ class QuestionsController < InheritedResources::Base
       end
     end
 
+  end
+  def export
+    
+    type = params[:type]
+
+    if type == 'votes'
+    	export_votes
+    elsif type == 'items'
+    	export_items
+    else
+	render :text => "Error! Specify a type of export"
+    end
+#    export_type = params[:export_type]
+#    export_format = params[:export_format] #CSV always now, could expand to xml later
+  end
+  
+
+  protected 
+  def export_votes
+    @question = Question.find(params[:id])
+
+    outfile = "question_#{@question.id}_votes" + Time.now.strftime("%m-%d-%Y") + ".csv"
+    headers = ['Vote ID', 'Voter ID', 'Choice Voted on ID', 'Choice Voted on Data', 'Question ID', 'Created at', 'Updated at']
+    csv_data = FasterCSV.generate do |csv|
+       csv << headers	
+       @question.choices.each do |choice|
+	       
+	       choice.votes.each do |v|
+	       csv << [ v.id, v.voter_id, choice.id, choice.data, @question.id, v.created_at, v.updated_at] 
+	       end
+       end
+    end
+
+    send_data(csv_data,
+        :type => 'text/csv; charset=iso-8859-1; header=present',
+      :disposition => "attachment; filename=#{outfile}")
+  end
+
+  def export_items
+    @question = Question.find(params[:id], :include => [:choices, :prompts])
+
+    outfile = "question_#{@question.id}_items_" + Time.now.strftime("%m-%d-%Y") + ".csv"
+    headers = ['Choice ID', 'Item ID', 'Data', 'Question ID', 'User Submitted', 'Choice Creator ID', 
+	    	'Wins', 'Losses', 'Created at', 'Updated at', 'Active', 'Score', 'Local Identifier', 
+		'Prompts on Left', 'Prompts on Right', 'Prompts Count']
+
+    csv_data = FasterCSV.generate do |csv|
+       csv << headers	
+       @question.choices.each do |c|
+	       csv << [ c.id, c.item_id, c.data, c.question_id, c.item.creator != @question.creator, c.item.creator_id, 
+		       c.wins, c.losses, c.created_at, c.updated_at, c.active, c.score, c.local_identifier, 
+		       c.prompts_on_the_left.size, c.prompts_on_the_right.size, c.prompts_count]
+       end
+    end
+
+    send_data(csv_data,
+        :type => 'text/csv; charset=iso-8859-1; header=present',
+      :disposition => "attachment; filename=#{outfile}")
   end
 end
 

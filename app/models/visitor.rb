@@ -14,6 +14,7 @@ class Visitor < ActiveRecord::Base
   end
   
   def vote_for!(prompt, ordinality)
+    # Why are there three vote objects created for every actual 'vote'? Why not have each vote have a questionid, promptid and choiceid?
     question_vote = votes.create!(:voteable_id => prompt.question_id, :voteable_type => "Question")
     logger.info "Visitor: #{self.inspect} voted for Question: #{prompt.question_id}"
     

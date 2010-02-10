@@ -55,5 +55,8 @@ Rails::Initializer.run do |config|
   config.gem "activemerchant",
     :lib     => 'active_merchant',
     :version => '1.4.2'
+  config.gem "fastercsv",
+    :lib     => 'fastercsv',
+    :version => '1.5.1'
 end
 
