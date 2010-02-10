@@ -118,7 +118,7 @@ class QuestionsController < InheritedResources::Base
        @question.choices.each do |c|
 	       csv << [ c.id, c.item_id, c.data, c.question_id, c.item.creator != @question.creator, c.item.creator_id, 
 		       c.wins, c.losses, c.created_at, c.updated_at, c.active, c.score, c.local_identifier, 
-		       c.prompts_on_the_left.size, c.prompts_on_the_right.size, c.prompts_count]
+		       c.prompts_on_the_left(true).size, c.prompts_on_the_right(true).size, c.prompts_count]
        end
     end
 
