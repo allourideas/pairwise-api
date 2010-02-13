@@ -8,6 +8,7 @@ class Question < ActiveRecord::Base
   has_many :choices, :order => 'score DESC'
   has_many :prompts do
     def pick(algorithm = nil)
+      logger.info( "inside Question#prompts#pick - never called?")
       if algorithm
         algorithm.pick_from(self) #todo
       else

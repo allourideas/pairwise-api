@@ -4,7 +4,6 @@ class QuestionsController < InheritedResources::Base
   respond_to :xml, :json
   respond_to :csv, :only => :export #leave the option for xml export here
   belongs_to :site, :optional => true
-  #has_scope :voted_on_by
 
   def show
     @question = Question.find(params[:id])
@@ -69,7 +68,8 @@ class QuestionsController < InheritedResources::Base
 
   end
   def export
-    
+    authenticate
+
     type = params[:type]
 
     if type == 'votes'

@@ -1,6 +1,6 @@
 ActionController::Routing::Routes.draw do |map|
   map.resources :clicks
-  map.resources :questions, :member => { :export => :get, :set_autoactivate_ideas_from_abroad => :put,  :activate => :put, :suspend => :put} do |question|
+  map.resources :questions, :member => { :export => :post, :set_autoactivate_ideas_from_abroad => :put,  :activate => :put, :suspend => :put} do |question|
     question.resources :items
     question.resources :prompts, :member => {:vote_left => :post, :vote_right => :post, :skip => :post, :vote => :post}, 
                        :collection => {:single => :get, :index => :get}
