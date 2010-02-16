@@ -30,7 +30,7 @@ class Visitor < ActiveRecord::Base
     other_choices.each {|c| c.lose! }
     
     loser_choice = other_choices.first
-    votes.create!(:question_id => prompt.question_id, :prompt_id => prompt_id, :voter_id=> self.id, :choice_id => choice.id, :loser_id => loser_choice.id)
+    votes.create!(:question_id => prompt.question_id, :prompt_id => prompt.id, :voter_id=> self.id, :choice_id => choice.id, :loser_choice_id => loser_choice.id)
     
 #    choice_vote = votes.create!(:voteable => choice)
     # logger.info "Visitor: voted for Prompt: #{prompt.id.to_s} for choice #{choice.item.data}"

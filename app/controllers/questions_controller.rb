@@ -89,14 +89,14 @@ class QuestionsController < InheritedResources::Base
     @question = Question.find(params[:id])
 
     outfile = "question_#{@question.id}_votes" + Time.now.strftime("%m-%d-%Y") + ".csv"
-    headers = ['Vote ID', 'Voter ID', 'Choice Voted on ID', 'Choice Voted on Data', 'Question ID', 'Created at', 'Updated at']
+    headers = ['Vote ID', 'Voter ID', 'Question ID','Choice Voted on ID', 'Choice Voted on Data', 'Loser Choice ID',
+	    	'Prompt ID', 'Created at', 'Updated at']
+    @votes = @question.votes
     csv_data = FasterCSV.generate do |csv|
        csv << headers	
-       @question.choices.each do |choice|
-	       
-	       choice.votes.each do |v|
-	       csv << [ v.id, v.voter_id, choice.id, choice.data, @question.id, v.created_at, v.updated_at] 
-	       end
+       @votes.each do |v|
+	       csv << [ v.id, v.voter_id, v.question_id, v.choice_id, v.choice.data, v.loser_choice_id,
+		       v.prompt_id, v.created_at, v.updated_at] 
        end
     end
 
