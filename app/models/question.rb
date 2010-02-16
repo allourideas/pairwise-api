@@ -16,7 +16,7 @@ class Question < ActiveRecord::Base
       end
     end
   end
-  has_many :votes, :as => :voteable 
+  has_many :votes
   
   after_save :ensure_at_least_two_choices
   attr_accessor :ideas

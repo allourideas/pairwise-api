@@ -2,7 +2,7 @@ class Prompt < ActiveRecord::Base
   #has_many :choices, :order => 'position DESC'
 
   has_many :skips
-  has_many :votes, :as => :voteable
+  has_many :votes
   
   
   belongs_to :question, :counter_cache => true
