@@ -89,14 +89,20 @@ class QuestionsController < InheritedResources::Base
     @question = Question.find(params[:id])
 
     outfile = "question_#{@question.id}_votes" + Time.now.strftime("%m-%d-%Y") + ".csv"
-    headers = ['Vote ID', 'Voter ID', 'Question ID','Choice Voted on ID', 'Choice Voted on Data', 'Loser Choice ID',
-	    	'Prompt ID', 'Created at', 'Updated at']
+    headers = ['Vote ID', 'Voter ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text',
+	    	'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at']
     @votes = @question.votes
     csv_data = FasterCSV.generate do |csv|
        csv << headers	
        @votes.each do |v|
-	       csv << [ v.id, v.voter_id, v.question_id, v.choice_id, v.choice.data, v.loser_choice_id,
-		       v.prompt_id, v.created_at, v.updated_at] 
+	       prompt = v.prompt
+	       # these may not exist
+	       loser_data = v.loser_choice.nil? ? "" : "'#{v.loser_choice.data.strip}'"
+	       left_id = v.prompt.nil? ? "" : v.prompt.left_choice_id
+	       right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
+
+	       csv << [ v.id, v.voter_id, v.question_id, v.choice_id, "\'#{v.choice.data.strip}'", v.loser_choice_id, loser_data,
+		       v.prompt_id, left_id, right_id, v.created_at, v.updated_at] 
        end
     end
 
@@ -116,7 +122,7 @@ class QuestionsController < InheritedResources::Base
     csv_data = FasterCSV.generate do |csv|
        csv << headers	
        @question.choices.each do |c|
-	       csv << [ c.id, c.item_id, c.data, c.question_id, c.item.creator != @question.creator, c.item.creator_id, 
+	       csv << [ c.id, c.item_id, "'#{c.data.strip}'", c.question_id, c.item.creator != @question.creator, c.item.creator_id, 
 		       c.wins, c.losses, c.created_at, c.updated_at, c.active, c.score, c.local_identifier, 
 		       c.prompts_on_the_left(true).size, c.prompts_on_the_right(true).size, c.prompts_count]
        end
