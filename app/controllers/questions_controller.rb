@@ -82,7 +82,21 @@ class QuestionsController < InheritedResources::Base
 #    export_type = params[:export_type]
 #    export_format = params[:export_format] #CSV always now, could expand to xml later
   end
-  
+
+  def num_votes_by_visitor_id
+    authenticate
+
+    @question = current_user.questions.find(params[:id])
+    hash = Vote.count(:conditions => "question_id = #{@question.id}", :group => "voter_id")
+    visitor_id_hash = {}
+    hash.each do |visitor_id, num_votes|
+	    visitor = Visitor.find(visitor_id)
+	    visitor_id_hash[visitor.identifier] = num_votes
+    end
+    respond_to do |format|
+    	format.xml{ render :xml => visitor_id_hash.to_xml and return}
+    end
+  end
 
   protected 
   def export_votes
