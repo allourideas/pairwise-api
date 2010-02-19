@@ -37,18 +37,18 @@ class Question < ActiveRecord::Base
    end until @p.active?
    return @p
  end
- memoize :picked_prompt
    
    def distinct_array_of_choice_ids(rank = 2, only_active = true)
      @choice_ids = choice_ids
      @s = @choice_ids.size
      begin
-       first_one, second_one = rand(@s), rand(@s)
-       @the_choice_ids = Set.new(@choice_ids.values_at(first_one, second_one))
+       index_list = (0...@s).sort_by{rand}
+       first_one, second_one = index_list.first, index_list.second
+       @the_choice_ids = @choice_ids.values_at(first_one, second_one)
        # @the_choice_ids << choices.active.first(:order => 'RAND()', :select => 'id').id
        # @the_choice_ids << choices.active.last(:order => 'RAND()', :select => 'id').id
      end until (@the_choice_ids.size == rank) 
-     logger.info "set populated and looks like #{@the_choice_ids.inspect}"
+     logger.info "List populated and looks like #{@the_choice_ids.inspect}"
      return @the_choice_ids.to_a
    end
  
