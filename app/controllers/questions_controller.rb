@@ -103,7 +103,7 @@ class QuestionsController < InheritedResources::Base
     @question = Question.find(params[:id])
 
     outfile = "question_#{@question.id}_votes" + Time.now.strftime("%m-%d-%Y") + ".csv"
-    headers = ['Vote ID', 'Voter ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text',
+    headers = ['Vote ID', 'Session ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text',
 	    	'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at']
     @votes = @question.votes
     csv_data = FasterCSV.generate do |csv|
@@ -135,8 +135,11 @@ class QuestionsController < InheritedResources::Base
 
     csv_data = FasterCSV.generate do |csv|
        csv << headers	
+
+       #ensure capital format for true and false
+       user_sumbmitted = (c.item.creator != @question.creator) ? "TRUE" : "FALSE"
        @question.choices.each do |c|
-	       csv << [ c.id, c.item_id, "'#{c.data.strip}'", c.question_id, c.item.creator != @question.creator, c.item.creator_id, 
+	       csv << [ c.id, c.item_id, "'#{c.data.strip}'", c.question_id, user_submitted , c.item.creator_id, 
 		       c.wins, c.losses, c.created_at, c.updated_at, c.active, c.score, c.local_identifier, 
 		       c.prompts_on_the_left(true).size, c.prompts_on_the_right(true).size, c.prompts_count]
        end
