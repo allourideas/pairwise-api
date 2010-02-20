@@ -137,8 +137,9 @@ class QuestionsController < InheritedResources::Base
        csv << headers	
 
        #ensure capital format for true and false
-       user_sumbmitted = (c.item.creator != @question.creator) ? "TRUE" : "FALSE"
        @question.choices.each do |c|
+             user_submitted = (c.item.creator != @question.creator) ? "TRUE" : "FALSE"
+
 	       csv << [ c.id, c.item_id, "'#{c.data.strip}'", c.question_id, user_submitted , c.item.creator_id, 
 		       c.wins, c.losses, c.created_at, c.updated_at, c.active, c.score, c.local_identifier, 
 		       c.prompts_on_the_left(true).size, c.prompts_on_the_right(true).size, c.prompts_count]
