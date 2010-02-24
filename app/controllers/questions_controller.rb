@@ -98,6 +98,20 @@ class QuestionsController < InheritedResources::Base
     end
   end
 
+  def object_info_totals_by_date
+    authenticate
+
+    # eventually allow for users to specify type of export through params[:type]
+    @question = current_user.questions.find(params[:id])
+    hash = Vote.count(:conditions => "question_id = #{@question.id}", :group => "date(created_at)")
+
+    respond_to do |format|
+	    format.xml { render :xml => hash.to_xml and return}
+    end
+  end
+
+
+
   protected 
   def export_votes
     @question = Question.find(params[:id])
