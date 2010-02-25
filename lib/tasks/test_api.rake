@@ -63,10 +63,10 @@ namespace :test_api do
 
 	appearances_by_choice_id = wins_hash.merge(losses_hash) do |key, oldval, newval| oldval + newval end
 
-	sum = total_appearances = appearances_by_choice_id.values.inject(:+)
+	sum = total_appearances = appearances_by_choice_id.values.inject(0) {|sum, x| sum +=x}
 	mean = average_appearances = total_appearances.to_f / appearances_by_choice_id.size.to_f
 
-	if sum:
+	if sum > 0:
 	   stddev = Math.sqrt( appearances_by_choice_id.values.inject(0) { |sum, e| sum + (e - mean) ** 2 } / appearances_by_choice_id.size.to_f )
 
            appearances_by_choice_id.each do |choice_id, n_i| 
