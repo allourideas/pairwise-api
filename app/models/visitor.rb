@@ -7,8 +7,10 @@ class Visitor < ActiveRecord::Base
   has_many :clicks
   
   validates_presence_of :site, :on => :create, :message => "can't be blank"
-  validates_uniqueness_of :identifier, :on => :create, :message => "must be unique", :scope => :site_id
-  
+# validates_uniqueness_of :identifier, :on => :create, :message => "must be unique", :scope => :site_id
+
+ named_scope :with_tracking, lambda { |*args| {:include => :votes, :conditions => { :identifier => args.first } }}
+
   def owns?(question)
     questions.include? question
   end

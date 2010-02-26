@@ -1,85 +1,23 @@
-class VisitorsController < ApplicationController
-  # GET /visitors
-  # GET /visitors.xml
-  def index
-    @visitors = Visitor.all
+class VisitorsController < InheritedResources::Base
+        respond_to :xml, :json
+	before_filter :authenticate
+	def votes_by_session_ids
+		session_ids = params[:session_ids]
 
-    respond_to do |format|
-      format.html # index.html.erb
-      format.xml  { render :xml => @visitors }
-    end
-  end
+		visitor_ids = Visitor.find(:all, :conditions => { :identifier => session_ids})
+		votes_by_visitor_id = Vote.with_voter_ids(visitor_ids).count(:group => :voter_id) 
 
-  # GET /visitors/1
-  # GET /visitors/1.xml
-  def show
-    @visitor = Visitor.find(params[:id])
+		votes_by_session_id = {}
+		
+		visitor_ids.each do |e| 
+			if votes_by_visitor_id.has_key?(e.id)
+				votes_by_session_id[e.identifier] = votes_by_visitor_id[e.id]
+			end
+		end
+    		
+		respond_to do |format|
+    			format.xml{ render :xml => votes_by_session_id.to_xml and return}
+    		end
+	end
 
-    respond_to do |format|
-      format.html # show.html.erb
-      format.xml  { render :xml => @visitor }
-    end
-  end
-
-  # GET /visitors/new
-  # GET /visitors/new.xml
-  def new
-    @visitor = Visitor.new
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.xml  { render :xml => @visitor }
-    end
-  end
-
-  # GET /visitors/1/edit
-  def edit
-    @visitor = Visitor.find(params[:id])
-  end
-
-  # POST /visitors
-  # POST /visitors.xml
-  def create
-    @visitor = Visitor.new(params[:visitor])
-
-    respond_to do |format|
-      if @visitor.save
-        flash[:notice] = 'Visitor was successfully created.'
-        format.html { redirect_to(@visitor) }
-        format.xml  { render :xml => @visitor, :status => :created, :location => @visitor }
-      else
-        format.html { render :action => "new" }
-        format.xml  { render :xml => @visitor.errors, :status => :unprocessable_entity }
-      end
-    end
-  end
-
-  # PUT /visitors/1
-  # PUT /visitors/1.xml
-  def update
-    @visitor = Visitor.find(params[:id])
-
-    respond_to do |format|
-      if @visitor.update_attributes(params[:visitor])
-        flash[:notice] = 'Visitor was successfully updated.'
-        format.html { redirect_to(@visitor) }
-        format.xml  { head :ok }
-      else
-        format.html { render :action => "edit" }
-        format.xml  { render :xml => @visitor.errors, :status => :unprocessable_entity }
-      end
-    end
-  end
-
-  # DELETE /visitors/1
-  # DELETE /visitors/1.xml
-  def destroy
-    @visitor = Visitor.find(params[:id])
-    @visitor.destroy
-
-    respond_to do |format|
-      format.html { redirect_to(visitors_url) }
-      format.xml  { head :ok }
-    end
-  end
 end

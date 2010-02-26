@@ -8,4 +8,5 @@ class Vote < ActiveRecord::Base
 
   named_scope :recent, lambda { |*args| {:conditions => ["created_at > ?", (args.first || Date.today.beginning_of_day)]} }
   named_scope :with_question, lambda { |*args| {:conditions => {:question_id => args.first }} }
+  named_scope :with_voter_ids, lambda { |*args| {:conditions => {:voter_id=> args.first }} }
 end
