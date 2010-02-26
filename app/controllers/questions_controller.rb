@@ -131,7 +131,7 @@ class QuestionsController < InheritedResources::Base
   def export_votes
     @question = Question.find(params[:id])
 
-    outfile = "question_#{@question.id}_votes" + Time.now.strftime("%m-%d-%Y") + ".csv"
+    outfile = "ideamarketplace_#{@question.id}_votes" + Time.now.strftime("%m-%d-%Y") + ".csv"
     headers = ['Vote ID', 'Session ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text',
 	    	'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at']
     @votes = @question.votes
@@ -157,9 +157,9 @@ class QuestionsController < InheritedResources::Base
   def export_items
     @question = Question.find(params[:id], :include => [:choices, :prompts])
 
-    outfile = "question_#{@question.id}_items_" + Time.now.strftime("%m-%d-%Y") + ".csv"
-    headers = ['Choice ID', 'Item ID', 'Data', 'Question ID', 'User Submitted', 'Choice Creator ID', 
-	    	'Wins', 'Losses', 'Created at', 'Updated at', 'Active', 'Score', 'Local Identifier', 
+    outfile = "ideamarketplace_#{@question.id}_ideas_" + Time.now.strftime("%m-%d-%Y") + ".csv"
+    headers = ['Ideamarketplace ID','Idea ID', 'Idea', 'Wins', 'Losses', 'Score','User Submitted', 'Idea Creator ID', 
+	    	'Created at', 'Last Activity', 'Active',  'Local Identifier', 
 		'Prompts on Left', 'Prompts on Right', 'Prompts Count']
 
     csv_data = FasterCSV.generate do |csv|
@@ -169,8 +169,8 @@ class QuestionsController < InheritedResources::Base
        @question.choices.each do |c|
              user_submitted = (c.item.creator != @question.creator) ? "TRUE" : "FALSE"
 
-	       csv << [ c.id, c.item_id, "'#{c.data.strip}'", c.question_id, user_submitted , c.item.creator_id, 
-		       c.wins, c.losses, c.created_at, c.updated_at, c.active, c.score, c.local_identifier, 
+	       csv << [c.question_id, c.id, "'#{c.data.strip}'", c.wins, c.losses, c.score, user_submitted , c.item.creator_id, 
+		        c.created_at, c.updated_at, c.active,  c.local_identifier, 
 		       c.prompts_on_the_left(true).size, c.prompts_on_the_right(true).size, c.prompts_count]
        end
     end
