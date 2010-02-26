@@ -1,6 +1,7 @@
 require 'fastercsv'
 
 class QuestionsController < InheritedResources::Base
+  before_filter :authenticate
   respond_to :xml, :json
   respond_to :csv, :only => :export #leave the option for xml export here
   belongs_to :site, :optional => true
@@ -49,7 +50,6 @@ class QuestionsController < InheritedResources::Base
   end
   
   def create
-    authenticate
     logger.info "all params are #{params.inspect}"
     logger.info "vi is #{params['question']['visitor_identifier']} and local are #{params['question']['local_identifier']}."
     if @question = current_user.create_question(params['question']['visitor_identifier'], :name => params['question']['name'], :local_identifier => params['question']['local_identifier'], :ideas => (params['question']['ideas'].lines.to_a.delete_if {|i| i.blank?}))
@@ -66,7 +66,6 @@ class QuestionsController < InheritedResources::Base
 
 
   def set_autoactivate_ideas_from_abroad
-    authenticate
     expire_page :action => :index
     logger.info("INSIDE autoactivate ideas")
 
@@ -88,8 +87,6 @@ class QuestionsController < InheritedResources::Base
 
   end
   def export
-    authenticate
-
     type = params[:type]
 
     if type == 'votes'
@@ -104,8 +101,6 @@ class QuestionsController < InheritedResources::Base
   end
 
   def num_votes_by_visitor_id
-    authenticate
-
     @question = current_user.questions.find(params[:id])
     hash = Vote.count(:conditions => "question_id = #{@question.id}", :group => "voter_id")
     visitor_id_hash = {}
