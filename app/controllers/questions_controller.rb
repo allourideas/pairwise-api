@@ -5,6 +5,26 @@ class QuestionsController < InheritedResources::Base
   respond_to :csv, :only => :export #leave the option for xml export here
   belongs_to :site, :optional => true
 
+  def recent_votes_by_question_id
+    creator_id = params[:creator_id]
+    date = params[:date]
+    if creator_id
+	    questions = Question.find(:all, :select => :id, :conditions => { :local_identifier => creator_id})
+	    questions_list = questions.map {|record | record.quoted_id}
+	    question_votes_hash = Vote.with_question(questions_list).recent.count(:group => :question_id)
+
+    elsif date #only for admins
+	    question_votes_hash = Vote.recent(date).count(:group => :question_id)
+    else
+	    question_votes_hash = Vote.recent.count(:group => :question_id)
+    end
+
+    respond_to do |format|
+    	format.xml{ render :xml => question_votes_hash.to_xml and return}
+    end
+  end
+
+
   def show
     @question = Question.find(params[:id])
     unless params[:barebones]
@@ -22,7 +42,7 @@ class QuestionsController < InheritedResources::Base
       show! do |format|
         session['prompts_ids'] ||= []
         format.xml { 
-          render :xml => @question.to_xml(:methods => [:item_count])
+          render :xml => @question.to_xml(:methods => [:item_count, :votes_count])
         }
       end
     end
