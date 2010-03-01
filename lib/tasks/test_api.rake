@@ -50,8 +50,8 @@ namespace :test_api do
 		error_bool = true
 	end
 
-	wins_by_choice_id = question.votes.count(:group => :choice_id)
-	losses_by_choice_id= question.votes.count(:conditions => "loser_choice_id IS NOT NULL", :group => :loser_choice_id)
+	wins_by_choice_id = question.votes.active.count(:group => :choice_id)
+	losses_by_choice_id= question.votes.active.count(:conditions => "loser_choice_id IS NOT NULL", :group => :loser_choice_id)
 
 	#Rails returns an ordered hash, which doesn't allow for blocks to change merging logic.
 	#A little hack to create a normal hash
@@ -89,11 +89,12 @@ namespace :test_api do
         
 	success_msg = "Conducted the following tests on API data and found no inconsistencies.\n" +
 			 "For each of the #{questions.length} questions in the database: \n" +
-			 "     2 x Total Wins = Total Votes " +
-			 "     Total Votes (wins + losses) is Even" +
-			 "     Total Votes (wins + losses) = 2 x the number of vote objects that belong to the question" +
-		         "     Total generated prompts on left = Total generated prompts on right" + 
-		         "     Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question"
+			 "     2 x Total Wins = Total Votes\n" +
+			 "     Total Votes (wins + losses) is Even\n" +
+			 "     Total Votes (wins + losses) = 2 x the number of vote objects that belong to the question\n" +
+		         "     Total generated prompts on left = Total generated prompts on right\n" + 
+		         "     Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question\n" +
+			 "             Note: this applies only to seed choices (not user submitted) and choices currently marked active\n"
 
 	print success_msg
 
