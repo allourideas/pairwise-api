@@ -116,16 +116,30 @@ class QuestionsController < InheritedResources::Base
   def object_info_totals_by_date
     authenticate
 
-    # eventually allow for users to specify type of export through params[:type]
+    object_type = params[:object_type]
+
     @question = current_user.questions.find(params[:id])
-    hash = Vote.count(:conditions => "question_id = #{@question.id}", :group => "date(created_at)")
+    if object_type == 'votes'
+      # eventually allow for users to specify type of export through params[:type]
+      hash = Vote.count(:conditions => "question_id = #{@question.id}", :group => "date(created_at)")
+    elsif object_type == 'user_submitted_ideas'
+      hash = Choice.count(:include => 'item', 
+		          :conditions => "choices.question_id = #{@question.id} AND items.creator_id <> #{@question.creator_id}", 
+			  :group => "date(choices.created_at)")
+    elsif object_type == 'user_sessions'
+	    # little more work to do here:
+      result = Vote.find(:all, :select => 'date(created_at) as date, voter_id, count(*) as vote_count', 
+			 :conditions => "question_id = #{@question.id}", :group => 'date(created_at), voter_id')
+      hash = Hash.new(0)
+      result.each do |r|
+	      hash[r.date]+=1
+      end
+    end
 
     respond_to do |format|
 	    format.xml { render :xml => hash.to_xml and return}
     end
   end
-
-
 
   protected 
   def export_votes
