@@ -172,7 +172,7 @@ class QuestionsController < InheritedResources::Base
     @question = Question.find(params[:id], :include => [:choices, :prompts])
 
     outfile = "ideamarketplace_#{@question.id}_ideas_" + Time.now.strftime("%m-%d-%Y") + ".csv"
-    headers = ['Ideamarketplace ID','Idea ID', 'Idea', 'Wins', 'Losses', 'Score','User Submitted', 'Idea Creator ID', 
+    headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Score','User Submitted', 'Idea Creator ID', 
 	    	'Created at', 'Last Activity', 'Active',  'Local Identifier', 
 		'Prompts on Left', 'Prompts on Right', 'Prompts Count']
 
