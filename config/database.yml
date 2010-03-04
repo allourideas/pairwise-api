@@ -9,7 +9,7 @@ development: &default
 
 test: &test
   <<: *default
-  database: db/test.sqlite3
+  database: pairwise_test
 
 cucumber:
   <<: *test
