@@ -1,6 +1,7 @@
 class VisitorsController < InheritedResources::Base
         respond_to :xml, :json
 	before_filter :authenticate
+
 	def votes_by_session_ids
 		session_ids = params[:session_ids]
 
@@ -16,7 +17,7 @@ class VisitorsController < InheritedResources::Base
 		end
     		
 		respond_to do |format|
-    			format.xml{ render :xml => votes_by_session_id.to_xml and return}
+    			format.json { render :json => votes_by_session_id.to_json and return}
     		end
 	end
 
