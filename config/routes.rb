@@ -1,7 +1,15 @@
 ActionController::Routing::Routes.draw do |map|
   #map.resources :clicks
   map.resources :visitors, :collection => {:votes_by_session_ids => :post}
-  map.resources :questions, :member => { :object_info_totals_by_date => :get, :num_votes_by_visitor_id => :get, :export => :post, :set_autoactivate_ideas_from_abroad => :put,  :activate => :put, :suspend => :put}, :collection => {:recent_votes_by_question_id => :get} do |question|
+  map.resources :questions, :member => { :object_info_totals_by_date => :get, 
+	  				 :num_votes_by_visitor_id => :get, 
+					 :export => :post, 
+					 :set_autoactivate_ideas_from_abroad => :put,  
+					 :activate => :put, 
+					 :suspend => :put}, 
+			    :collection => {:all_num_votes_by_visitor_id => :get, 
+					    :all_object_info_totals_by_date => :get,
+				            :recent_votes_by_question_id => :get} do |question|
     question.resources :items
     question.resources :prompts, :member => {:vote_left => :post, :vote_right => :post, :skip => :post, :vote => :post}, 
                        :collection => {:single => :get, :index => :get}

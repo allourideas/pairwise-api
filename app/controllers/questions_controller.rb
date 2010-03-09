@@ -102,11 +102,31 @@ class QuestionsController < InheritedResources::Base
 
   def num_votes_by_visitor_id
     @question = current_user.questions.find(params[:id])
-    hash = Vote.count(:conditions => "question_id = #{@question.id}", :group => "voter_id")
+
+     votes_by_visitor_id= Vote.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
+				   :joins => :voter, 
+				   :conditions => {:question_id => @question.id }, 
+				   :group => "voter_id")
+
     visitor_id_hash = {}
-    hash.each do |visitor_id, num_votes|
-	    visitor = Visitor.find(visitor_id)
-	    visitor_id_hash[visitor.identifier] = num_votes
+
+    votes_by_visitor_id.each do |visitor|
+   	    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+   	    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+    end
+    respond_to do |format|
+    	format.xml{ render :xml => visitor_id_hash.to_xml and return}
+    end
+  end
+
+  def all_num_votes_by_visitor_id
+    votes_by_visitor_id= Vote.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
+				   :joins => :voter, 
+				   :group => "voter_id")
+    visitor_id_hash = {}
+    votes_by_visitor_id.each do |visitor|
+   	    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+   	    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
     end
     respond_to do |format|
     	format.xml{ render :xml => visitor_id_hash.to_xml and return}
@@ -114,13 +134,10 @@ class QuestionsController < InheritedResources::Base
   end
 
   def object_info_totals_by_date
-    authenticate
-
     object_type = params[:object_type]
 
     @question = current_user.questions.find(params[:id])
     if object_type == 'votes'
-      # eventually allow for users to specify type of export through params[:type]
       hash = Vote.count(:conditions => "question_id = #{@question.id}", :group => "date(created_at)")
     elsif object_type == 'user_submitted_ideas'
       hash = Choice.count(:include => 'item', 
@@ -130,6 +147,29 @@ class QuestionsController < InheritedResources::Base
 	    # little more work to do here:
       result = Vote.find(:all, :select => 'date(created_at) as date, voter_id, count(*) as vote_count', 
 			 :conditions => "question_id = #{@question.id}", :group => 'date(created_at), voter_id')
+      hash = Hash.new(0)
+      result.each do |r|
+	      hash[r.date]+=1
+      end
+    end
+
+    respond_to do |format|
+	    format.xml { render :xml => hash.to_xml and return}
+    end
+  end
+  
+  def all_object_info_totals_by_date
+    object_type = params[:object_type]
+
+    if object_type == 'votes'
+      hash = Vote.count(:group => "date(created_at)")
+    elsif object_type == 'user_submitted_ideas'
+      hash = Choice.count(:include => ['item', 'question'], 
+		          :conditions => "items.creator_id <> questions.creator_id", 
+			  :group => "date(choices.created_at)")
+    elsif object_type == 'user_sessions'
+      result = Vote.find(:all, :select => 'date(created_at) as date, voter_id, count(*) as vote_count', 
+			 :group => 'date(created_at), voter_id')
       hash = Hash.new(0)
       result.each do |r|
 	      hash[r.date]+=1
