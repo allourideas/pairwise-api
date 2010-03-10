@@ -25,6 +25,33 @@ class QuestionsController < InheritedResources::Base
     end
   end
 
+  def object_info_totals_by_question_id
+      total_ideas_by_q_id = Choice.count(:include => ['item', 'question'], 
+		          :conditions => "items.creator_id <> questions.creator_id", 
+			  :group => "choices.question_id")
+
+      active_ideas_by_q_id = Choice.count(:include => ['item', 'question'], 
+		          :conditions => "choices.active = 1 AND items.creator_id <> questions.creator_id", 
+			  :group => "choices.question_id")
+
+      combined_hash = {}
+
+      total_ideas_by_q_id.each do |q_id, num_total|
+	      combined_hash[q_id] = {}
+	      combined_hash[q_id][:total_ideas] = num_total
+	      if(active_ideas_by_q_id.has_key?(q_id))
+	         combined_hash[q_id][:active_ideas]= active_ideas_by_q_id[q_id]
+	      else
+	         combined_hash[q_id][:active_ideas]= 0
+	      end
+      end
+    respond_to do |format|
+	    format.xml { render :xml => combined_hash.to_xml and return}
+    end
+
+  end
+
+
 
   def show
     @question = Question.find(params[:id])

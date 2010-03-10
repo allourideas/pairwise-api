@@ -9,6 +9,7 @@ ActionController::Routing::Routes.draw do |map|
 					 :suspend => :put}, 
 			    :collection => {:all_num_votes_by_visitor_id => :get, 
 					    :all_object_info_totals_by_date => :get,
+					    :object_info_totals_by_question_id => :get,
 				            :recent_votes_by_question_id => :get} do |question|
     question.resources :items
     question.resources :prompts, :member => {:vote_left => :post, :vote_right => :post, :skip => :post, :vote => :post}, 
