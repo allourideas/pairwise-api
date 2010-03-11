@@ -75,6 +75,11 @@ class Choice < ActiveRecord::Base
     self.score = compute_score
     save!
   end
+
+  def user_created
+    self.item.creator_id != self.question.creator_id
+  end
+
   
   protected
 

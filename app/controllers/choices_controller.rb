@@ -25,7 +25,7 @@ class ChoicesController < InheritedResources::Base
       end
     end
     index! do |format|
-      format.xml { render :xml => @choices.to_xml(:only => [ :data, :score, :id, :active ])}
+      format.xml { render :xml => @choices.to_xml(:only => [ :data, :score, :id, :active], :methods => :user_created)}
     end
 
   end
