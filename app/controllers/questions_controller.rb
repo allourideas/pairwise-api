@@ -170,6 +170,12 @@ class QuestionsController < InheritedResources::Base
       hash = Choice.count(:include => 'item', 
 		          :conditions => "choices.question_id = #{@question.id} AND items.creator_id <> #{@question.creator_id}", 
 			  :group => "date(choices.created_at)")
+      # we want graphs to go from date of first vote -> date of last vote, so adding those two boundries here.
+      mindate = Vote.minimum('date(created_at)', :conditions => {:question_id => @question.id})
+      maxdate = Vote.maximum('date(created_at)', :conditions => {:question_id => @question.id})
+
+      hash[mindate] = 0 if !hash.include?(mindate)
+      hash[maxdate] = 0 if !hash.include?(maxdate)
     elsif object_type == 'user_sessions'
 	    # little more work to do here:
       result = Vote.find(:all, :select => 'date(created_at) as date, voter_id, count(*) as vote_count', 
