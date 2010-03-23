@@ -26,6 +26,7 @@ class Choice < ActiveRecord::Base
   
   def lose!
     self.loss_count += 1 rescue (self.loss_count = 1)
+    self.score = compute_score
     save!
   end
   
@@ -51,7 +52,7 @@ class Choice < ActiveRecord::Base
       self.item = @item
     end
     unless self.score
-      self.score = 0.0
+      self.score = 50.0
     end
     unless self.active?
       puts "this choice was not specifically set to active, so we are now asking if we should auto-activate"

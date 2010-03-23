@@ -9,7 +9,9 @@ class ChoicesController < InheritedResources::Base
     if params[:limit]
       @question = Question.find(params[:question_id])#, :include => :choices)
       @question.reload
-      @question.choices.each(&:compute_score!)
+      
+      #should compute score after each win/loss
+      #@question.choices.each(&:compute_score!)
       unless params[:include_inactive]
         @choices = Choice.find(:all, :conditions => {:question_id => @question.id, :active => true}, :limit => params[:limit].to_i, :order => 'score DESC', :include => :item)
       else
@@ -17,7 +19,7 @@ class ChoicesController < InheritedResources::Base
       end
     else
       @question = Question.find(params[:question_id], :include => :choices) #eagerloads ALL choices
-      @question.choices.each(&:compute_score!)
+      #@question.choices.each(&:compute_score!)
       unless params[:include_inactive]
         @choices = @question.choices(true).active.find(:all, :include => :item)
       else
@@ -34,8 +36,8 @@ class ChoicesController < InheritedResources::Base
     show! do |format|
       format.xml { 
         @choice.reload
-        @choice.compute_score!
-        @choice.reload
+      #  @choice.compute_score!
+      #  @choice.reload
         render :xml => @choice.to_xml(:methods => [:item_data, :wins_plus_losses, :question_name])}
       format.json { render :json => @choice.to_json(:methods => [:data])}
     end 
