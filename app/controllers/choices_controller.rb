@@ -23,7 +23,7 @@ class ChoicesController < InheritedResources::Base
       unless params[:include_inactive]
         @choices = @question.choices(true).active.find(:all, :include => :item)
       else
-        @choices = @question.choices(true)
+        @choices = @question.choices.find(:all, :include =>:item)
       end
     end
     index! do |format|
