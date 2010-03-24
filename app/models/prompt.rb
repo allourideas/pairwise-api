@@ -38,14 +38,6 @@ class Prompt < ActiveRecord::Base
     left_choice.item.data
   end
   
-  def left_choice_id
-    left_choice.id
-  end
-  
-  def right_choice_id
-    right_choice.id
-  end
-  
   def active?
     left_choice.active? and right_choice.active?
   end

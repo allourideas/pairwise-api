@@ -1,7 +1,112 @@
+require 'fastercsv'
 namespace :test_api do
 
    task :all => [:question_vote_consistency]
 
+   desc "Don't run unless you know what you are doing"
+   task(:generate_lots_of_votes => :environment) do
+      if Rails.env.production?
+	 print "You probably don't want to run this in production as it will falsify a bunch of random votes"
+      end
+ 
+ 
+     current_user = User.first
+      3000.times do 
+	      question = Question.find(120) # test question change as needed
+	      @p = Prompt.find(question.catchup_choose_prompt_id)
+
+	      current_user.record_vote("test_vote", @p, rand(2))
+      end
+
+   end
+
+   desc "Should only need to be run once"
+   task(:generate_all_possible_prompts => :environment) do
+      inserts = []
+      Question.find(:all).each do |q|
+	choices = q.choices
+	if q.prompts.size > choices.size**2 - choices.size
+		print "ERROR: #{q.id}\n"
+		next
+	elsif q.prompts.size == choices.size**2 - choices.size
+		print "#{q.id} has enough prompts, skipping...\n"
+		next
+	else
+		print "#{q.id} should add #{(choices.size ** 2 - choices.size) - q.prompts.size}\n"
+
+	end
+        timestring = Time.now.to_s(:db) #isn't rails awesome?
+	promptscount=0
+  	the_prompts = Prompt.find(:all, :select => 'id, left_choice_id, right_choice_id', :conditions => {:question_id => q.id})
+
+	the_prompts_hash = {}
+	the_prompts.each do |p|
+		the_prompts_hash["#{p.left_choice_id},#{p.right_choice_id}"] = 1
+	end
+
+        choices.each do |l|
+	   choices.each do |r|
+	     if l.id == r.id
+		   next
+	     else
+		#p = the_prompts.find{|o| o.left_choice_id == l.id && o.right_choice_id == r.id}
+		keystring = "#{l.id},#{r.id}"
+		p = the_prompts_hash[keystring]
+		if p.nil?
+	           print "."
+	           inserts.push("(NULL, #{q.id}, NULL, #{l.id}, '#{timestring}', '#{timestring}', NULL, 0, #{r.id}, NULL, NULL)")
+		   promptscount+=1
+		end
+
+	     end
+
+	   end
+         end
+
+	print "Added #{promptscount} to #{q.id}\n"
+
+       Question.update_counters(q.id, :prompts_count => promptscount)
+
+       end
+
+    sql = "INSERT INTO `prompts` (`algorithm_id`, `question_id`, `voter_id`, `left_choice_id`, `created_at`, `updated_at`, `tracking`, `votes_count`, `right_choice_id`, `active`, `randomkey`) VALUES #{inserts.join(', ')}"
+
+    unless inserts.empty?
+       ActiveRecord::Base.connection.execute(sql)
+    end
+   
+   end
+
+
+   desc "Dump votes of a question by left vs right id"
+   task(:make_csv => :environment) do
+
+	   q = Question.find(120)
+
+	   the_prompts = q.prompts_hash_by_choice_ids
+
+	   #hash_of_choice_ids_from_left_to_right_to_votes
+	   the_hash = {}
+	   the_prompts.each do |key, p|
+		   left_id, right_id = key.split(", ")
+		   if not the_hash.has_key?(left_id)
+			   the_hash[left_id] = {}
+			   the_hash[left_id][left_id] = 0
+		   end
+
+		   the_hash[left_id][right_id] = p.votes.size
+	   end
+
+	   the_hash.sort.each do |xval, row|
+		   rowarray = []
+		   row.sort.each do |yval, cell|
+			   rowarray << cell
+		   end
+		   puts rowarray.join(", ")
+	   end
+   end
+
+      
    desc "Description here"
    task(:question_vote_consistency => :environment) do
       questions = Question.find(:all)

@@ -37,6 +37,44 @@ class Question < ActiveRecord::Base
    end until @p.active?
    return @p
  end
+ 
+ # adapted from ruby cookbook(2006): section 5-11
+ def catchup_choose_prompt_id
+   weighted = catchup_prompts_weights
+   # Rand returns a number from 0 - 1, so weighted needs to be normalized
+   target = rand 
+   weighted.each do |item, weight|
+	return item if target <= weight
+        target -= weight
+   end
+   # check if prompt has two active choices here, maybe we can set this on the prompt level too?
+ end
+
+
+ # TODO Add index for question id on prompts table
+ def catchup_prompts_weights
+   weights = Hash.new(0)
+   throttle_min = 0.05
+   #assuming all prompts exist
+   prompts.each do |p|
+	   weights[p.id] = [(1.0/ (p.votes.size + 1).to_f).to_f, throttle_min].min
+   end
+   normalize!(weights)
+   weights
+ end
+
+ def normalize!(weighted)
+   if weighted.instance_of?(Hash)
+	   sum = weighted.inject(0) do |sum, item_and_weight|
+	      sum += item_and_weight[1]
+	   end
+	   sum = sum.to_f
+	   weighted.each { |item, weight| weighted[item] = weight/sum }
+   elsif weighted.instance_of?(Array)
+	   sum = weighted.inject(0) {|sum, item| sum += item}
+	   weighted.each_with_index {|item, i| weighted[i] = item/sum}
+   end
+  end
    
    def distinct_array_of_choice_ids(rank = 2, only_active = true)
      @choice_ids = choice_ids
