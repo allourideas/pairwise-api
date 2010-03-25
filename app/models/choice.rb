@@ -13,6 +13,7 @@ class Choice < ActiveRecord::Base
   has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id"
   has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
   named_scope :active, :conditions => { :active => true }
+  named_scope :inactive, :conditions => { :active => false}
   
   #attr_accessor :data
   

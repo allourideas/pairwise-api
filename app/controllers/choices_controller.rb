@@ -68,6 +68,9 @@ class ChoicesController < InheritedResources::Base
           the_status = @choice.active? ? 'active' : 'inactive'
           options[:builder].tag!('choice_status', the_status) }
         logger.info "successfully saved the choice #{@choice.inspect}"
+
+	Question.update_counters(@question.id, :inactive_choices_count => @choice.active? ? 0 : 1)
+
         format.xml { render :xml => @choice.to_xml(:procs => [saved_choice_id, choice_status]), :status => :ok }
         # format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id, choice_status]), :status => :ok }
         format.json { render :json => @question.to_json(:procs => [saved_choice_id, choice_status]), :status => :ok }
@@ -87,6 +90,7 @@ class ChoicesController < InheritedResources::Base
     respond_to do |format|
       if @choice.activate!
         logger.info "successfully activated choice #{@choice.inspect}"
+	Question.update_counters(@question.id, :inactive_choices_count => -1)
         format.xml { render :xml => true }
         format.json { render :json => true }
       else
@@ -109,6 +113,7 @@ class ChoicesController < InheritedResources::Base
         format.json { render :json => false }
       elsif @choice.deactivate!
         logger.info "successfully deactivated choice #{@choice.inspect}"
+	Question.update_counters(@question.id, :inactive_choices_count => 1 )
         format.xml { render :xml => true }
         format.json { render :json => true }
       else
