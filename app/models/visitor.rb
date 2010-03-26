@@ -25,6 +25,10 @@ class Visitor < ActiveRecord::Base
     
     loser_choice = other_choices.first
     votes.create!(:question_id => prompt.question_id, :prompt_id => prompt.id, :voter_id=> self.id, :choice_id => choice.id, :loser_choice_id => loser_choice.id)
+    # Votes count is a cached value, creating the vote above will increment it in the db, but to get the proper score, we need to increment it in the current object
+    # The updated votes_count object is not saved to the db, so we don't need to worry about double counting
+    # Alternatively, we could just do choice.reload, but that results in another db read
+    choice.votes_count +=1
     choice.compute_score! #update score after win
   end
   

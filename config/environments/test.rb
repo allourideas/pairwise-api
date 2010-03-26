@@ -49,3 +49,7 @@ PAYPAL_API_LOGIN              = ''
 PAYPAL_API_PASSWORD           = ''
 PAYPAL_API_SIGNATURE          = ''
 
+begin
+  require 'factory_girl'
+rescue LoadError
+end
