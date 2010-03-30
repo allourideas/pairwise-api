@@ -37,17 +37,28 @@ class Question < ActiveRecord::Base
    end until @p.active?
    return @p
  end
- 
+
  # adapted from ruby cookbook(2006): section 5-11
- def catchup_choose_prompt_id
+ def catchup_choose_prompt
    weighted = catchup_prompts_weights
    # Rand returns a number from 0 - 1, so weighted needs to be normalized
-   target = rand 
-   weighted.each do |item, weight|
-	return item if target <= weight
-        target -= weight
+   prompt = nil
+
+   until prompt && prompt.active?
+	   target = rand 
+	   prompt_id = nil
+
+	   weighted.each do |item, weight|
+		   if target <= weight
+			   prompt_id = item
+			   break
+		   end
+		   target -= weight
+	   end
+	   prompt = Prompt.find(prompt_id, :include => ['left_choice', 'right_choice'])
    end
    # check if prompt has two active choices here, maybe we can set this on the prompt level too?
+   prompt
  end
 
 
@@ -56,8 +67,13 @@ class Question < ActiveRecord::Base
    weights = Hash.new(0)
    throttle_min = 0.05
    #assuming all prompts exist
-   prompts.each do |p|
-	   weights[p.id] = [(1.0/ (p.votes.size + 1).to_f).to_f, throttle_min].min
+
+   #the_prompts = prompts.find(:all, :select => 'id, votes_count')
+   #We don't really need to instantiate all the objects
+   the_prompts = ActiveRecord::Base.connection.select_all("SELECT id, votes_count from prompts where question_id =#{self.id}")
+
+   the_prompts.each do |p|
+	   weights[p["id"].to_i] = [(1.0/ (p["votes_count"].to_i + 1).to_f).to_f, throttle_min].min
    end
    normalize!(weights)
    weights

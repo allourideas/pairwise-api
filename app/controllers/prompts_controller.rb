@@ -64,8 +64,14 @@ class PromptsController < InheritedResources::Base
     #@prompt.choices.each(&:compute_score!)
     respond_to do |format|
       if successful
-        format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
-        format.json { render :json => @question.picked_prompt.to_json(:methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+	if @question.id == 120 #test0330 
+		next_prompt = @question.catchup_choose_prompt
+	else
+		next_prompt = @question.picked_prompt
+	end
+
+        format.xml { render :xml => next_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+        format.json { render :json => next_prompt.to_json(:methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
       else
         format.xml { render :xml => c, :status => :unprocessable_entity }
         format.json { render :json => c, :status => :unprocessable_entity }

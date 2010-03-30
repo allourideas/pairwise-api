@@ -56,7 +56,12 @@ class QuestionsController < InheritedResources::Base
   def show
     @question = Question.find(params[:id])
     unless params[:barebones]
-      @p = @question.picked_prompt
+      if params[:algorithm] && params[:algorithm] == "catchup"
+	      logger.info("Question #{@question.id} requested catchup algorithm!")
+	      @p = @question.catchup_choose_prompt
+      else
+	      @p = @question.picked_prompt
+      end
       left_choice_text = Proc.new { |options| options[:builder].tag!('left_choice_text', @p.left_choice.item.data) }
       right_choice_text = Proc.new { |options| options[:builder].tag!('right_choice_text', @p.right_choice.item.data) }
       picked_prompt_id = Proc.new { |options| options[:builder].tag!('picked_prompt_id', @p.id) }
