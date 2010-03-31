@@ -17,7 +17,9 @@ class Question < ActiveRecord::Base
     end
   end
   has_many :votes
-  
+  has_many :densities
+ 
+  #comment out to run bt import script! 
   after_save :ensure_at_least_two_choices
   attr_accessor :ideas
     
@@ -145,5 +147,67 @@ class Question < ActiveRecord::Base
       }
     end
   end
+
+  def density
+      # slow code, only to be run by cron job once at night
+      the_prompts = prompts.find(:all, :include => ['left_choice', 'right_choice'])
+
+      seed_seed_sum = 0
+      seed_seed_total = 0
+
+      seed_nonseed_sum= 0
+      seed_nonseed_total= 0
+
+      nonseed_seed_sum= 0
+      nonseed_seed_total= 0
+      
+      nonseed_nonseed_sum= 0
+      nonseed_nonseed_total= 0
+
+      the_prompts.each do |p|
+	      if p.left_choice.user_created == false && p.right_choice.user_created == false
+		      seed_seed_sum += p.votes.size
+		      seed_seed_total +=1
+	      elsif p.left_choice.user_created == false && p.right_choice.user_created == true
+		      seed_nonseed_sum += p.votes.size
+		      seed_nonseed_total +=1
+	      elsif p.left_choice.user_created == true && p.right_choice.user_created == false
+		      nonseed_seed_sum += p.votes.size
+		      nonseed_seed_total +=1
+	      elsif p.left_choice.user_created == true && p.right_choice.user_created == true
+		      nonseed_nonseed_sum += p.votes.size
+		      nonseed_nonseed_total +=1
+	      end
+      end
+
+      densities = {}
+      densities[:seed_seed] = seed_seed_sum.to_f / seed_seed_total.to_f
+      densities[:seed_nonseed] = seed_nonseed_sum.to_f / seed_nonseed_total.to_f
+      densities[:nonseed_seed] = nonseed_seed_sum.to_f / nonseed_seed_total.to_f
+      densities[:nonseed_nonseed] = nonseed_nonseed_sum.to_f / nonseed_nonseed_total.to_f
+      
+      puts "Seed_seed sum: #{seed_seed_sum}, seed_seed total num: #{seed_seed_total}"
+      puts "Seed_nonseed sum: #{seed_nonseed_sum}, seed_nonseed total num: #{seed_nonseed_total}"
+      puts "Nonseed_seed sum: #{nonseed_seed_sum}, nonseed_seed total num: #{nonseed_seed_total}"
+      puts "Nonseed_nonseed sum: #{nonseed_nonseed_sum}, nonseed_nonseed total num: #{nonseed_nonseed_total}"
+
+
+      densities
+  end
+
+  def save_densities!
+
+	  d_hash = density
+
+	  d_hash.each do |type, average|
+		  d = Density.new
+		  d.question_id = self.id
+		  d.prompt_type = type.to_s
+		  d.value = average.nan? ? nil : average
+		  d.save!
+	  end
+  end
+
+
 
 end

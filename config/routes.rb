@@ -1,5 +1,6 @@
 ActionController::Routing::Routes.draw do |map|
   #map.resources :clicks
+  map.resources :densities
   map.resources :visitors, :collection => {:votes_by_session_ids => :post}
   map.resources :questions, :member => { :object_info_totals_by_date => :get, 
 	  				 :num_votes_by_visitor_id => :get, 

@@ -106,6 +106,13 @@ namespace :test_api do
 	   end
    end
 
+
+   desc "Generate density information for each question - should be run nightly"
+   task(:generate_density_information => :environment) do
+	   Question.find(:all).each do |q|
+		   q.save_densities!
+	   end
+   end
       
    desc "Description here"
    task(:question_vote_consistency => :environment) do
