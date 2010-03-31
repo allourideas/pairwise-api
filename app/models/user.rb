@@ -18,6 +18,8 @@ class User < ActiveRecord::Base
   def create_choice(visitor_identifier, question, choice_params = {})
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
     raise "Question not found" if question.nil?
+
+    #TODO Does this serve a purpose?
     if visitor.owns?(question)
       choice = question.choices.create!(choice_params.merge(:active => false, :creator => visitor))
     elsif question.local_identifier == choice_params[:local_identifier]
@@ -29,11 +31,11 @@ class User < ActiveRecord::Base
     return choice
   end
   
-  def record_vote(visitor_identifier, prompt, ordinality)
-    @click = Click.new(:what_was_clicked => 'on the API level, inside record_vote' + " with prompt id #{prompt.id}, ordinality #{ordinality.to_s}")
-    @click.save!
+  def record_vote(visitor_identifier, prompt, ordinality, time_viewed)
+    #@click = Click.new(:what_was_clicked => 'on the API level, inside record_vote' + " with prompt id #{prompt.id}, ordinality #{ordinality.to_s}")
+    #@click.save!
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
-    visitor.vote_for!(prompt, ordinality)
+    visitor.vote_for!(prompt, ordinality, time_viewed)
     #prompt.choices.each {|c| c.compute_score; c.save!}
   end
   

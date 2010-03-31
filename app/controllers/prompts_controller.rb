@@ -51,12 +51,14 @@ class PromptsController < InheritedResources::Base
     logger.info "#{current_user.inspect} is voting #{direction} at #{Time.now}."
     @question = Question.find(params[:question_id])
     @prompt = @question.prompts.find(params[:id])
+
+    time_viewed = params['params']['time_viewed']
     
     case direction
     when :left
-      successful = c = current_user.record_vote(params['params']['auto'], @prompt, 0)
+      successful = c = current_user.record_vote(params['params']['auto'], @prompt, 0, time_viewed)
     when :right
-      successful = c = current_user.record_vote(params['params']['auto'], @prompt, 1)
+      successful = c = current_user.record_vote(params['params']['auto'], @prompt, 1, time_viewed)
     else
       raise "need to specify either ':left' or ':right' as a direction"
     end
