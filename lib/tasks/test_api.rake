@@ -1,7 +1,7 @@
 require 'fastercsv'
 namespace :test_api do
 
-   task :all => [:question_vote_consistency]
+   task :all => [:question_vote_consistency,:generate_density_information]
 
    desc "Don't run unless you know what you are doing"
    task(:generate_lots_of_votes => :environment) do

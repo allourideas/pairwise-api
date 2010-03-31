@@ -64,7 +64,9 @@ class PromptsController < InheritedResources::Base
     #@prompt.choices.each(&:compute_score!)
     respond_to do |format|
       if successful
-	if @question.id == 120 #test0330 
+	catchup_marketplace_ids = [120, 117, 1]
+	if catchup_marketplace_ids.include?(@question.id)
+		logger.info("Question #{@question.id} is using catchup algorithm!")
 		next_prompt = @question.catchup_choose_prompt
 	else
 		next_prompt = @question.picked_prompt
