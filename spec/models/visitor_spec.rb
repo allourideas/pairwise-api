@@ -38,7 +38,7 @@ describe Visitor do
   it "should be able to vote for a prompt" do
     #@prompt = @question.prompts.first
     @prompt.should_not be_nil
-    v = @v.vote_for! @prompt, 0
+    v = @v.vote_for! @prompt, 0, 340
   end
   
   it "should be able to skip a prompt" do
@@ -51,7 +51,7 @@ describe Visitor do
     prev_winner_score = @lc.score
     prev_loser_score = @rc.score
     
-    vote = @v.vote_for! @prompt, 0
+    vote = @v.vote_for! @prompt, 0, 340
     
     @lc.reload
     @rc.reload
@@ -66,7 +66,7 @@ describe Visitor do
     prev_loser_losses = @rc.losses
     prev_loser_wins = @rc.wins
     
-    vote = @v.vote_for! @prompt, 0
+    vote = @v.vote_for! @prompt, 0, 340
     
     @lc.reload
     @rc.reload

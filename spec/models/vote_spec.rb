@@ -6,8 +6,10 @@ describe Vote do
       :tracking => "value for tracking",
       :site_id => 1,
       :voter_id => 1,
-      :voteable_id => 1,
-      :voteable_type => "value for voteable_type"
+      :question_id => 1,
+      :prompt_id => 1,
+      :choice_id=> 1,
+      :loser_choice_id=> 1,
     }
   end
 

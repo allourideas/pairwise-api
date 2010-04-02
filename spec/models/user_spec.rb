@@ -29,7 +29,7 @@ describe User do
   end
   
   it "should be able to record a visitor's vote" do
-    v = @aoi_clone.record_vote("johnnydoe", @prompt, 0)
+    v = @aoi_clone.record_vote("johnnydoe", @prompt, 0, 304)
     prompt_votes = @prompt.votes(true)
     prompt_votes.should_not be_empty
     prompt_votes.size.should eql 1
