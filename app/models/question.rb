@@ -93,6 +93,73 @@ class Question < ActiveRecord::Base
 	   weighted.each_with_index {|item, i| weighted[i] = item/sum}
    end
   end
+
+ def bradley_terry_probs
+   probs = []
+   prev_probs = []
+
+   # What ordering key we use is unimportant, just need a consistent way to link index of prob to id
+   the_choices = self.choices.sort{|x,y| x.id<=>y.id}
+
+   # This hash is keyed by pairs of choices - 'LC.id, RC.id'
+   the_prompts = prompts_hash_by_choice_ids
+
+   # Initial probabilities chosen at random
+   the_choices.size.times do 
+	   probs << rand
+	   prev_probs << rand
+   end
+
+   t=0
+   probs_size = probs.size
+   
+   # probably want to add a fuzz here to account for floating rounding
+   until probs == prev_probs do
+      s = t % probs_size
+      prev_probs = probs.dup
+      choice = the_choices[s]
+
+      numerator = choice.wins.to_f
+
+      denominator = 0.0
+      the_choices.each_with_index do |c, index|
+	      if(index == s)
+		      next
+	      end
+
+	      wins_and_losses = the_prompts["#{choice.id}, #{c.id}"].votes.size + the_prompts["#{c.id}, #{choice.id}"].votes.size
+	      denominator+= (wins_and_losses).to_f / (prev_probs[s] + prev_probs[index])
+      end
+      probs[s] = numerator / denominator 
+      normalize!(probs)
+      t+=1
+   end
+ 
+   probs_hash = {}
+   probs.each_with_index do |item, index| 
+	   probs_hash[the_choices[index].id] = item
+   end
+   probs_hash
+ end
+
+ 
+ def all_bt_scores
+	 btprobs = bradley_terry_probs
+	 btprobs.each do |key, value|
+		 c = Choice.find(key)
+		 puts "#{c.id}: #{c.votes.size} #{c.compute_bt_score(btprobs)}"
+	 end
+
+ end
+
+ def prompts_hash_by_choice_ids
+   the_prompts = {}
+   self.prompts.each do |p|
+      the_prompts["#{p.left_choice_id}, #{p.right_choice_id}"] = p
+   end
+   the_prompts
+ end
+
    
    def distinct_array_of_choice_ids(rank = 2, only_active = true)
      @choice_ids = choice_ids

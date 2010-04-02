@@ -82,6 +82,26 @@ class Choice < ActiveRecord::Base
     self.item.creator_id != self.question.creator_id
   end
 
+  def compute_bt_score(btprobs = nil)
+      if btprobs.nil?
+	      btprobs = self.question.bradley_terry_probs
+      end
+
+      p_i = btprobs[self.id]
+
+      total = 0
+      btprobs.each do |id, p_j|
+	      if id == self.id
+		      next
+	      end
+
+	      total += (p_i / (p_i + p_j))
+      end
+
+      total / (btprobs.size-1)
+
+  end
+
   
   protected
 
