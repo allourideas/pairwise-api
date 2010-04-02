@@ -55,6 +55,7 @@ class QuestionsController < InheritedResources::Base
 
   def show
     @question = Question.find(params[:id])
+    visitor_identifier = params[:visitor_identifier]
     unless params[:barebones]
       if params[:algorithm] && params[:algorithm] == "catchup"
 	      logger.info("Question #{@question.id} requested catchup algorithm!")
@@ -62,13 +63,30 @@ class QuestionsController < InheritedResources::Base
       else
 	      @p = @question.picked_prompt
       end
+
+      # we sometimes request a question when no prompt is displayed
+      # TODO It would be a good idea to find these places and treat them like barebones
+      if visitor_identifier != ""
+         @a = current_user.record_appearance(visitor_identifier, @p)
+      else 
+	 @a = nil
+      end
+      
       left_choice_text = Proc.new { |options| options[:builder].tag!('left_choice_text', @p.left_choice.item.data) }
       right_choice_text = Proc.new { |options| options[:builder].tag!('right_choice_text', @p.right_choice.item.data) }
       picked_prompt_id = Proc.new { |options| options[:builder].tag!('picked_prompt_id', @p.id) }
+      appearance_id = Proc.new { |options| options[:builder].tag!('appearance_id', @a.lookup) }
+      
+      the_procs = [left_choice_text, right_choice_text, picked_prompt_id]
+
+      if @a
+	  the_procs << appearance_id
+      end
+
       show! do |format|
         session['prompts_ids'] ||= []
         format.xml { 
-          render :xml => @question.to_xml(:methods => [:item_count], :procs => [left_choice_text, right_choice_text, picked_prompt_id])
+          render :xml => @question.to_xml(:methods => [:item_count], :procs => the_procs)
           }
       end
     else

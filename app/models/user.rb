@@ -31,13 +31,21 @@ class User < ActiveRecord::Base
     return choice
   end
   
-  def record_vote(visitor_identifier, prompt, ordinality, time_viewed)
+  def record_vote(visitor_identifier, appearance_lookup, prompt, ordinality, time_viewed)
     #@click = Click.new(:what_was_clicked => 'on the API level, inside record_vote' + " with prompt id #{prompt.id}, ordinality #{ordinality.to_s}")
     #@click.save!
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
-    visitor.vote_for!(prompt, ordinality, time_viewed)
+    visitor.vote_for!(appearance_lookup, prompt, ordinality, time_viewed)
     #prompt.choices.each {|c| c.compute_score; c.save!}
   end
+
+  def record_appearance(visitor_identifier, prompt)
+    visitor = visitors.find_or_create_by_identifier(visitor_identifier)
+
+    a = Appearance.create(:voter => visitor, :prompt => prompt, :question_id => prompt.question_id, 
+			  :lookup =>  Digest::MD5.hexdigest(rand(10000000000).to_s + visitor.id.to_s + prompt.id.to_s) )
+  end
+
   
   def record_skip(visitor_identifier, prompt)
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)

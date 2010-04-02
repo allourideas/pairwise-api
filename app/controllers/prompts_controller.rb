@@ -53,12 +53,16 @@ class PromptsController < InheritedResources::Base
     @prompt = @question.prompts.find(params[:id])
 
     time_viewed = params['params']['time_viewed']
+
+    visitor_identifier = params['params']['auto']
+    
+    appearance_lookup = params['params']['appearance_lookup']
     
     case direction
     when :left
-      successful = c = current_user.record_vote(params['params']['auto'], @prompt, 0, time_viewed)
+      successful = c = current_user.record_vote(params['params']['auto'], appearance_lookup, @prompt, 0, time_viewed)
     when :right
-      successful = c = current_user.record_vote(params['params']['auto'], @prompt, 1, time_viewed)
+      successful = c = current_user.record_vote(params['params']['auto'], appearance_lookup, @prompt, 1, time_viewed)
     else
       raise "need to specify either ':left' or ':right' as a direction"
     end
@@ -74,8 +78,13 @@ class PromptsController < InheritedResources::Base
 		next_prompt = @question.picked_prompt
 	end
 
-        format.xml { render :xml => next_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
-        format.json { render :json => next_prompt.to_json(:methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+
+        @a = current_user.record_appearance(visitor_identifier, next_prompt)
+         
+	appearance_id = Proc.new { |options| options[:builder].tag!('appearance_id', @a.lookup) }
+
+        format.xml { render :xml => next_prompt.to_xml(:procs => [appearance_id], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+        format.json { render :json => next_prompt.to_json(:procs => [appearance_id], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
       else
         format.xml { render :xml => c, :status => :unprocessable_entity }
         format.json { render :json => c, :status => :unprocessable_entity }
