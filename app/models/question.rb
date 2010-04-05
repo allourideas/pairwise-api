@@ -87,16 +87,25 @@ class Question < ActiveRecord::Base
 	      sum += item_and_weight[1]
 	   end
 	   sum = sum.to_f
-	   weighted.each { |item, weight| weighted[item] = weight/sum }
+	   weighted.each do |item, weight| 
+		   weighted[item] = weight/sum 
+		   weighted[item] = 0.0 unless weighted[item].finite?
+	   end
    elsif weighted.instance_of?(Array)
 	   sum = weighted.inject(0) {|sum, item| sum += item}
-	   weighted.each_with_index {|item, i| weighted[i] = item/sum}
+	   weighted.each_with_index do |item, i| 
+		   weighted[i] = item/sum
+		   weighted[i] = 0.0 unless weighted[i].finite?
+	   end
+
    end
   end
 
  def bradley_terry_probs
    probs = []
    prev_probs = []
+
+   fuzz = 0.001
 
    # What ordering key we use is unimportant, just need a consistent way to link index of prob to id
    the_choices = self.choices.sort{|x,y| x.id<=>y.id}
@@ -112,14 +121,18 @@ class Question < ActiveRecord::Base
 
    t=0
    probs_size = probs.size
+
+   difference = 1
    
    # probably want to add a fuzz here to account for floating rounding
-   until probs == prev_probs do
+   while difference > fuzz do
       s = t % probs_size
       prev_probs = probs.dup
       choice = the_choices[s]
 
       numerator = choice.wins.to_f
+
+
 
       denominator = 0.0
       the_choices.each_with_index do |c, index|
@@ -128,11 +141,20 @@ class Question < ActiveRecord::Base
 	      end
 
 	      wins_and_losses = the_prompts["#{choice.id}, #{c.id}"].votes.size + the_prompts["#{c.id}, #{choice.id}"].votes.size
+
 	      denominator+= (wins_and_losses).to_f / (prev_probs[s] + prev_probs[index])
       end
       probs[s] = numerator / denominator 
+      # avoid divide by zero NaN
+      probs[s] = 0.0 unless probs[s].finite?
       normalize!(probs)
       t+=1
+
+      difference = 0
+      probs.each_with_index do |curr, index|
+	      difference += (curr - prev_probs[index]).abs
+      end
+      puts difference
    end
  
    probs_hash = {}
