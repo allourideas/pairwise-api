@@ -255,16 +255,16 @@ class Question < ActiveRecord::Base
 
       the_prompts.each do |p|
 	      if p.left_choice.user_created == false && p.right_choice.user_created == false
-		      seed_seed_sum += p.votes.size
+		      seed_seed_sum += p.appearances.size
 		      seed_seed_total +=1
 	      elsif p.left_choice.user_created == false && p.right_choice.user_created == true
-		      seed_nonseed_sum += p.votes.size
+		      seed_nonseed_sum += p.appearances.size
 		      seed_nonseed_total +=1
 	      elsif p.left_choice.user_created == true && p.right_choice.user_created == false
-		      nonseed_seed_sum += p.votes.size
+		      nonseed_seed_sum += p.appearances.size
 		      nonseed_seed_total +=1
 	      elsif p.left_choice.user_created == true && p.right_choice.user_created == true
-		      nonseed_nonseed_sum += p.votes.size
+		      nonseed_nonseed_sum += p.appearances.size
 		      nonseed_nonseed_total +=1
 	      end
       end

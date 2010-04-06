@@ -3,6 +3,7 @@ class Prompt < ActiveRecord::Base
 
   has_many :skips
   has_many :votes
+  has_many :appearances
   
   
   belongs_to :question, :counter_cache => true

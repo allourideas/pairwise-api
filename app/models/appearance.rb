@@ -3,5 +3,4 @@ class Appearance < ActiveRecord::Base
       belongs_to :prompt
       belongs_to :question
       has_one :vote
-
 end
