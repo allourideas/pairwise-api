@@ -20,6 +20,105 @@ namespace :test_api do
 
    end
 
+   desc "Generate appearances for any votes that have no current appearance, should only need to be run once"
+   task(:generate_appearances_for_existing_votes => :environment) do 
+	   votes = Vote.all
+
+	   count = 0 
+	   votes.each do |v|
+		   if v.appearance.nil?
+			   print "."
+			   a = Appearance.create(:voter_id => v.voter_id, :site_id => v.site_id, :prompt_id => v.prompt_id, :question_id => v.question_id, :created_at => v.created_at, :updated_at => v.updated_at)
+			   v.appearance = a
+			   v.save
+
+			   count += 1
+		   end
+	   end
+
+	   print count
+   end
+
+
+   desc "Generate past density information"
+   task(:generate_past_densities => :environment) do 
+	   #this is not elegant, but should only be run once, so quick and dirty wins
+
+	   start_date = Vote.find(:all, :conditions => 'loser_choice_id IS NOT NULL', :order => :created_at, :limit =>  1).first.created_at.to_date
+	   end_date = Appearance.first.created_at.to_date
+
+	   start_date.upto(end_date-1) do |the_date|
+		   questions = Question.find(:all)
+
+		   print the_date.to_s
+		   questions.each do |q|
+			   relevant_votes = q.votes.find(:all, :conditions => ['loser_choice_id IS NOT NULL AND created_at < ?', the_date])
+			   relevant_choices = q.choices.find(:all, :conditions => ['created_at < ?', the_date])
+
+			   seed_choices = 0
+
+			   relevant_choices.each do |c|
+				   if !c.user_created
+					   seed_choices+=1
+				   end
+
+			   end
+
+			   nonseed_choices = relevant_choices.size - seed_choices
+
+			   seed_seed_total = seed_choices **2 - seed_choices
+			   nonseed_nonseed_total = nonseed_choices **2 - nonseed_choices
+			   seed_nonseed_total = seed_choices * nonseed_choices
+			   nonseed_seed_total = seed_choices * nonseed_choices
+
+			   seed_seed_sum = 0
+			   seed_nonseed_sum= 0
+			   nonseed_seed_sum= 0
+			   nonseed_nonseed_sum= 0
+
+			   relevant_votes.each do |v|
+
+				   p = v.prompt
+				   if p.left_choice.user_created == false && p.right_choice.user_created == false
+					   seed_seed_sum += 1
+				   elsif p.left_choice.user_created == false && p.right_choice.user_created == true
+					   seed_nonseed_sum += 1
+				   elsif p.left_choice.user_created == true && p.right_choice.user_created == false
+					   nonseed_seed_sum += 1
+				   elsif p.left_choice.user_created == true && p.right_choice.user_created == true
+					   nonseed_nonseed_sum += 1
+				   end
+			   end
+
+			   densities = {}
+			   densities[:seed_seed] = seed_seed_sum.to_f / seed_seed_total.to_f
+			   densities[:seed_nonseed] = seed_nonseed_sum.to_f / seed_nonseed_total.to_f
+			   densities[:nonseed_seed] = nonseed_seed_sum.to_f / nonseed_seed_total.to_f
+			   densities[:nonseed_nonseed] = nonseed_nonseed_sum.to_f / nonseed_nonseed_total.to_f
+
+			   densities.each do |type, average|
+				   d = Density.new
+				   d.created_at = the_date
+				   d.question_id = q.id
+				   d.prompt_type = type.to_s
+				   d.value = average.nan? ? nil : average
+				    d.save!
+			   end
+
+			   puts "Seed_seed sum: #{seed_seed_sum}, seed_seed total num: #{seed_seed_total}"
+			   puts "Seed_nonseed sum: #{seed_nonseed_sum}, seed_nonseed total num: #{seed_nonseed_total}"
+			   puts "Nonseed_seed sum: #{nonseed_seed_sum}, nonseed_seed total num: #{nonseed_seed_total}"
+			   puts "Nonseed_nonseed sum: #{nonseed_nonseed_sum}, nonseed_nonseed total num: #{nonseed_nonseed_total}"
+
+
+		   end
+
+	   end
+
+   end
+
+   task(:generate_historical_density_data)
+
    desc "Should only need to be run once"
    task(:generate_all_possible_prompts => :environment) do
       inserts = []
