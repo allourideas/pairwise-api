@@ -61,7 +61,7 @@ class ChoicesController < InheritedResources::Base
     @question = Question.find params[:question_id]
 
     respond_to do |format|
-      if @choice = current_user.create_choice(params['params']['data'], @question, {:data => params['params']['data'], 
+      if @choice = current_user.create_choice(params['params']['auto'], @question, {:data => params['params']['data'], 
                                                                                     :local_identifier => params['params']['local_identifier']})
         saved_choice_id = Proc.new { |options| options[:builder].tag!('saved_choice_id', @choice.id) }
         choice_status = Proc.new { |options| 
