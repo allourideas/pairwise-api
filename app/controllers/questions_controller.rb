@@ -66,8 +66,9 @@ class QuestionsController < InheritedResources::Base
 
       # we sometimes request a question when no prompt is displayed
       # TODO It would be a good idea to find these places and treat them like barebones
-      if visitor_identifier != ""
+      if !visitor_identifier.blank? 
          @a = current_user.record_appearance(visitor_identifier, @p)
+	 logger.info("creating appearance!")
       else 
 	 @a = nil
       end
@@ -150,19 +151,52 @@ class QuestionsController < InheritedResources::Base
 #    export_format = params[:export_format] #CSV always now, could expand to xml later
   end
 
-  def num_votes_by_visitor_id
+  def object_info_by_visitor_id
+    
+    object_type = params[:object_type]
     @question = current_user.questions.find(params[:id])
 
-     votes_by_visitor_id= Vote.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
-				   :joins => :voter, 
-				   :conditions => {:question_id => @question.id }, 
-				   :group => "voter_id")
-
     visitor_id_hash = {}
+    if object_type == "votes"
+	    votes_by_visitor_id= Vote.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
+					  :joins => :voter, 
+					  :conditions => {:question_id => @question.id }, 
+					  :group => "voter_id")
 
-    votes_by_visitor_id.each do |visitor|
-   	    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
-   	    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+
+	    votes_by_visitor_id.each do |visitor|
+		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+	    end
+    elsif object_type == "uploaded_ideas"
+
+	    uploaded_ideas_by_visitor_id = @question.choices.find(:all, :select => 'creator_id, count(*) as ideas_count', 
+								   :joins => [:item], 
+								   :conditions => "items.creator_id != #{@question.creator_id}", 
+	                                                           :group => 'creator_id')
+
+	    uploaded_ideas_by_visitor_id.each do |visitor|
+		    v = Visitor.find(visitor.creator_id, :select => 'identifier') 
+
+		    logger.info(v.identifier)
+
+		    visitor_id_hash[v.identifier] = visitor.ideas_count
+	    end
+
+	    logger.info(visitor_id_hash.inspect)
+    elsif object_type == "bounces"
+
+	    possible_bounces = @question.appearances.count(:group => :voter_id, :having => 'count_all = 1')
+            possible_bounce_ids = possible_bounces.inject([]){|list, (k,v)| list << k}
+
+	    voted_at_least_once = @question.votes.find(:all, :select => :voter_id, :conditions => {:voter_id => possible_bounce_ids})
+	    voted_at_least_once_ids = voted_at_least_once.inject([]){|list, v| list << v.voter_id}
+
+	    bounces = possible_bounce_ids - voted_at_least_once_ids
+
+	    bounces.each do |visitor_id|
+		    v = Visitor.find(visitor_id, :select => 'identifier') 
+		    visitor_id_hash[v.identifier] = 1
+	    end
     end
     respond_to do |format|
     	format.xml{ render :xml => visitor_id_hash.to_xml and return}

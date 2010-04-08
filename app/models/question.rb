@@ -18,6 +18,7 @@ class Question < ActiveRecord::Base
   end
   has_many :votes
   has_many :densities
+  has_many :appearances
  
   #comment out to run bt import script! 
   after_save :ensure_at_least_two_choices
