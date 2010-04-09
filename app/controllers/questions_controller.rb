@@ -182,7 +182,6 @@ class QuestionsController < InheritedResources::Base
 		    visitor_id_hash[v.identifier] = visitor.ideas_count
 	    end
 
-	    logger.info(visitor_id_hash.inspect)
     elsif object_type == "bounces"
 
 	    possible_bounces = @question.appearances.count(:group => :voter_id, :having => 'count_all = 1')
@@ -195,7 +194,10 @@ class QuestionsController < InheritedResources::Base
 
 	    bounces.each do |visitor_id|
 		    v = Visitor.find(visitor_id, :select => 'identifier') 
-		    visitor_id_hash[v.identifier] = 1
+
+		    if v.identifier
+		       visitor_id_hash[v.identifier] = 1
+		    end
 	    end
     end
     respond_to do |format|
