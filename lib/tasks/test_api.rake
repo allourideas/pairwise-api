@@ -117,7 +117,6 @@ namespace :test_api do
 
    end
 
-   task(:generate_historical_density_data)
 
    desc "Should only need to be run once"
    task(:generate_all_possible_prompts => :environment) do
@@ -219,12 +218,15 @@ namespace :test_api do
 
       error_msg = ""
 
+      bad_choices = []
       questions.each do |question|
 
 	total_wins =0
 	total_votes =0
 	total_generated_prompts_on_left = 0
 	total_generated_prompts_on_right = 0
+	total_scores_gte_fifty= 0
+	total_scores_lte_fifty= 0
 	error_bool = false
 	question.choices.each do |choice|
 			
@@ -239,6 +241,32 @@ namespace :test_api do
 
 	    total_generated_prompts_on_left += choice.prompts_on_the_left.size
 	    total_generated_prompts_on_right += choice.prompts_on_the_right.size
+
+	    cached_score = choice.score
+	    generated_score = choice.compute_score
+
+	    if cached_score.round != generated_score.round
+		 error_msg += "Error! The cached_score is not equal to the calculated score for choice #{choice.id}"
+
+		 print "This score is wrong! #{choice.id} , Question ID: #{question.id}, #{cached_score}, #{generated_score}, updated: #{choice.updated_at}\n"
+
+		 bad_choices << choice.id
+
+	    end
+
+	    if cached_score == 0.0 || cached_score == 100.0 || cached_score.nil?
+		 error_msg += "Error! The cached_score for choice #{choice.id} is exactly 0 or 100, the value: #{cached_score}"
+		 print "Either 0 or 100 This score is wrong! #{choice.id} , Question ID: #{question.id}, #{cached_score}, #{generated_score}, updated: #{choice.updated_at}\n"
+		 bad_choices << choice.id
+	    end
+
+	    if cached_score >= 50
+		    total_scores_gte_fifty +=1
+	    end
+	    if cached_score <= 50
+		    total_scores_lte_fifty +=1
+	    end
+
         end
 	
 	if (2*total_wins != total_votes)
@@ -260,6 +288,13 @@ namespace :test_api do
 		error_msg += "Error 4: Total generated prompts on left != Total generated prompts on right"
 		error_bool = true
 	end
+
+	if(total_scores_lte_fifty == question.choices.size || total_scores_gte_fifty == question.choices.size) && (total_scores_lte_fifty != total_scores_gte_fifty)
+		error_msg += "Error: The scores of all choices are either all above 50, or all below 50. This is probably wrong"
+		error_bool = true
+		puts "Error score fifty: #{question.id}"
+	end
+
 
 	wins_by_choice_id = question.votes.active.count(:group => :choice_id)
 	losses_by_choice_id= question.votes.active.count(:conditions => "loser_choice_id IS NOT NULL", :group => :loser_choice_id)
@@ -293,9 +328,50 @@ namespace :test_api do
 	if error_bool
 	   error_msg += "Question #{question.id}: 2*wins = #{2*total_wins}, total votes = #{total_votes}, vote_count = #{question.votes_count}\n"
 	end
+
 	error_bool = false
      end
-     
+
+     votes_without_appearances= Vote.count(:conditions => {:appearance_id => nil})
+     if (votes_without_appearances > 0)
+	     error_msg += "Error! There are #{votes_without_appearances} votes without associated appearance objects."
+     end
+
+     recording_client_time_start_date = Vote.find(:all, :conditions => 'time_viewed IS NOT NULL', :order => 'created_at', :limit => 1).first.created_at
+
+     Vote.find_each(:batch_size => 1000, :include => :appearance) do |v|
+
+
+	     # Subtracting DateTime objects results in the difference in days
+	     server_response_time = v.created_at.to_f - v.appearance.created_at.to_f
+	     if server_response_time < 0
+	        the_error_msg = "Error! Vote #{v.id} was created before the appearance associated with it: Appearance id: #{v.appearance.id}, Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}\n"
+
+
+		error_msg += the_error_msg
+	        print the_error_msg
+
+		print "Error!"
+	     end
+
+	     if v.time_viewed && v.time_viewed/1000 > server_response_time 
+		     the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}, Client side response time: #{v.time_viewed}\n"
+
+		     error_msg += the_error_msg
+		     print the_error_msg
+
+             elsif v.time_viewed.nil?
+		     if v.created_at > recording_client_time_start_date 
+	                the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, does not have a client response, even though it should! Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}, Client side response time: #{v.time_viewed}\n"
+			error_msg += the_error_msg
+	                print the_error_msg
+		     end
+
+	     end
+
+
+     end
+            
      if error_msg.blank?
         
 	success_msg = "Conducted the following tests on API data and found no inconsistencies.\n" +
@@ -305,13 +381,23 @@ namespace :test_api do
 			 "     Total Votes (wins + losses) = 2 x the number of vote objects that belong to the question\n" +
 		         "     Total generated prompts on left = Total generated prompts on right\n" + 
 		         "     Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question\n" +
-			 "             Note: this applies only to seed choices (not user submitted) and choices currently marked active\n"
+			 "             Note: this applies only to seed choices (not user submitted) and choices currently marked active\n" + 
+			 "     The cached score value matches the calculated score value for each choice\n" +
+			 "     All Vote objects have an associated appearance object\n" +
+			 "     All Vote objects have an client response time < calculated server roundtrip time\n" 
 
 	print success_msg
 
 	CronMailer.deliver_info_message(CRON_EMAIL, "Test of API Vote Consistency passed", success_msg)
      else
      	CronMailer.deliver_info_message("#{CRON_EMAIL},#{ERRORS_EMAIL}", "Error! Failure of API Vote Consistency " , error_msg)
+
+	unless bad_choices.blank?
+
+		puts "Here's a list of choice ids that you may want to modify: #{bad_choices.uniq.inspect}"
+
+	end
+	print error_msg
      end
 
    end
