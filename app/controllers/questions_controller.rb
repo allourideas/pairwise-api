@@ -174,9 +174,16 @@ class QuestionsController < InheritedResources::Base
 								   :conditions => "items.creator_id != #{@question.creator_id}", 
 	                                                           :group => 'creator_id')
 
+	    count = 0
 	    uploaded_ideas_by_visitor_id.each do |visitor|
 		    v = Visitor.find(visitor.creator_id, :select => 'identifier') 
 
+		    logger.info(v.identifier)
+		    
+		    if v.identifier.include?(" ") || v.identifier.include?("'")
+			    v.identifier = "no_data#{count}"
+			    count +=1
+		    end
 		    logger.info(v.identifier)
 
 		    visitor_id_hash[v.identifier] = visitor.ideas_count
