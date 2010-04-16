@@ -254,7 +254,7 @@ class QuestionsController < InheritedResources::Base
     elsif object_type == 'appearances_by_creation_date'
 
             hash = Hash.new()
-	    @question.choices.find(:all, :order => :created_at).each do |c|
+	    @question.choices.active.find(:all, :order => :created_at).each do |c|
 	             relevant_prompts = c.prompts_on_the_left.find(:all, :select => 'id') + c.prompts_on_the_right.find(:all, :select => 'id')
 
 		     appearances = Appearance.count(:conditions => {:prompt_id => relevant_prompts, :question_id => @question.id})
