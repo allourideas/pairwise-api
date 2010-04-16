@@ -114,18 +114,5 @@ describe ChoicesController do
 
   end
 
-  describe "DELETE destroy" do
-    it "destroys the requested choice" do
-      Choice.should_receive(:find).with("37").and_return(mock_choice)
-      mock_choice.should_receive(:destroy)
-      delete :destroy, :id => "37"
-    end
-
-    it "redirects to the choices list" do
-      Choice.stub!(:find).and_return(mock_choice(:destroy => true))
-      delete :destroy, :id => "1"
-      response.should redirect_to(choices_url)
-    end
-  end
 
 end

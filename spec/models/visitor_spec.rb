@@ -9,19 +9,20 @@ describe Visitor do
   it {should have_many :clicks}
   
   before(:each) do
-    @aoi_clone = Factory.create(:user, :email => "pius@alum.mit.edu", :password => "password", :password_confirmation => "password", :id => 8)
+    @aoi_clone = Factory.create(:user)
     @johndoe = Factory.create(:visitor, :identifier => 'johndoe', :site => @aoi_clone)
     @question = Factory.create(:question, :name => 'which do you like better?', :site => @aoi_clone, :creator => @aoi_clone.default_visitor)
     @lc = Factory.create(:choice, :question => @question, :creator => @johndoe, :data => 'hello gorgeous')
     @rc = Factory.create(:choice, :question => @question, :creator => @johndoe, :data => 'goodbye gorgeous')
     @prompt = Factory.create(:prompt, :question => @question, :tracking => 'sample', :left_choice => @lc, :right_choice => @rc)
-    #my_instance.stub!(:msg).and_return(value)
+    @appearance = @aoi_clone.record_appearance("test visitor identifier", @prompt)
     @valid_attributes = {
       :site => @aoi_clone,
       :identifier => "value for identifier",
       :tracking => "value for tracking"
     }
     @v = Visitor.create!(@valid_attributes)
+
   end
 
   it "should create a new instance given valid attributes" do
@@ -38,7 +39,7 @@ describe Visitor do
   it "should be able to vote for a prompt" do
     #@prompt = @question.prompts.first
     @prompt.should_not be_nil
-    v = @v.vote_for! @prompt, 0, 340
+    v = @v.vote_for! @appearance.lookup, @prompt, 0, 340
   end
   
   it "should be able to skip a prompt" do
@@ -51,7 +52,7 @@ describe Visitor do
     prev_winner_score = @lc.score
     prev_loser_score = @rc.score
     
-    vote = @v.vote_for! @prompt, 0, 340
+    vote = @v.vote_for! @appearance.lookup, @prompt, 0, 340
     
     @lc.reload
     @rc.reload
@@ -66,7 +67,7 @@ describe Visitor do
     prev_loser_losses = @rc.losses
     prev_loser_wins = @rc.wins
     
-    vote = @v.vote_for! @prompt, 0, 340
+    vote = @v.vote_for! @appearance.lookup, @prompt, 0, 340
     
     @lc.reload
     @rc.reload

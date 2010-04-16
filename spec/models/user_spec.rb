@@ -4,12 +4,14 @@ describe User do
   it {should have_many :visitors}
 
   before(:each) do
-    @aoi_clone = Factory.create(:user, :email => "pius@alum.mit.edu", :password => "password", :password_confirmation => "password", :id => 8)
+    @aoi_clone = Factory.create(:user)
     @johndoe = Factory.create(:visitor, :identifier => 'johndoe', :site => @aoi_clone)
     @question = Factory.create(:question, :name => 'which do you like better?', :site => @aoi_clone, :creator => @aoi_clone.default_visitor)
     @lc = Factory.create(:choice, :question => @question, :creator => @johndoe, :data => 'hello gorgeous')
     @rc = Factory.create(:choice, :question => @question, :creator => @johndoe, :data => 'goodbye gorgeous')
     @prompt = Factory.create(:prompt, :question => @question, :tracking => 'sample', :left_choice => @lc, :right_choice => @rc)
+
+    @appearance = @aoi_clone.record_appearance("test visitor identifier", @prompt)
   end
 
   
@@ -29,7 +31,7 @@ describe User do
   end
   
   it "should be able to record a visitor's vote" do
-    v = @aoi_clone.record_vote("johnnydoe", @prompt, 0, 304)
+    v = @aoi_clone.record_vote("johnnydoe", @appearance.lookup, @prompt, 0, 304)
     prompt_votes = @prompt.votes(true)
     prompt_votes.should_not be_empty
     prompt_votes.size.should eql 1
