@@ -45,9 +45,7 @@ namespace :test_api do
 	   #this is not elegant, but should only be run once, so quick and dirty wins
 
 	   start_date = Vote.find(:all, :conditions => 'loser_choice_id IS NOT NULL', :order => :created_at, :limit =>  1).first.created_at.to_date
-	   end_date = Appearance.first.created_at.to_date
-
-	   start_date.upto(end_date-1) do |the_date|
+	   start_date.upto(Date.today) do |the_date|
 		   questions = Question.find(:all)
 
 		   print the_date.to_s
@@ -120,7 +118,6 @@ namespace :test_api do
 
    desc "Should only need to be run once"
    task(:generate_all_possible_prompts => :environment) do
-      inserts = []
       Question.find(:all).each do |q|
 	choices = q.choices
 	if q.prompts.size > choices.size**2 - choices.size
@@ -133,8 +130,10 @@ namespace :test_api do
 		print "#{q.id} should add #{(choices.size ** 2 - choices.size) - q.prompts.size}\n"
 
 	end
-        timestring = Time.now.to_s(:db) #isn't rails awesome?
+        created_timestring = q.created_at.to_s(:db)
+	updated_timestring = Time.now.to_s(:db) #isn't rails awesome?
 	promptscount=0
+        inserts = []
   	the_prompts = Prompt.find(:all, :select => 'id, left_choice_id, right_choice_id', :conditions => {:question_id => q.id})
 
 	the_prompts_hash = {}
@@ -151,8 +150,7 @@ namespace :test_api do
 		keystring = "#{l.id},#{r.id}"
 		p = the_prompts_hash[keystring]
 		if p.nil?
-	           print "."
-	           inserts.push("(NULL, #{q.id}, NULL, #{l.id}, '#{timestring}', '#{timestring}', NULL, 0, #{r.id}, NULL, NULL)")
+	           inserts.push("(NULL, #{q.id}, NULL, #{l.id}, '#{created_timestring}', '#{updated_timestring}', NULL, 0, #{r.id}, NULL, NULL)")
 		   promptscount+=1
 		end
 
@@ -162,16 +160,17 @@ namespace :test_api do
          end
 
 	print "Added #{promptscount} to #{q.id}\n"
+	sql = "INSERT INTO `prompts` (`algorithm_id`, `question_id`, `voter_id`, `left_choice_id`, `created_at`, `updated_at`, `tracking`, `votes_count`, `right_choice_id`, `active`, `randomkey`) VALUES #{inserts.join(', ')}"
+	unless inserts.empty?
+		ActiveRecord::Base.connection.execute(sql)
+	end
 
-       Question.update_counters(q.id, :prompts_count => promptscount)
+	Question.update_counters(q.id, :prompts_count => promptscount)
+
 
        end
 
-    sql = "INSERT INTO `prompts` (`algorithm_id`, `question_id`, `voter_id`, `left_choice_id`, `created_at`, `updated_at`, `tracking`, `votes_count`, `right_choice_id`, `active`, `randomkey`) VALUES #{inserts.join(', ')}"
 
-    unless inserts.empty?
-       ActiveRecord::Base.connection.execute(sql)
-    end
    
    end
 
@@ -242,10 +241,12 @@ namespace :test_api do
 	    total_generated_prompts_on_left += choice.prompts_on_the_left.size
 	    total_generated_prompts_on_right += choice.prompts_on_the_right.size
 
-	    cached_score = choice.score
-	    generated_score = choice.compute_score
+	    cached_score = choice.score.to_f
+	    generated_score = choice.compute_score.to_f
 
-	    if cached_score.round != generated_score.round
+	    delta = 0.001
+
+	    if (cached_score - generated_score).abs >= delta
 		 error_msg += "Error! The cached_score is not equal to the calculated score for choice #{choice.id}"
 
 		 print "This score is wrong! #{choice.id} , Question ID: #{question.id}, #{cached_score}, #{generated_score}, updated: #{choice.updated_at}\n"
@@ -266,6 +267,7 @@ namespace :test_api do
 	    if cached_score <= 50
 		    total_scores_lte_fifty +=1
 	    end
+
 
         end
 	
@@ -323,6 +325,31 @@ namespace :test_api do
 	   end
 	end
 			
+        # Checks that counter_cache is working as expected
+	cached_prompts_size = question.prompts.size
+	actual_prompts_size = question.prompts.count
+
+	if cached_prompts_size != actual_prompts_size
+		error_msg += "Error! Question #{question.id} has an inconsistent # of prompts! cached#: #{cached_prompts_size}, actual#: #{actual_prompts_size}\n"
+	end
+	
+	cached_votes_size = question.votes.size
+	actual_votes_size = question.votes.count
+
+	if cached_votes_size != actual_votes_size
+		error_msg += "Error! Question #{question.id} has an inconsistent # of votes! cached#: #{cached_votes_size}, actual#: #{actual_votes_size}\n"
+	end
+	
+	cached_choices_size = question.choices.size
+	actual_choices_size = question.choices.count
+
+	if cached_choices_size != actual_choices_size
+		error_msg += "Error! Question #{question.id} has an inconsistent # of choices! cached#: #{cached_choices_size}, actual#: #{actual_choices_size}\n"
+	end
+
+	if cached_prompts_size != question.choices.size **2 - question.choices.size 
+		error_msg += "Error! Question #{question.id} has an incorrect number of prompts! Expected #{question.choices.size **2 - question.choices.size}, Actual: #{cached_prompts_size}\n"
+	end
 
 
 	if error_bool
@@ -383,6 +410,10 @@ namespace :test_api do
 		         "     Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question\n" +
 			 "             Note: this applies only to seed choices (not user submitted) and choices currently marked active\n" + 
 			 "     The cached score value matches the calculated score value for each choice\n" +
+			 "     The cached vote count matches the actual number of votes for each question\n" +
+			 "     The cached choices count matches the actual number of choices for each question\n" +
+			 "     The cached prompt count matches the actual number of prompts for each question\n" +
+			 "     The prompt count matches the expected number of prompts ( num_choices ^2 - num choices) for each question\n" +
 			 "     All Vote objects have an associated appearance object\n" +
 			 "     All Vote objects have an client response time < calculated server roundtrip time\n" 
 
