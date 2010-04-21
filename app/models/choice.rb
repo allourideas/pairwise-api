@@ -108,7 +108,7 @@ class Choice < ActiveRecord::Base
   
   def generate_prompts
     #once a choice is added, we need to generate the new prompts (possible combinations of choices)
-    #do this in a new process (via delayed jobs)
+    #do this in a new process (via delayed jobs)? Maybe just for uploaded ideas
     previous_choices = (self.question.choices - [self])
     return if previous_choices.empty?
     inserts = []
@@ -127,7 +127,6 @@ class Choice < ActiveRecord::Base
 
     Question.update_counters(self.question_id, :prompts_count => 2*previous_choices.size)
 
-    logger.info("The sql is:::: #{sql}")
 
     ActiveRecord::Base.connection.execute(sql)
 

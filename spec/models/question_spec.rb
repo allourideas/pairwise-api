@@ -84,6 +84,49 @@ describe Question do
 		  (sum - 1.0).abs.should < 0.000001
 	  end
 
+	  it "should allow the prompt queue to be cleared" do
+		  @catchup_q.add_prompt_to_queue
+		  @catchup_q.clear_prompt_queue
+
+		  @catchup_q.pop_prompt_queue.should == nil
+	  end
+	  it "should allow a prompt to be added to the prompt queue" do
+		  @catchup_q.clear_prompt_queue
+		  @catchup_q.pop_prompt_queue.should == nil
+
+		  @catchup_q.add_prompt_to_queue
+
+		  prompt = @catchup_q.pop_prompt_queue
+
+		  prompt.should_not == nil
+		  prompt.active?.should == true
+	  end
+	  it "should return prompts from the queue in FIFO order" do
+		  @catchup_q.clear_prompt_queue
+		  @catchup_q.pop_prompt_queue.should == nil
+		  
+		  prompt1 = @catchup_q.add_prompt_to_queue
+		  prompt2 = @catchup_q.add_prompt_to_queue
+		  prompt3 = @catchup_q.add_prompt_to_queue
+
+		  prompt_1 = @catchup_q.pop_prompt_queue
+		  prompt_2 = @catchup_q.pop_prompt_queue
+		  prompt_3 = @catchup_q.pop_prompt_queue
+
+
+		  prompt_1.should == prompt1
+		  prompt_2.should == prompt2
+		  prompt_3.should == prompt3
+
+		  # there is a small probability that the catchup algorithm
+		  # choose two prompts that are indeed equal
+		  prompt_1.should_not == prompt_2
+		  prompt_1.should_not == prompt_3
+		  prompt_2.should_not == prompt_3
+
+
+		  @catchup_q.pop_prompt_queue.should == nil
+	  end
 
 
   end

@@ -298,6 +298,27 @@ class Question < ActiveRecord::Base
 	  end
   end
 
+  def pq_key
+	  @pq_key ||= "#{self.id}_prompt_queue"
+  end
+
+  def clear_prompt_queue
+	  $redis.del(self.pq_key)
+  end
+
+  def add_prompt_to_queue
+	  prompt = self.catchup_choose_prompt
+	  $redis.rpush(self.pq_key, prompt.id)
+	  prompt
+  end
+
+  def pop_prompt_queue
+	  prompt_id = $redis.lpop(self.pq_key)
+	  prompt = prompt_id.nil? ? nil : Prompt.find(prompt_id.to_i)
+  end
+
+
+
 
 
 end
