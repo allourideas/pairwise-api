@@ -20,17 +20,10 @@ Rails::Initializer.run do |config|
     :lib     => "smtp-tls",
     :version => "1.1.2",
     :source  => "http://gems.github.com"
-  config.gem "tobi-delayed_job",
-    :lib     => "delayed_job",
-    :version => "1.7.0",
-    :source  => "http://gems.github.com"
   config.gem "thoughtbot-paperclip",
     :lib     => "paperclip",
     :version => "2.3.1",
     :source  => "http://gems.github.com"
-  config.gem "aws-s3",
-    :lib     => "aws/s3",
-    :version => "0.6.2"
   config.gem "mime-types",
     :lib     => "mime/types",
     :version => "1.16"
@@ -53,11 +46,10 @@ Rails::Initializer.run do |config|
     :lib     => 'clearance', 
     :source  => 'http://gems.github.com', 
     :version => '0.8.2'
-  config.gem "activemerchant",
-    :lib     => 'active_merchant',
-    :version => '1.4.2'
   config.gem "fastercsv",
     :lib     => 'fastercsv',
     :version => '1.5.1'
+  config.gem 'delayed_job',
+    :version => '2.0.3'
 end
 
