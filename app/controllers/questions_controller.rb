@@ -59,7 +59,14 @@ class QuestionsController < InheritedResources::Base
     unless params[:barebones]
       if params[:algorithm] && params[:algorithm] == "catchup"
 	      logger.info("Question #{@question.id} requested catchup algorithm!")
-	      @p = @question.catchup_choose_prompt
+
+	      @p = @question.pop_prompt_queue
+	      if @p.nil?
+		      logger.info("Catchup prompt cache miss! Nothing in prompt_queue")
+		      @p = @question.catchup_choose_prompt
+	      end
+	      @question.send_later :add_prompt_to_queue
+
       else
 	      @p = @question.picked_prompt
       end

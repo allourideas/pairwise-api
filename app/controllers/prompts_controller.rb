@@ -72,8 +72,13 @@ class PromptsController < InheritedResources::Base
       if successful
 	#catchup_marketplace_ids = [120, 117, 1, 116]
 	if @question.uses_catchup?
-		logger.info("Question #{@question.id} is using catchup algorithm!")
-		next_prompt = @question.catchup_choose_prompt
+	      logger.info("Question #{@question.id} is using catchup algorithm!")
+	      next_prompt = @question.pop_prompt_queue
+	      if next_prompt.nil?
+		      logger.info("Catchup prompt cache miss! Nothing in prompt_queue")
+		      next_prompt = @question.catchup_choose_prompt
+	      end
+	      @question.send_later :add_prompt_to_queue
 	else
 		next_prompt = @question.picked_prompt
 	end

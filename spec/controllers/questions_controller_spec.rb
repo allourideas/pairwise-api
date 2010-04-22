@@ -4,18 +4,26 @@ describe QuestionsController do
   
   # integrate_views
   #   
-  #   def sign_in_as(user)
-  #     @controller.current_user = user
-  #     return user
-  #   end
+     def sign_in_as(user)
+       @controller.current_user = user
+       return user
+     end
   #   
-  #   before(:each) do
-  #     sign_in_as(@user = Factory(:email_confirmed_user))
-  #   end
+     before(:each) do
+       sign_in_as(@user = Factory(:email_confirmed_user))
+     end
   # 
-  #   def mock_question(stubs={})
-  #     @mock_question ||= mock_model(Question, stubs)
-  #   end
+     def mock_question(stubs={})
+       @mock_question ||= mock_model(Question, stubs)
+     end
+     
+     def mock_prompt(stubs={})
+       @mock_prompt ||= mock_model(Prompt, stubs)
+     end
+     
+     def mock_appearance(stubs={})
+       @mock_appearance||= mock_model(Appearance, stubs)
+     end
   # 
   #   describe "GET index" do
   #     it "assigns all questions as @questions" do
@@ -25,13 +33,32 @@ describe QuestionsController do
   #     end
   #   end
   # 
-  #   describe "GET show" do
-  #     it "assigns the requested question as @question" do
-  #       Question.stub!(:find).with("37").and_return(mock_question)
-  #       get :show, :id => "37"
-  #       assigns[:question].should equal(mock_question)
-  #     end
-  #   end
+     describe "GET show normal" do
+       before(:each) do
+         Question.stub!(:find).with("37").and_return(mock_question)
+	 mock_question.stub!(:picked_prompt).and_return(mock_prompt)
+       end
+
+       it "assigns the requested question as @question" do
+         Question.stub!(:find).with("37").and_return(mock_question)
+	 #TODO it shouldn't call this unless we are generating an appearance, right?
+
+         get :show, :id => "37"
+         assigns[:question].should equal(mock_question)
+         assigns[:prompt].should equal(mock_prompt)
+         assigns[:a].should be_nil
+       end
+
+       #TODO this is not a particularly intutive param to pass in order to create an appearance
+       it "creates an appearance when a visitor identifier is a param" do
+	 @user.stub!(:record_appearance).with("somelongunique32charstring", mock_prompt).and_return(mock_appearance)
+         get :show, :id => "37", :visitor_identifier => "somelongunique32charstring"
+         assigns[:question].should equal(mock_question)
+         assigns[:prompt].should equal(mock_prompt)
+         assigns[:a].should equal(mock_appearance)
+
+       end
+     end
   # 
   #   describe "GET new" do
   #     it "assigns a new question as @question" do
