@@ -39,9 +39,7 @@ class User < ActiveRecord::Base
     #prompt.choices.each {|c| c.compute_score; c.save!}
   end
 
-  def record_appearance(visitor_identifier, prompt)
-    visitor = visitors.find_or_create_by_identifier(visitor_identifier)
-
+  def record_appearance(visitor, prompt)
     a = Appearance.create(:voter => visitor, :prompt => prompt, :question_id => prompt.question_id, 
 			  :lookup =>  Digest::MD5.hexdigest(rand(10000000000).to_s + visitor.id.to_s + prompt.id.to_s) )
   end

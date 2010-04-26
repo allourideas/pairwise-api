@@ -74,7 +74,8 @@ class QuestionsController < InheritedResources::Base
       # we sometimes request a question when no prompt is displayed
       # TODO It would be a good idea to find these places and treat them like barebones
       if !visitor_identifier.blank? 
-         @a = current_user.record_appearance(visitor_identifier, @p)
+         visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+         @a = current_user.record_appearance(visitor, @p)
 	 logger.info("creating appearance!")
       else 
 	 @a = nil
@@ -85,10 +86,15 @@ class QuestionsController < InheritedResources::Base
       picked_prompt_id = Proc.new { |options| options[:builder].tag!('picked_prompt_id', @p.id) }
       appearance_id = Proc.new { |options| options[:builder].tag!('appearance_id', @a.lookup) }
       
+      visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
+      visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
+      
       the_procs = [left_choice_text, right_choice_text, picked_prompt_id]
 
       if @a
 	  the_procs << appearance_id
+	  the_procs << visitor_votes
+	  the_procs << visitor_ideas
       end
 
       show! do |format|

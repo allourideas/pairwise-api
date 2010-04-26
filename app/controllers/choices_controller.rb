@@ -60,8 +60,11 @@ class ChoicesController < InheritedResources::Base
 
     @question = Question.find params[:question_id]
 
+    visitor_identifier = params['params']['auto']
+    visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+
     respond_to do |format|
-      if @choice = current_user.create_choice(params['params']['auto'], @question, {:data => params['params']['data'], 
+      if @choice = current_user.create_choice(visitor_identifier, @question, {:data => params['params']['data'], 
                                                                                     :local_identifier => params['params']['local_identifier']})
         saved_choice_id = Proc.new { |options| options[:builder].tag!('saved_choice_id', @choice.id) }
         choice_status = Proc.new { |options| 
@@ -71,7 +74,10 @@ class ChoicesController < InheritedResources::Base
 
 	Question.update_counters(@question.id, :inactive_choices_count => @choice.active? ? 0 : 1)
 
-        format.xml { render :xml => @choice.to_xml(:procs => [saved_choice_id, choice_status]), :status => :ok }
+	visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
+        visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
+
+        format.xml { render :xml => @choice.to_xml(:procs => [saved_choice_id, choice_status, visitor_votes, visitor_ideas]), :status => :ok }
         # format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id, choice_status]), :status => :ok }
         format.json { render :json => @question.to_json(:procs => [saved_choice_id, choice_status]), :status => :ok }
       else

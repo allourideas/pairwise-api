@@ -11,7 +11,8 @@ describe User do
     @rc = Factory.create(:choice, :question => @question, :creator => @johndoe, :data => 'goodbye gorgeous')
     @prompt = Factory.create(:prompt, :question => @question, :tracking => 'sample', :left_choice => @lc, :right_choice => @rc)
 
-    @appearance = @aoi_clone.record_appearance("test visitor identifier", @prompt)
+    @visitor = @aoi_clone.visitors.find_or_create_by_identifier("test_visitor_identifier")
+    @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
   end
 
   

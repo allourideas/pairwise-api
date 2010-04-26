@@ -84,12 +84,16 @@ class PromptsController < InheritedResources::Base
 	end
 
 
-        @a = current_user.record_appearance(visitor_identifier, next_prompt)
+        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+        @a = current_user.record_appearance(visitor, next_prompt)
          
 	appearance_id = Proc.new { |options| options[:builder].tag!('appearance_id', @a.lookup) }
+      
+	visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
+      visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
 
-        format.xml { render :xml => next_prompt.to_xml(:procs => [appearance_id], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
-        format.json { render :json => next_prompt.to_json(:procs => [appearance_id], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+        format.xml { render :xml => next_prompt.to_xml(:procs => [appearance_id, visitor_votes, visitor_ideas], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+        format.json { render :json => next_prompt.to_json(:procs => [appearance_id, visitor_votes, visitor_ideas], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
       else
         format.xml { render :xml => c, :status => :unprocessable_entity }
         format.json { render :json => c, :status => :unprocessable_entity }
