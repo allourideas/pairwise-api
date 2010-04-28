@@ -47,7 +47,7 @@ describe User do
   end
   
   it "should be able to record a visitor's skip" do
-    s = @aoi_clone.record_skip("johnnydoe", @prompt)
+    s = @aoi_clone.record_skip("johnnydoe", @appearance.lookup, @prompt, 340)
   end
 
 end

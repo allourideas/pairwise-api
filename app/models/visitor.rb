@@ -18,6 +18,7 @@ class Visitor < ActiveRecord::Base
   
   def vote_for!(appearance_lookup, prompt, ordinality, time_viewed)
     @a = Appearance.find_by_lookup(appearance_lookup)
+    #make votefor fail if we cant find the appearance
     choices = prompt.choices
     choice = choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
     other_choices = choices - [choice]
@@ -37,7 +38,12 @@ class Visitor < ActiveRecord::Base
 
   end
   
-  def skip!(prompt)
-    prompt_skip = skips.create!(:prompt => prompt)
+  def skip!(appearance_lookup, prompt, time_viewed, options = {})
+    @a = Appearance.find_by_lookup(appearance_lookup)
+    
+    skip_create_options  = { :question_id => prompt.question_id, :prompt_id => prompt.id, :skipper_id=> self.id, :time_viewed => time_viewed, :appearance_id => @a.id} 
+
+    prompt_skip = skips.create!(skip_create_options.merge(options))
+
   end
 end

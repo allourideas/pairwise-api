@@ -53,9 +53,7 @@ class PromptsController < InheritedResources::Base
     @prompt = @question.prompts.find(params[:id])
 
     time_viewed = params['params']['time_viewed']
-
     visitor_identifier = params['params']['auto']
-    
     appearance_lookup = params['params']['appearance_lookup']
     
     case direction
@@ -71,6 +69,7 @@ class PromptsController < InheritedResources::Base
     respond_to do |format|
       if successful
 	#catchup_marketplace_ids = [120, 117, 1, 116]
+	#TODO refactor into question model
 	if @question.uses_catchup?
 	      logger.info("Question #{@question.id} is using catchup algorithm!")
 	      next_prompt = @question.pop_prompt_queue
@@ -125,12 +124,45 @@ class PromptsController < InheritedResources::Base
     authenticate
     logger.info "#{current_user.inspect} is skipping."
     @question = Question.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id], :include => [{ :left_choice => :item }, { :right_choice => :item }])
+    @prompt = @question.prompts.find(params[:id]) #, :include => [{ :left_choice => :item }, { :right_choice => :item }])
+
+    time_viewed = params['params']['time_viewed']
+    raise "time_viewed cannot be nil" if time_viewed.nil?
+
+    visitor_identifier = params['params']['auto']
+    raise "visitor identifier cannot be nil" if visitor_identifier.nil?
+    appearance_lookup = params['params']['appearance_lookup']
+    raise "appearance_lookup cannot be nil" if appearance_lookup.nil?
+
+    skip_reason = params['params']['skip_reason'] # optional parameter
     
 
     respond_to do |format|
-      if @skip = current_user.record_skip(params['params']['auto'], @prompt)
-        format.xml { render :xml =>  @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text]), :status => :ok }
+      if @skip = current_user.record_skip(visitor_identifier, appearance_lookup, @prompt, time_viewed, :skip_reason => skip_reason)
+
+	if @question.uses_catchup?
+	      logger.info("Question #{@question.id} is using catchup algorithm!")
+	      @next_prompt = @question.pop_prompt_queue
+	      if @next_prompt.nil?
+		      logger.info("Catchup prompt cache miss! Nothing in prompt_queue")
+		      @next_prompt = @question.catchup_choose_prompt
+	      end
+	      @question.send_later :add_prompt_to_queue
+	else
+		@next_prompt = @question.picked_prompt
+	end
+
+
+        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+        @a = current_user.record_appearance(visitor, @next_prompt)
+         
+	appearance_id = Proc.new { |options| options[:builder].tag!('appearance_id', @a.lookup) }
+      
+	visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
+        visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
+
+
+        format.xml { render :xml =>  @question.picked_prompt.to_xml(:procs => [appearance_id, visitor_votes, visitor_ideas],:methods => [:left_choice_text, :right_choice_text]), :status => :ok }
         format.json { render :json => @question.picked_prompt.to_json, :status => :ok }
       else
         format.xml { render :xml => @skip, :status => :unprocessable_entity }

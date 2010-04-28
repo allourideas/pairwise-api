@@ -47,7 +47,7 @@ describe Visitor do
   it "should be able to skip a prompt" do
     #@prompt = @question.prompts.first
     @prompt.should_not be_nil
-    v = @v.skip! @prompt
+    v = @v.skip! @appearance.lookup, @prompt, 304
   end
 
   it "should accurately update score counts after vote" do

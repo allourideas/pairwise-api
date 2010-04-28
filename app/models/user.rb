@@ -45,10 +45,9 @@ class User < ActiveRecord::Base
   end
 
   
-  def record_skip(visitor_identifier, prompt)
+  def record_skip(visitor_identifier, appearance_lookup, prompt, time_viewed, options = {})
     visitor = visitors.find_or_create_by_identifier(visitor_identifier)
-    question = prompt.question
-    visitor.skip!(prompt)
+    visitor.skip!(appearance_lookup, prompt, time_viewed, options)
   end
   
   def activate_question(question_id, options)
