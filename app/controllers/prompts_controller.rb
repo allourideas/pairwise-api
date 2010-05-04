@@ -144,8 +144,11 @@ class PromptsController < InheritedResources::Base
 	      logger.info("Question #{@question.id} is using catchup algorithm!")
 	      @next_prompt = @question.pop_prompt_queue
 	      if @next_prompt.nil?
+		      @question.record_prompt_cache_miss
 		      logger.info("Catchup prompt cache miss! Nothing in prompt_queue")
 		      @next_prompt = @question.catchup_choose_prompt
+	      else
+		      @question.record_prompt_cache_hit
 	      end
 	      @question.send_later :add_prompt_to_queue
 	else

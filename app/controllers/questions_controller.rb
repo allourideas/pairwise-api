@@ -64,6 +64,9 @@ class QuestionsController < InheritedResources::Base
 	      if @p.nil?
 		      logger.info("Catchup prompt cache miss! Nothing in prompt_queue")
 		      @p = @question.catchup_choose_prompt
+		      @question.record_prompt_cache_miss
+	      else
+		      @question.record_prompt_cache_hit
 	      end
 	      @question.send_later :add_prompt_to_queue
 

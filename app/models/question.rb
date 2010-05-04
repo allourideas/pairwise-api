@@ -240,7 +240,6 @@ class Question < ActiveRecord::Base
 
   def density
       # slow code, only to be run by cron job once at night
-      the_prompts = prompts.find(:all, :include => ['left_choice', 'right_choice'])
 
       seed_seed_sum = 0
       seed_seed_total = 0
@@ -254,7 +253,8 @@ class Question < ActiveRecord::Base
       nonseed_nonseed_sum= 0
       nonseed_nonseed_total= 0
 
-      the_prompts.each do |p|
+      #the_prompts = prompts.find(:all, :include => ['left_choice', 'right_choice'])
+      prompts.find_each(:include => ['left_choice', 'right_choice']) do |p|
 	      if p.left_choice.user_created == false && p.right_choice.user_created == false
 		      seed_seed_sum += p.appearances.size
 		      seed_seed_total +=1
@@ -317,7 +317,22 @@ class Question < ActiveRecord::Base
 	  prompt = prompt_id.nil? ? nil : Prompt.find(prompt_id.to_i)
   end
 
+  def record_prompt_cache_miss
+	  $redis.incr(self.pq_key + "_" + Time.now.to_date.to_s + "_"+ "misses")
+	  $redis.expire(self.pq_key, 24*60*60 * 3) #Expire in three days
+  end
 
+  def record_prompt_cache_hit
+	  $redis.incr(self.pq_key + "_" + Time.now.to_date.to_s + "_"+ "hits")
+	  $redis.expire(self.pq_key, 24*60*60 * 3) #Expire in three days
+  end
+
+  def get_prompt_cache_misses(date)
+	  $redis.get(self.pq_key + "_" + date.to_s + "_"+ "misses")
+  end
+  def get_prompt_cache_hits(date)
+	  $redis.get(self.pq_key + "_" + date.to_s + "_"+ "hits")
+  end
 
 
 

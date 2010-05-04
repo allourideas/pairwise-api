@@ -352,6 +352,25 @@ namespace :test_api do
 	end
 
 
+	#catchup specific 
+	if question.uses_catchup?
+		misses = question.get_prompt_cache_misses(Date.yesterday).to_i
+		hits = question.get_prompt_cache_hits(Date.yesterday).to_i
+
+		
+		yesterday_votes = question.appearances.count(:conditions => ['date(created_at) = ?', Date.yesterday])
+
+		if misses + hits != yesterday_votes
+		     error_msg += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_votes}, Actual: #{misses+hits}\n"
+		end
+
+		miss_rate = misses.to_f / yesterday_votes.to_f
+		if miss_rate > 0.1
+		     error_msg += "Error! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}\n"
+		end
+	end
+
+
 	if error_bool
 	   error_msg += "Question #{question.id}: 2*wins = #{2*total_wins}, total votes = #{total_votes}, vote_count = #{question.votes_count}\n"
 	end
@@ -416,12 +435,16 @@ namespace :test_api do
 			 "     The prompt count matches the expected number of prompts ( num_choices ^2 - num choices) for each question\n" +
 			 "     All Vote objects have an associated appearance object\n" +
 			 "     All Vote objects have an client response time < calculated server roundtrip time\n" 
+			 "     More than 90% of prompts on catchup algorithm questions were served from cache\n" 
 
 	print success_msg
 
 	CronMailer.deliver_info_message(CRON_EMAIL, "Test of API Vote Consistency passed", success_msg)
      else
      	CronMailer.deliver_info_message("#{CRON_EMAIL},#{ERRORS_EMAIL}", "Error! Failure of API Vote Consistency " , error_msg)
+
+	puts "There were errors: "
+	puts error_msg
 
 	unless bad_choices.blank?
 
