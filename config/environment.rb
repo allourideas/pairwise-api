@@ -52,5 +52,6 @@ Rails::Initializer.run do |config|
   config.gem 'delayed_job',
     :version => '2.0.3'
   config.gem 'redis'
+    :version => '1.0.7'
 end
 
