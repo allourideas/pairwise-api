@@ -155,14 +155,26 @@ class QuestionsController < InheritedResources::Base
   end
   def export
     type = params[:type]
+    response_type = params[:response_type]
 
-    if type == 'votes'
-    	export_votes
-    elsif type == 'items'
-    	export_items
+    if response_type == 'redis'
+	    redis_key = params[:redis_key]
     else
-	render :text => "Error! Specify a type of export"
+	    render :text => "Error! The only export type supported currently is local through redis!" and return
     end
+    
+    if type.nil?
+	render :text => "Error! Specify a type of export" and return
+    end
+
+    @question = current_user.questions.find(params[:id])
+
+    @question.send_later :export_and_delete, type, 
+	                        :response_type => response_type, :redis_key => redis_key, :delete_at => 3.days.from_now
+
+
+    render :text => "Ok! Please wait for the response (as specified by your response_type)"
+
 #    export_type = params[:export_type]
 #    export_format = params[:export_format] #CSV always now, could expand to xml later
   end
@@ -326,57 +338,6 @@ class QuestionsController < InheritedResources::Base
   end
 
   protected 
-  def export_votes
-    @question = Question.find(params[:id])
-
-    outfile = "ideamarketplace_#{@question.id}_votes" + Time.now.strftime("%m-%d-%Y") + ".csv"
-    headers = ['Vote ID', 'Session ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text',
-	    	'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at']
-    @votes = @question.votes
-    csv_data = FasterCSV.generate do |csv|
-       csv << headers	
-       @votes.each do |v|
-	       prompt = v.prompt
-	       # these may not exist
-	       loser_data = v.loser_choice.nil? ? "" : "'#{v.loser_choice.data.strip}'"
-	       left_id = v.prompt.nil? ? "" : v.prompt.left_choice_id
-	       right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
-
-	       csv << [ v.id, v.voter_id, v.question_id, v.choice_id, "\'#{v.choice.data.strip}'", v.loser_choice_id, loser_data,
-		       v.prompt_id, left_id, right_id, v.created_at, v.updated_at] 
-       end
-    end
-
-    send_data(csv_data,
-        :type => 'text/csv; charset=iso-8859-1; header=present',
-      :disposition => "attachment; filename=#{outfile}")
-  end
-
-  def export_items
-    @question = Question.find(params[:id], :include => [:choices, :prompts])
-
-    outfile = "ideamarketplace_#{@question.id}_ideas_" + Time.now.strftime("%m-%d-%Y") + ".csv"
-    headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Score','User Submitted', 'Idea Creator ID', 
-	    	'Created at', 'Last Activity', 'Active',  'Local Identifier', 
-		'Prompts on Left', 'Prompts on Right', 'Prompts Count']
-
-    csv_data = FasterCSV.generate do |csv|
-       csv << headers	
-
-       #ensure capital format for true and false
-       @question.choices.each do |c|
-             user_submitted = (c.item.creator != @question.creator) ? "TRUE" : "FALSE"
-
-	       csv << [c.question_id, c.id, "'#{c.data.strip}'", c.wins, c.losses, c.score, user_submitted , c.item.creator_id, 
-		        c.created_at, c.updated_at, c.active,  c.local_identifier, 
-		       c.prompts_on_the_left(true).size, c.prompts_on_the_right(true).size, c.prompts_count]
-       end
-    end
-
-    send_data(csv_data,
-        :type => 'text/csv; charset=iso-8859-1; header=present',
-      :disposition => "attachment; filename=#{outfile}")
-  end
 end
 
 class String

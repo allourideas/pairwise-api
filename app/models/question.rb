@@ -17,6 +17,7 @@ class Question < ActiveRecord::Base
     end
   end
   has_many :votes
+  has_many :skips
   has_many :densities
   has_many :appearances
  
@@ -332,6 +333,98 @@ class Question < ActiveRecord::Base
   end
   def get_prompt_cache_hits(date)
 	  $redis.get(self.pq_key + "_" + date.to_s + "_"+ "hits")
+  end
+
+  def export_and_delete(type, options={})
+	  delete_at = options.delete(:delete_at)
+	  filename = export(type, options)
+
+	  File.send_at(delete_at, :delete, filename)
+	  filename
+  end
+
+  def export(type, options = {})
+
+    case type
+    when 'votes'
+	 outfile = "ideamarketplace_#{self.id}_votes.csv"
+
+	 headers = ['Vote ID', 'Session ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text',
+		    'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at', 'Response Time (ms)']
+    
+    when 'ideas'
+	 outfile = "ideamarketplace_#{self.id}_ideas.csv"
+         headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score',
+	       'User Submitted', 'Idea Creator ID', 'Created at', 'Last Activity', 'Active',  'Local Identifier', 
+		'Appearances on Left', 'Appearances on Right']
+    when 'skips'
+         outfile = "ideamarketplace_#{self.id}_skips.csv"
+         headers = ['Skip ID', 'Session ID', 'Question ID','Left Choice ID', 'Left Choice Text', 
+	            'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Appearance ID', 'Reason',
+		    'Created at', 'Updated at', 'Response Time (ms)']
+    else 
+	 raise "Unsupported export type: #{type}"
+    end
+
+    filename = File.join(File.expand_path(Rails.root), "public", "system", "exports", 
+			 self.id.to_s, Digest::SHA1.hexdigest(outfile + rand(10000000).to_s) + "_" + outfile)
+
+    FileUtils::mkdir_p(File.dirname(filename))
+    csv_data = FasterCSV.open(filename, "w") do |csv|
+       csv << headers	
+
+       case type
+       when 'votes'
+
+         self.votes.find_each(:include => [:prompt, :choice, :loser_choice]) do |v|
+	       prompt = v.prompt
+	       # these may not exist
+	       loser_data = v.loser_choice.nil? ? "" : "'#{v.loser_choice.data.strip}'"
+	       left_id = v.prompt.nil? ? "" : v.prompt.left_choice_id
+	       right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
+
+	       csv << [ v.id, v.voter_id, v.question_id, v.choice_id, "\'#{v.choice.data.strip}'", v.loser_choice_id, loser_data,
+		       v.prompt_id, left_id, right_id, v.created_at, v.updated_at, v.time_viewed] 
+	 end
+
+       when 'ideas'
+         self.choices.each do |c|
+             user_submitted = c.user_created ? "TRUE" : "FALSE"
+	     left_prompts_ids = c.prompts_on_the_left.ids_only
+	     right_prompts_ids = c.prompts_on_the_right.ids_only
+
+	     left_appearances = self.appearances.count(:conditions => {:prompt_id => left_prompts_ids})
+	     right_appearances = self.appearances.count(:conditions => {:prompt_id => right_prompts_ids})
+
+	     num_skips = self.skips.count(:conditions => {:prompt_id => left_prompts_ids + right_prompts_ids})
+
+	       csv << [c.question_id, c.id, "'#{c.data.strip}'", c.wins, c.losses, num_skips, c.score,
+		       user_submitted , c.item.creator_id, c.created_at, c.updated_at, c.active,  c.local_identifier, 
+		       left_appearances, right_appearances]
+         end
+       when 'skips'
+	       
+          self.skips.find_each(:include => :prompt) do |s|
+	       prompt = s.prompt
+	       csv << [ s.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, 
+		       s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.appearance_id, s.skip_reason,
+		       s.created_at, s.updated_at, s.time_viewed] 
+         end
+       end
+
+    end
+
+    if options[:response_type] == 'redis'
+
+	    if options[:redis_key].nil?
+		    raise "No :redis_key specified"
+	    end
+
+	    $redis.lpush(options[:redis_key], filename)
+    #TODO implement response_type == 'email' for use by customers of the API (not local)
+    end
+
+    filename
   end
 
 

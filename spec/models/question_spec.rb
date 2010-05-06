@@ -51,6 +51,7 @@ describe Question do
     prompt = q.catchup_choose_prompt
     prompt.active?.should == true
   end
+
   
   context "catchup algorithm" do 
 	  before(:all) do
@@ -127,10 +128,95 @@ describe Question do
 
 		  @catchup_q.pop_prompt_queue.should == nil
 	  end
+  end
 
+  context "exporting data" do
+	  before(:each) do
+		  user = Factory.create(:user)
+		  @question = Factory.create(:aoi_question, :site => user, :creator => user.default_visitor)
+
+	  end
+	  
+
+	  it "should export vote data to a csv file" do
+		  filename = @question.export('votes')
+
+		  filename.should_not be nil
+		  filename.should match /.*ideamarketplace_#{@question.id}_votes[.]csv$/
+		  File.exists?(filename).should be_true
+		  # Not specifying exact file syntax, it's likely to change frequently
+		  #
+		  rows = FasterCSV.read(filename)
+		  rows.first.should include("Vote ID")
+		  rows.first.should_not include("Idea ID")
+		  File.delete(filename).should be_true
+
+	  end
+
+	  it "should notify redis after completing an export, if redis option set" do
+		  redis_key = "test_key123"
+		  $redis.del(redis_key) # clear if key exists already
+		  filename = @question.export('votes', :response_type => 'redis', :redis_key => redis_key)
+
+		  filename.should_not be nil
+		  filename.should match /.*ideamarketplace_#{@question.id}_votes[.]csv$/
+		  File.exists?(filename).should be_true
+		  $redis.lpop(redis_key).should == filename
+
+		  # Not specifying exact file syntax, it's likely to change frequently
+		  $redis.del(redis_key) # clean up
+
+	  end
+	  it "should email question owner after completing an export, if email option set" do
+		  #TODO 
+	  end
+
+	  it "should export skip data to a csv file" do 
+		  filename = @question.export('skips')
+
+		  filename.should_not be nil
+		  filename.should match /.*ideamarketplace_#{@question.id}_skips[.]csv$/
+		  File.exists?(filename).should be_true
+
+		  # Not specifying exact file syntax, it's likely to change frequently
+		  #
+		  rows = FasterCSV.read(filename)
+		  rows.first.should include("Skip ID")
+		  rows.first.should_not include("Idea ID")
+		  File.delete(filename).should_not be_nil 
+
+
+	  end
+
+	  it "should export idea data to a csv file" do
+		  filename = @question.export('ideas')
+
+		  filename.should_not be nil
+		  filename.should match /.*ideamarketplace_#{@question.id}_ideas[.]csv$/
+		  File.exists?(filename).should be_true
+		  # Not specifying exact file syntax, it's likely to change frequently
+		  #
+		  rows = FasterCSV.read(filename)
+		  rows.first.should include("Idea ID")
+		  rows.first.should_not include("Skip ID")
+		  File.delete(filename).should_not be_nil
+
+	  end
+
+	  it "should raise an error when given an unsupported export type" do
+		  lambda { @question.export("blahblahblah") }.should raise_error
+	  end
+
+	  it "should export data and schedule a job to delete export after X days" do
+		  Delayed::Job.delete_all
+		  filename = @question.export_and_delete('votes', :delete_at => 2.days.from_now)
+
+		  Delayed::Job.count.should == 1
+		  Delayed::Job.delete_all
+		  File.delete(filename).should_not be_nil
+
+	  end
 
   end
 
-  
-  #q = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
 end
