@@ -350,12 +350,13 @@ class Question < ActiveRecord::Base
 	 outfile = "ideamarketplace_#{self.id}_votes.csv"
 
 	 headers = ['Vote ID', 'Session ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text',
-		    'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at', 'Response Time (ms)']
+		    'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at', 
+		    'Response Time (s)', 'Session Identifier']
     
     when 'ideas'
 	 outfile = "ideamarketplace_#{self.id}_ideas.csv"
          headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score',
-	       'User Submitted', 'Idea Creator ID', 'Created at', 'Last Activity', 'Active',  'Local Identifier', 
+	       'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active',  'Local Identifier', 
 		'Appearances on Left', 'Appearances on Right']
     when 'skips'
          outfile = "ideamarketplace_#{self.id}_skips.csv"
@@ -384,7 +385,8 @@ class Question < ActiveRecord::Base
 	       right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
 
 	       csv << [ v.id, v.voter_id, v.question_id, v.choice_id, "\'#{v.choice.data.strip}'", v.loser_choice_id, loser_data,
-		       v.prompt_id, left_id, right_id, v.created_at, v.updated_at, v.time_viewed] 
+		       v.prompt_id, left_id, right_id, v.created_at, v.updated_at, 
+		       v.time_viewed.to_f / 1000.0 , v.voter.identifier] 
 	 end
 
        when 'ideas'
@@ -421,6 +423,7 @@ class Question < ActiveRecord::Base
 	    end
 
 	    $redis.lpush(options[:redis_key], filename)
+	    $redis.expire(options[:redis_key], 24*60*60 * 3) #Expire in three days
     #TODO implement response_type == 'email' for use by customers of the API (not local)
     end
 
