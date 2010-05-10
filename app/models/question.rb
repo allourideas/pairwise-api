@@ -356,7 +356,7 @@ class Question < ActiveRecord::Base
     when 'ideas'
 	 outfile = "ideamarketplace_#{self.id}_ideas.csv"
          headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score',
-	       'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active',  'Local Identifier', 
+	       'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active',  
 		'Appearances on Left', 'Appearances on Right']
     when 'skips'
          outfile = "ideamarketplace_#{self.id}_skips.csv"
@@ -401,7 +401,7 @@ class Question < ActiveRecord::Base
 	     num_skips = self.skips.count(:conditions => {:prompt_id => left_prompts_ids + right_prompts_ids})
 
 	       csv << [c.question_id, c.id, "'#{c.data.strip}'", c.wins, c.losses, num_skips, c.score,
-		       user_submitted , c.item.creator_id, c.created_at, c.updated_at, c.active,  c.local_identifier, 
+		       user_submitted , c.item.creator_id, c.created_at, c.updated_at, c.active,
 		       left_appearances, right_appearances]
          end
        when 'skips'
