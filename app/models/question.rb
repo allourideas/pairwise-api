@@ -350,7 +350,7 @@ class Question < ActiveRecord::Base
 	 outfile = "ideamarketplace_#{self.id}_votes.csv"
 
 	 headers = ['Vote ID', 'Session ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text',
-		    'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at', 
+		    'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Appearance ID',
 		    'Response Time (s)', 'Session Identifier']
     
     when 'ideas'
@@ -358,11 +358,11 @@ class Question < ActiveRecord::Base
          headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score',
 	       'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active',  
 		'Appearances on Left', 'Appearances on Right']
-    when 'skips'
-         outfile = "ideamarketplace_#{self.id}_skips.csv"
-         headers = ['Skip ID', 'Session ID', 'Question ID','Left Choice ID', 'Left Choice Text', 
+    when 'non_votes'
+         outfile = "ideamarketplace_#{self.id}_non_votes.csv"
+         headers = ['Record Type', 'Record ID', 'Session ID', 'Question ID','Left Choice ID', 'Left Choice Text', 
 	            'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Appearance ID', 'Reason',
-		    'Created at', 'Updated at', 'Response Time (ms)']
+		    'Created at', 'Updated at', 'Response Time (s)', 'Session Identifier']
     else 
 	 raise "Unsupported export type: #{type}"
     end
@@ -377,15 +377,15 @@ class Question < ActiveRecord::Base
        case type
        when 'votes'
 
-         self.votes.find_each(:include => [:prompt, :choice, :loser_choice]) do |v|
+         self.votes.find_each(:include => [:prompt, :choice, :loser_choice, :voter]) do |v|
 	       prompt = v.prompt
 	       # these may not exist
 	       loser_data = v.loser_choice.nil? ? "" : "'#{v.loser_choice.data.strip}'"
 	       left_id = v.prompt.nil? ? "" : v.prompt.left_choice_id
 	       right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
 
-	       csv << [ v.id, v.voter_id, v.question_id, v.choice_id, "\'#{v.choice.data.strip}'", v.loser_choice_id, loser_data,
-		       v.prompt_id, left_id, right_id, v.created_at, v.updated_at, 
+	       csv << [ v.id, v.voter_id, v.question_id, v.choice_id, "'#{v.choice.data.strip}'", v.loser_choice_id, loser_data,
+		       v.prompt_id, left_id, right_id, v.created_at, v.updated_at, v.appearance_id,
 		       v.time_viewed.to_f / 1000.0 , v.voter.identifier] 
 	 end
 
@@ -404,14 +404,30 @@ class Question < ActiveRecord::Base
 		       user_submitted , c.item.creator_id, c.created_at, c.updated_at, c.active,
 		       left_appearances, right_appearances]
          end
-       when 'skips'
+       when 'non_votes'
 	       
-          self.skips.find_each(:include => :prompt) do |s|
-	       prompt = s.prompt
-	       csv << [ s.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, 
-		       s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.appearance_id, s.skip_reason,
-		       s.created_at, s.updated_at, s.time_viewed] 
-         end
+	  self.appearances.find_each(:include => [:skip, :vote, :voter]) do |a|
+		  # we only display skips and orphaned appearances in this csv file
+		  unless a.vote.nil?
+			  next
+		  end
+		  
+		  #If no skip and no vote, this is an orphaned appearance
+		  if a.skip.nil?
+	              prompt = a.prompt
+	              csv << [ "Orphaned Appearance", a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, 
+		           a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'N/A', 'N/A',
+		           a.created_at, a.updated_at, 'N/A', a.voter.identifier] 
+			  
+		  else
+	          #If this appearance belongs to a skip, show information on the skip instead
+		      s = a.skip
+	              prompt = s.prompt
+	              csv << [ "Skip", s.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, 
+		           s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.appearance_id, s.skip_reason,
+		           s.created_at, s.updated_at, s.time_viewed.to_f / 1000.0 , s.skipper.identifier] 
+		  end
+	  end
        end
 
     end
@@ -421,9 +437,9 @@ class Question < ActiveRecord::Base
 	    if options[:redis_key].nil?
 		    raise "No :redis_key specified"
 	    end
-
+	    #The client should use blpop to listen for a key
+	    #The client is responsible for deleting the redis key (auto expiration results failure in testing)
 	    $redis.lpush(options[:redis_key], filename)
-	    $redis.expire(options[:redis_key], 24*60*60 * 3) #Expire in three days
     #TODO implement response_type == 'email' for use by customers of the API (not local)
     end
 

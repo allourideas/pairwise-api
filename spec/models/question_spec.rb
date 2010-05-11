@@ -62,7 +62,7 @@ describe Question do
 		  @catchup_q.save!
 
 		  100.times.each do |num|
-			  user.create_choice("visitor identifier", @catchup_q, {:data => num, :local_identifier => "exmaple"})
+			  user.create_choice("visitor identifier", @catchup_q, {:data => num.to_s, :local_identifier => "exmaple"})
 		  end
 	  end
 	  it "should choose an active prompt using catchup algorithm on a large number of choices" do 
@@ -131,10 +131,32 @@ describe Question do
   end
 
   context "exporting data" do
-	  before(:each) do
+	  before(:all) do
 		  user = Factory.create(:user)
 		  @question = Factory.create(:aoi_question, :site => user, :creator => user.default_visitor)
+		  @question.it_should_autoactivate_ideas = true
+		  @question.save!
 
+                  visitor = user.visitors.find_or_create_by_identifier('visitor identifier')
+		  100.times.each do |num|
+			  user.create_choice(visitor.identifier, @question, {:data => num.to_s, :local_identifier => "example creator"})
+		  end
+
+		  200.times.each do |num|
+			  @p = @question.picked_prompt
+
+			  @a = user.record_appearance(visitor, @p)
+
+			  choice = rand(3)
+			  case choice
+			  when 0
+			    user.record_vote(visitor.identifier, @a.lookup, @p, rand(2), rand(1000))
+			  when 1
+			    user.record_skip(visitor.identifier, @a.lookup, @p, rand(1000))
+			  when 2
+			     #this is an orphaned appearance, so do nothing
+			  end
+		  end
 	  end
 	  
 
@@ -162,27 +184,28 @@ describe Question do
 		  filename.should match /.*ideamarketplace_#{@question.id}_votes[.]csv$/
 		  File.exists?(filename).should be_true
 		  $redis.lpop(redis_key).should == filename
-
-		  # Not specifying exact file syntax, it's likely to change frequently
 		  $redis.del(redis_key) # clean up
+		  File.delete(filename).should be_true
 
 	  end
 	  it "should email question owner after completing an export, if email option set" do
 		  #TODO 
 	  end
 
-	  it "should export skip data to a csv file" do 
-		  filename = @question.export('skips')
+	  it "should export non vote data to a csv file" do 
+		  filename = @question.export('non_votes')
 
 		  filename.should_not be nil
-		  filename.should match /.*ideamarketplace_#{@question.id}_skips[.]csv$/
+		  filename.should match /.*ideamarketplace_#{@question.id}_non_votes[.]csv$/
 		  File.exists?(filename).should be_true
 
 		  # Not specifying exact file syntax, it's likely to change frequently
 		  #
 		  rows = FasterCSV.read(filename)
-		  rows.first.should include("Skip ID")
+		  rows.first.should include("Record ID")
+		  rows.first.should include("Record Type")
 		  rows.first.should_not include("Idea ID")
+		  puts filename
 		  File.delete(filename).should_not be_nil 
 
 
@@ -199,6 +222,7 @@ describe Question do
 		  rows = FasterCSV.read(filename)
 		  rows.first.should include("Idea ID")
 		  rows.first.should_not include("Skip ID")
+		  puts filename
 		  File.delete(filename).should_not be_nil
 
 	  end

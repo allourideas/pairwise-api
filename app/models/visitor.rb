@@ -43,6 +43,7 @@ class Visitor < ActiveRecord::Base
     
     skip_create_options  = { :question_id => prompt.question_id, :prompt_id => prompt.id, :skipper_id=> self.id, :time_viewed => time_viewed, :appearance_id => @a.id} 
 
+    #the most common optional reason is 'skip_reason', probably want to refactor to make time viewed an optional parameter
     prompt_skip = skips.create!(skip_create_options.merge(options))
 
   end
