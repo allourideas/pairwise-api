@@ -218,6 +218,7 @@ namespace :test_api do
       error_msg = ""
 
       bad_choices = []
+      bad_votes = []
       questions.each do |question|
 
 	total_wins =0
@@ -386,6 +387,12 @@ namespace :test_api do
 	     error_msg += "Error! There are #{votes_without_appearances} votes without associated appearance objects."
      end
 
+     skips_without_appearances= Skip.count(:conditions => {:appearance_id => nil})
+     if (skips_without_appearances > 0)
+	     error_msg += "Error! There are #{skips_without_appearances} skips without associated appearance objects."
+     end
+
+
      recording_client_time_start_date = Vote.find(:all, :conditions => 'time_viewed IS NOT NULL', :order => 'created_at', :limit => 1).first.created_at
 
      Vote.find_each(:batch_size => 1000, :include => :appearance) do |v|
@@ -409,8 +416,10 @@ namespace :test_api do
 		     error_msg += the_error_msg
 		     print the_error_msg
 
+		     bad_votes << v.id
+
              elsif v.time_viewed.nil?
-		     if v.created_at > recording_client_time_start_date 
+		     if v.created_at > recording_client_time_start_date && v.missing_response_time_exp != 'invalid'
 	                the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, does not have a client response, even though it should! Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}, Client side response time: #{v.time_viewed}\n"
 			error_msg += the_error_msg
 	                print the_error_msg
@@ -452,6 +461,11 @@ namespace :test_api do
 	unless bad_choices.blank?
 
 		puts "Here's a list of choice ids that you may want to modify: #{bad_choices.uniq.inspect}"
+
+	end
+	unless bad_votes.blank?
+
+		puts "Here's a list of vote ids that you may want to modify: #{bad_votes.uniq.inspect}"
 
 	end
 	print error_msg
