@@ -357,6 +357,9 @@ namespace :test_api do
 		misses = question.get_prompt_cache_misses(Date.yesterday).to_i
 		hits = question.get_prompt_cache_hits(Date.yesterday).to_i
 
+		question.expire_prompt_cache_tracking_keys(Date.yesterday)
+
+
 		
 		yesterday_votes = question.appearances.count(:conditions => ['date(created_at) = ?', Date.yesterday])
 

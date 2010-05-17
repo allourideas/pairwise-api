@@ -342,12 +342,10 @@ class Question < ActiveRecord::Base
 
   def record_prompt_cache_miss
 	  $redis.incr(self.pq_key + "_" + Time.now.to_date.to_s + "_"+ "misses")
-	  $redis.expire(self.pq_key, 24*60*60 * 3) #Expire in three days
   end
 
   def record_prompt_cache_hit
 	  $redis.incr(self.pq_key + "_" + Time.now.to_date.to_s + "_"+ "hits")
-	  $redis.expire(self.pq_key, 24*60*60 * 3) #Expire in three days
   end
 
   def get_prompt_cache_misses(date)
@@ -356,6 +354,13 @@ class Question < ActiveRecord::Base
   def get_prompt_cache_hits(date)
 	  $redis.get(self.pq_key + "_" + date.to_s + "_"+ "hits")
   end
+
+
+  def expire_prompt_cache_tracking_keys(date, expire_time = 24*60*60 * 3) # default expires in three days
+	  $redis.expire(self.pq_key + "_" + date.to_s + "_"+ "hits", expire_time)
+	  $redis.expire(self.pq_key + "_" + date.to_s + "_"+ "misses", expire_time)
+  end
+
 
   def export_and_delete(type, options={})
 	  delete_at = options.delete(:delete_at)
