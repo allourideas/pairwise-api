@@ -57,22 +57,8 @@ class QuestionsController < InheritedResources::Base
     @question = Question.find(params[:id])
     visitor_identifier = params[:visitor_identifier]
     unless params[:barebones]
-      if params[:algorithm] && params[:algorithm] == "catchup"
-	      logger.info("Question #{@question.id} requested catchup algorithm!")
-
-	      @p = @question.pop_prompt_queue
-	      if @p.nil?
-		      logger.info("Catchup prompt cache miss! Nothing in prompt_queue")
-		      @p = @question.catchup_choose_prompt
-		      @question.record_prompt_cache_miss
-	      else
-		      @question.record_prompt_cache_hit
-	      end
-	      @question.send_later :add_prompt_to_queue
-
-      else
-	      @p = @question.picked_prompt
-      end
+      
+      @p = @question.choose_prompt(:algorithm => params[:algorithm])
 
       # we sometimes request a question when no prompt is displayed
       # TODO It would be a good idea to find these places and treat them like barebones

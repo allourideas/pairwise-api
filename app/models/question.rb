@@ -29,6 +29,28 @@ class Question < ActiveRecord::Base
     choices_count
   end
    
+  def choose_prompt(options = {})
+
+	  if self.uses_catchup? || options[:algorithm] == "catchup"
+	      logger.info("Question #{self.id} is using catchup algorithm!")
+	      next_prompt = self.pop_prompt_queue
+	      if next_prompt.nil?
+		      logger.info("DEBUG Catchup prompt cache miss! Nothing in prompt_queue")
+		      next_prompt = self.catchup_choose_prompt
+		      record_prompt_cache_miss
+	      else
+		      record_prompt_cache_hit
+	      end
+	      self.send_later :add_prompt_to_queue
+	      return next_prompt
+	  else
+	      #Standard choose prompt at random
+              next_prompt = self.picked_prompt
+	      return next_prompt
+	  end
+          
+  end
+
  #TODO: generalize for prompts of rank > 2
  #TODO: add index for rapid finding
  def picked_prompt(rank = 2)

@@ -68,28 +68,15 @@ class PromptsController < InheritedResources::Base
     #@prompt.choices.each(&:compute_score!)
     respond_to do |format|
       if successful
-	#catchup_marketplace_ids = [120, 117, 1, 116]
-	#TODO refactor into question model
-	if @question.uses_catchup?
-	      logger.info("Question #{@question.id} is using catchup algorithm!")
-	      next_prompt = @question.pop_prompt_queue
-	      if next_prompt.nil?
-		      logger.info("Catchup prompt cache miss! Nothing in prompt_queue")
-		      next_prompt = @question.catchup_choose_prompt
-	      end
-	      @question.send_later :add_prompt_to_queue
-	else
-		next_prompt = @question.picked_prompt
-	end
-
+        
+	next_prompt = @question.choose_prompt
 
         visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
         @a = current_user.record_appearance(visitor, next_prompt)
          
 	appearance_id = Proc.new { |options| options[:builder].tag!('appearance_id', @a.lookup) }
-      
 	visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
-      visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
+        visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
 
         format.xml { render :xml => next_prompt.to_xml(:procs => [appearance_id, visitor_votes, visitor_ideas], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
         format.json { render :json => next_prompt.to_json(:procs => [appearance_id, visitor_votes, visitor_ideas], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }

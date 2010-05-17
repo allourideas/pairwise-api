@@ -59,12 +59,20 @@ describe Question do
 		  @catchup_q = Factory.create(:aoi_question, :site => user, :creator => user.default_visitor)
 
 		  @catchup_q.it_should_autoactivate_ideas = true
+		  @catchup_q.uses_catchup = true
 		  @catchup_q.save!
 
 		  100.times.each do |num|
 			  user.create_choice("visitor identifier", @catchup_q, {:data => num.to_s, :local_identifier => "exmaple"})
 		  end
 	  end
+
+
+	  it "should create a delayed job after requesting a prompt" do
+		  proc { @catchup_q.choose_prompt}.should change(Delayed::Job, :count).by(1)
+	  end
+
+
 	  it "should choose an active prompt using catchup algorithm on a large number of choices" do 
 		  @catchup_q.reload
 		  # Sanity check, 2 extra choices are autocreated when empty question created
