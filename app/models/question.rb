@@ -378,7 +378,7 @@ class Question < ActiveRecord::Base
 
 	 headers = ['Vote ID', 'Session ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text',
 		    'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Appearance ID',
-		    'Response Time (s)', 'Session Identifier']
+		    'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier']
     
     when 'ideas'
 	 outfile = "ideamarketplace_#{self.id}_ideas.csv"
@@ -389,7 +389,7 @@ class Question < ActiveRecord::Base
          outfile = "ideamarketplace_#{self.id}_non_votes.csv"
          headers = ['Record Type', 'Record ID', 'Session ID', 'Question ID','Left Choice ID', 'Left Choice Text', 
 	            'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Appearance ID', 'Reason',
-		    'Created at', 'Updated at', 'Response Time (s)', 'Session Identifier']
+		    'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier']
     else 
 	 raise "Unsupported export type: #{type}"
     end
@@ -411,9 +411,11 @@ class Question < ActiveRecord::Base
 	       left_id = v.prompt.nil? ? "" : v.prompt.left_choice_id
 	       right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
 
+	       time_viewed = v.time_viewed.nil? ? "NA": v.time_viewed.to_f / 1000.0
+
 	       csv << [ v.id, v.voter_id, v.question_id, v.choice_id, "'#{v.choice.data.strip}'", v.loser_choice_id, loser_data,
 		       v.prompt_id, left_id, right_id, v.created_at, v.updated_at, v.appearance_id,
-		       v.time_viewed.to_f / 1000.0 , v.voter.identifier] 
+		       time_viewed, v.missing_response_time_exp , v.voter.identifier] 
 	 end
 
        when 'ideas'
@@ -444,15 +446,17 @@ class Question < ActiveRecord::Base
 	              prompt = a.prompt
 	              csv << [ "Orphaned Appearance", a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, 
 		           a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'N/A', 'N/A',
-		           a.created_at, a.updated_at, 'N/A', a.voter.identifier] 
+		           a.created_at, a.updated_at, 'N/A', '', a.voter.identifier] 
 			  
 		  else
+	              
 	          #If this appearance belongs to a skip, show information on the skip instead
 		      s = a.skip
+		      time_viewed = s.time_viewed.nil? ? "NA": s.time_viewed.to_f / 1000.0
 	              prompt = s.prompt
 	              csv << [ "Skip", s.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, 
 		           s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.appearance_id, s.skip_reason,
-		           s.created_at, s.updated_at, s.time_viewed.to_f / 1000.0 , s.skipper.identifier] 
+		           s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier] 
 		  end
 	  end
        end
