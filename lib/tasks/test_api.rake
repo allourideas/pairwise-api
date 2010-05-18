@@ -46,14 +46,19 @@ namespace :test_api do
 
 	   start_date = Vote.find(:all, :conditions => 'loser_choice_id IS NOT NULL', :order => :created_at, :limit =>  1).first.created_at.to_date
 	   start_date.upto(Date.today) do |the_date|
-		   questions = Question.find(:all)
+		   questions = Question.find(:all, :conditions => ['created_at < ?', the_date])
 
 		   print the_date.to_s
 		   questions.each do |q|
-			   relevant_votes = q.votes.find(:all, :conditions => ['loser_choice_id IS NOT NULL AND created_at < ?', the_date])
+			   puts q.id
 			   relevant_choices = q.choices.find(:all, :conditions => ['created_at < ?', the_date])
 
 			   seed_choices = 0
+
+			   if relevant_choices == 0
+				   next
+				   #this question had not been created yet
+			   end
 
 			   relevant_choices.each do |c|
 				   if !c.user_created
@@ -74,9 +79,9 @@ namespace :test_api do
 			   nonseed_seed_sum= 0
 			   nonseed_nonseed_sum= 0
 
-			   relevant_votes.each do |v|
+			   q.appearances.find_each(:conditions => ['prompt_id IS NOT NULL AND created_at < ?', the_date]) do |a|
 
-				   p = v.prompt
+				   p = a.prompt
 				   if p.left_choice.user_created == false && p.right_choice.user_created == false
 					   seed_seed_sum += 1
 				   elsif p.left_choice.user_created == false && p.right_choice.user_created == true
@@ -100,7 +105,7 @@ namespace :test_api do
 				   d.question_id = q.id
 				   d.prompt_type = type.to_s
 				   d.value = average.nan? ? nil : average
-				    d.save!
+				   d.save!
 			   end
 
 			   puts "Seed_seed sum: #{seed_seed_sum}, seed_seed total num: #{seed_seed_total}"
