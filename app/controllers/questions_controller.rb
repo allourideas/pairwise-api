@@ -119,7 +119,7 @@ class QuestionsController < InheritedResources::Base
 
 
   def set_autoactivate_ideas_from_abroad
-    expire_page :action => :index
+    #expire_page :action => :index
     logger.info("INSIDE autoactivate ideas")
 
     

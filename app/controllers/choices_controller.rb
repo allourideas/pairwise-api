@@ -55,7 +55,7 @@ class ChoicesController < InheritedResources::Base
   
   def create_from_abroad
     authenticate
-    expire_page :action => :index
+    #expire_page :action => :index
     logger.info "inside create_from_abroad"
 
     @question = Question.find params[:question_id]
@@ -89,7 +89,7 @@ class ChoicesController < InheritedResources::Base
   
   def update_from_abroad
     authenticate
-    expire_page :action => :index
+    #expire_page :action => :index
     @question = current_user.questions.find(params[:question_id])
     @choice = @question.choices.find(params[:id])
     
