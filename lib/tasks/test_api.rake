@@ -211,8 +211,32 @@ namespace :test_api do
 
    desc "Generate density information for each question - should be run nightly"
    task(:generate_density_information => :environment) do
-	   Question.find(:all).each do |q|
+
+	   # calculating densities is expensive, so only do it for questions with new data
+	   question_ids = Vote.count(:conditions => ['date(created_at) = ?', Date.yesterday], :group => 'question_id').keys()
+
+	   Question.find(:all, :conditions => {:id => question_ids}).each do |q|
 		   q.save_densities!
+	   end
+
+	   # we can just copy the previous night's data for remaining questions
+	   
+	   Question.find(:all, :conditions => ['id NOT IN (?)', question_ids]).each do |q|
+		   densities = q.densities.find(:all, :conditions => ['date(created_at) = ?', Date.yesterday])
+
+
+		   densities.each do |d|
+			   new_d = d.clone
+			   new_d.created_at = new_d.updated_at = Time.now
+			   new_d.save!
+		   end
+
+		   if densities.blank?
+			   #fallback in case there wasn't a successful run yesterday
+			   q.save_densities!
+			   
+		   end
+
 	   end
    end
       

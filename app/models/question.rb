@@ -276,19 +276,40 @@ class Question < ActiveRecord::Base
       nonseed_nonseed_sum= 0
       nonseed_nonseed_total= 0
 
+      #cache some hashes to prevent tons of sql thrashing
+      num_appearances_by_prompt = self.appearances.count(:group => :prompt_id)
+
+
+      is_user_created = {}
+      self.choices.each do |c|
+	      is_user_created[c.id] = c.user_created
+      end
+
+
       #the_prompts = prompts.find(:all, :include => ['left_choice', 'right_choice'])
-      prompts.find_each(:include => ['left_choice', 'right_choice']) do |p|
-	      if p.left_choice.user_created == false && p.right_choice.user_created == false
-		      seed_seed_sum += p.appearances.size
+      prompts.find_each do |p|
+
+	      num_appearances = num_appearances_by_prompt[p.id]
+
+	      if num_appearances.nil?
+		      num_appearances = 0
+	      end
+
+	      left_user_created = is_user_created[p.left_choice_id]
+	      right_user_created = is_user_created[p.right_choice_id]
+
+
+	      if left_user_created == false && right_user_created == false
+		      seed_seed_sum += num_appearances
 		      seed_seed_total +=1
-	      elsif p.left_choice.user_created == false && p.right_choice.user_created == true
-		      seed_nonseed_sum += p.appearances.size
+	      elsif left_user_created == false && right_user_created == true
+		      seed_nonseed_sum += num_appearances
 		      seed_nonseed_total +=1
-	      elsif p.left_choice.user_created == true && p.right_choice.user_created == false
-		      nonseed_seed_sum += p.appearances.size
+	      elsif left_user_created == true && right_user_created == false
+		      nonseed_seed_sum += num_appearances
 		      nonseed_seed_total +=1
-	      elsif p.left_choice.user_created == true && p.right_choice.user_created == true
-		      nonseed_nonseed_sum += p.appearances.size
+	      elsif left_user_created == true && right_user_created == true
+		      nonseed_nonseed_sum += num_appearances
 		      nonseed_nonseed_total +=1
 	      end
       end
