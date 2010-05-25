@@ -10,6 +10,7 @@ class Choice < ActiveRecord::Base
   #validates_length_of :item, :maximum => 140
   
   has_many :votes
+  has_many :flags
   has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id"
   has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
   named_scope :active, :conditions => { :active => true }

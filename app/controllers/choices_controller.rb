@@ -3,6 +3,8 @@ class ChoicesController < InheritedResources::Base
   actions :show, :index, :create, :update
   belongs_to :question
   has_scope :active, :boolean => true, :only => :index
+
+  before_filter :authenticate, :only => [:flag]
   #caches_page :index
   
   def index
@@ -177,4 +179,36 @@ class ChoicesController < InheritedResources::Base
       end
     end
   end
+
+  def flag
+    @question = current_user.questions.find(params[:question_id])
+    @choice = @question.choices.find(params[:id])
+
+    flag_params = {:choice_id => params[:id].to_i, :question_id => params[:question_id].to_i, :site_id => current_user.id}
+
+    if explanation = params[:explanation] 
+	    flag_params.merge!({:explanation => explanation})
+		   
+    end
+    if visitor_identifier = params[:visitor_identifier]
+            visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+	    flag_params.merge!({:visitor_id => visitor.id})
+    end
+    respond_to do |format|
+	    if @choice.deactivate!
+                    flag = Flag.create!(flag_params)
+		    puts "I AM CREATING A FLAG FOR #{@choice.inspect}"
+		    format.xml { render :xml => @choice.to_xml, :status => :created }
+		    format.json { render :json => @choice.to_json, :status => :created }
+	    else
+		    format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
+		    format.json { render :json => @choice.to_json }
+	    end
+    end
+
+  end
+  
+
+
 end
+  
