@@ -107,7 +107,7 @@ class QuestionsController < InheritedResources::Base
       show! do |format|
         session['prompts_ids'] ||= []
         format.xml { 
-          render :xml => @question.to_xml(:methods => [:item_count, :votes_count])
+          render :xml => @question.to_xml(:methods => [:item_count])
         }
       end
     end
