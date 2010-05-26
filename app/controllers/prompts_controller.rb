@@ -67,9 +67,7 @@ class PromptsController < InheritedResources::Base
     
     #@prompt.choices.each(&:compute_score!)
     respond_to do |format|
-      if successful
-        
-	next_prompt = @question.choose_prompt
+      if successful && next_prompt = @question.choose_prompt
 
         visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
         @a = current_user.record_appearance(visitor, next_prompt)
@@ -111,6 +109,7 @@ class PromptsController < InheritedResources::Base
     authenticate
     logger.info "#{current_user.inspect} is skipping."
     @question = Question.find(params[:question_id])
+
     @prompt = @question.prompts.find(params[:id]) #, :include => [{ :left_choice => :item }, { :right_choice => :item }])
 
     time_viewed = params['params']['time_viewed']
@@ -125,23 +124,7 @@ class PromptsController < InheritedResources::Base
     
 
     respond_to do |format|
-      if @skip = current_user.record_skip(visitor_identifier, appearance_lookup, @prompt, time_viewed, :skip_reason => skip_reason)
-
-	if @question.uses_catchup?
-	      logger.info("Question #{@question.id} is using catchup algorithm!")
-	      @next_prompt = @question.pop_prompt_queue
-	      if @next_prompt.nil?
-		      @question.record_prompt_cache_miss
-		      logger.info("Catchup prompt cache miss! Nothing in prompt_queue")
-		      @next_prompt = @question.catchup_choose_prompt
-	      else
-		      @question.record_prompt_cache_hit
-	      end
-	      @question.send_later :add_prompt_to_queue
-	else
-		@next_prompt = @question.picked_prompt
-	end
-
+      if @skip = current_user.record_skip(visitor_identifier, appearance_lookup, @prompt, time_viewed, :skip_reason => skip_reason) && @next_prompt = @question.choose_prompt
 
         visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
         @a = current_user.record_appearance(visitor, @next_prompt)
@@ -152,11 +135,11 @@ class PromptsController < InheritedResources::Base
         visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
 
 
-        format.xml { render :xml =>  @question.picked_prompt.to_xml(:procs => [appearance_id, visitor_votes, visitor_ideas],:methods => [:left_choice_text, :right_choice_text]), :status => :ok }
-        format.json { render :json => @question.picked_prompt.to_json, :status => :ok }
+        format.xml { render :xml =>  @next_prompt.to_xml(:procs => [appearance_id, visitor_votes, visitor_ideas],:methods => [:left_choice_text, :right_choice_text]), :status => :ok }
+        format.json { render :json => @next_prompt.to_json, :status => :ok }
       else
-        format.xml { render :xml => @skip, :status => :unprocessable_entity }
-        format.json { render :json => @skip, :status => :unprocessable_entity }
+        format.xml { render :xml => @prompt.to_xml, :status => :conflict}
+        format.json { render :json => @prompt.to_xml, :status => :conflict}
       end
     end
   end

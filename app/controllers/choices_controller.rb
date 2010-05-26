@@ -80,7 +80,7 @@ class ChoicesController < InheritedResources::Base
         visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
 
         format.xml { render :xml => @choice.to_xml(:procs => [saved_choice_id, choice_status, visitor_votes, visitor_ideas]), :status => :ok }
-        # format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id, choice_status]), :status => :ok }
+	# TODO: Why are we rendering a question here? Is the prompt being used later on?
         format.json { render :json => @question.to_json(:procs => [saved_choice_id, choice_status]), :status => :ok }
       else
         format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
@@ -98,7 +98,6 @@ class ChoicesController < InheritedResources::Base
     respond_to do |format|
       if @choice.activate!
         logger.info "successfully activated choice #{@choice.inspect}"
-	Question.update_counters(@question.id, :inactive_choices_count => -1)
         format.xml { render :xml => true }
         format.json { render :json => true }
       else
@@ -121,7 +120,6 @@ class ChoicesController < InheritedResources::Base
         format.json { render :json => false }
       elsif @choice.deactivate!
         logger.info "successfully deactivated choice #{@choice.inspect}"
-	Question.update_counters(@question.id, :inactive_choices_count => 1 )
         format.xml { render :xml => true }
         format.json { render :json => true }
       else
@@ -197,7 +195,6 @@ class ChoicesController < InheritedResources::Base
     respond_to do |format|
 	    if @choice.deactivate!
                     flag = Flag.create!(flag_params)
-		    puts "I AM CREATING A FLAG FOR #{@choice.inspect}"
 		    format.xml { render :xml => @choice.to_xml, :status => :created }
 		    format.json { render :json => @choice.to_json, :status => :created }
 	    else
