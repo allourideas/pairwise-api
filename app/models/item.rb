@@ -4,6 +4,7 @@ class Item < ActiveRecord::Base
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
   
   named_scope :active, :conditions => { :active => true }
+  named_scope :with_creator_ids, lambda { |*args| {:conditions => {:creator_id=> args.first }} }
   
   # has_many :items_questions, :dependent => :destroy
   # has_many :questions, :through => :items_questions
