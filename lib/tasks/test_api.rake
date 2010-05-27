@@ -243,13 +243,98 @@ namespace :test_api do
    desc "Description here"
    task(:question_vote_consistency => :environment) do
       questions = Question.find(:all)
+      errors = []
+      successes = []
 
-      error_msg = ""
-
-      bad_choices = []
-      bad_votes = []
       questions.each do |question|
 
+	message, error_occurred = check_basic_balanced_stats(question)
+        #hack for now, get around to doing this with block /yield to get rid of duplication
+        if error_occurred
+	   errors << message
+        else
+	   successes << message
+        end
+
+
+        message, error_occurred = check_each_choice_appears_within_n_stddevs(question)
+        if error_occurred
+	   errors << message
+        else
+	   successes << message
+        end
+        
+	message, error_occurred = check_each_choice_equally_likely_to_appear_left_or_right(question)
+        if error_occurred
+	   errors << message
+        else
+	   successes << message
+        end
+	
+	
+			
+	message, error_occurred = check_object_counter_cache_values_match_actual_values(question)
+        if error_occurred
+	   errors << message
+        else
+	   successes << message
+        end
+
+
+	#catchup specific 
+	if question.uses_catchup?
+	     message, error_occurred = check_prompt_cache_hit_rate(question)
+             if error_occurred
+	        errors << message
+             else
+	        successes << message
+             end
+	end
+     end
+
+     message, error_occurred = ensure_all_votes_and_skips_have_unique_appearance
+     
+     if error_occurred
+	errors << message
+     else
+	successes << message
+     end
+
+     message, error_occurred = response_time_tests	
+
+     if error_occurred
+	errors << message
+     else
+	successes << message
+     end
+
+     email_text = "Conducted the following tests on API data and found the following results\n" +
+			 "For each of the #{questions.length} questions in the database: \n"
+     errors.each do |e|
+	email_text += "     Test FAILED: " + e + "\n"
+     end
+
+     successes.uniq.each do |s|
+	s.split("\n").each do |m| # some successes have several lines
+	   email_text += "     Test Passed: " + m + "\n"
+	end
+     end
+	 
+     puts email_text
+     
+     if errors.empty?
+	CronMailer.deliver_info_message(CRON_EMAIL, "Test of API Vote Consistency passed", email_text)
+     else
+     	CronMailer.deliver_info_message("#{CRON_EMAIL},#{ERRORS_EMAIL}", "Error! Failure of API Vote Consistency " , email_text)
+     end
+
+   end
+   def check_basic_balanced_stats(question)
+	error_message = ""
+	success_message = "2 x Total Wins = Total Votes\n" +
+			 "Total Votes (wins + losses) is Even\n" +
+			 "Total Votes (wins + losses) = 2 x the number of vote objects that belong to the question\n" +
+		         "Total generated prompts on left = Total generated prompts on right"
 	total_wins =0
 	total_votes =0
 	total_generated_prompts_on_left = 0
@@ -257,6 +342,7 @@ namespace :test_api do
 	total_scores_gte_fifty= 0
 	total_scores_lte_fifty= 0
 	error_bool = false
+
 	question.choices.each do |choice|
 			
 	    if choice.wins
@@ -277,19 +363,18 @@ namespace :test_api do
 	    delta = 0.001
 
 	    if (cached_score - generated_score).abs >= delta
-		 error_msg += "Error! The cached_score is not equal to the calculated score for choice #{choice.id}"
+		 error_message += "Error! The cached_score is not equal to the calculated score for choice #{choice.id}"
 
 		 print "This score is wrong! #{choice.id} , Question ID: #{question.id}, #{cached_score}, #{generated_score}, updated: #{choice.updated_at}\n"
 
-		 bad_choices << choice.id
 
 	    end
 
 	    if cached_score == 0.0 || cached_score == 100.0 || cached_score.nil?
-		 error_msg += "Error! The cached_score for choice #{choice.id} is exactly 0 or 100, the value: #{cached_score}"
+		 error_message += "Error! The cached_score for choice #{choice.id} is exactly 0 or 100, the value: #{cached_score}"
 		 print "Either 0 or 100 This score is wrong! #{choice.id} , Question ID: #{question.id}, #{cached_score}, #{generated_score}, updated: #{choice.updated_at}\n"
-		 bad_choices << choice.id
 	    end
+
 
 	    if cached_score >= 50
 		    total_scores_gte_fifty +=1
@@ -302,31 +387,40 @@ namespace :test_api do
         end
 	
 	if (2*total_wins != total_votes)
-		 error_msg += "Error 1: 2 x Total Wins != Total votes"
+		 error_message += "Error 1: 2 x Total Wins != Total votes"
 		 error_bool= true
 	end
 
 	if(total_votes % 2 != 0)
-		error_msg += "Error 2: Total votes is not Even!"
+		error_message += "Error 2: Total votes is not Even!"
 		error_bool= true
 	end
 
 	if(total_votes != 2* question.votes_count)
-		error_msg += "Error 3: Total votes != 2 x # vote objects"
+		error_message += "Error 3: Total votes != 2 x # vote objects"
 		error_bool = true
 	end
 
 	if(total_generated_prompts_on_right != total_generated_prompts_on_right)
-		error_msg += "Error 4: Total generated prompts on left != Total generated prompts on right"
+		error_message += "Error 4: Total generated prompts on left != Total generated prompts on right"
 		error_bool = true
 	end
 
 	if(total_scores_lte_fifty == question.choices.size || total_scores_gte_fifty == question.choices.size) && (total_scores_lte_fifty != total_scores_gte_fifty)
-		error_msg += "Error: The scores of all choices are either all above 50, or all below 50. This is probably wrong"
+		error_message += "Error: The scores of all choices are either all above 50, or all below 50. This is probably wrong"
 		error_bool = true
 		puts "Error score fifty: #{question.id}"
 	end
-
+	
+	if error_bool
+	   error_message += "Question #{question.id}: 2*wins = #{2*total_wins}, total votes = #{total_votes}, vote_count = #{question.votes_count}\n"
+	end
+        return error_message.blank? ? [success_message, false] : [error_message, true] 
+   end
+   def check_each_choice_appears_within_n_stddevs(question)
+	error_message =""
+	success_message = "Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question " +
+			 "(Note: this applies only to seed choices (not user submitted) and choices currently marked active)"
 
 	wins_by_choice_id = question.votes.active.count(:group => :choice_id)
 	losses_by_choice_id= question.votes.active.count(:conditions => "loser_choice_id IS NOT NULL", :group => :loser_choice_id)
@@ -339,6 +433,7 @@ namespace :test_api do
 	losses_hash.merge!(losses_by_choice_id)
 
 
+
 	appearances_by_choice_id = wins_hash.merge(losses_hash) do |key, oldval, newval| oldval + newval end
 
 	sum = total_appearances = appearances_by_choice_id.values.inject(0) {|sum, x| sum +=x}
@@ -349,157 +444,141 @@ namespace :test_api do
 
            appearances_by_choice_id.each do |choice_id, n_i| 
 		if (n_i < (mean - 6*stddev)) || (n_i > mean + 6 *stddev)
-			error_msg += "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question"
-			error_bool = true
+			error_message += "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question"
 		end
 	   end
 	end
-			
+
+        return error_message.blank? ? [success_message, false] : [error_message, true] 
+   end
+   def check_each_choice_equally_likely_to_appear_left_or_right(question)
+   	error_message = ""
+	success_message = "All choices have equal probability of appearing on left or right (within error params)"
+	question.choices.each do |c|
+	         left_prompts_ids = c.prompts_on_the_left.ids_only
+	         right_prompts_ids = c.prompts_on_the_right.ids_only
+
+	         left_appearances = question.appearances.count(:conditions => {:prompt_id => left_prompts_ids})
+	         right_appearances = question.appearances.count(:conditions => {:prompt_id => right_prompts_ids})
+
+		 n = left_appearances + right_appearances
+
+		 if n == 0
+		    next
+		 end
+		 est_p = right_appearances.to_f / n.to_f
+		 z = (est_p - 0.5).abs / Math.sqrt((0.5 * 0.5) / n.to_f)
+
+		 if z > 6 
+		 	error_message += "Error: Choice ID #{c.id} seems to favor one side: Left Appearances #{left_appearances}, Right Appearances: #{right_appearances}, z = #{z}\n"
+		 end
+	end
+        return error_message.blank? ? [success_message, false] : [error_message, true] 
+   end
+   def check_prompt_cache_hit_rate(question)
+	error_message = ""
+	success_message = "At least 90% of prompts on catchup algorithm questions were served from cache\n" 
+
+	misses = question.get_prompt_cache_misses(Date.yesterday).to_i
+	hits = question.get_prompt_cache_hits(Date.yesterday).to_i
+
+	question.expire_prompt_cache_tracking_keys(Date.yesterday)
+		
+	yesterday_votes = question.appearances.count(:conditions => ['date(created_at) = ?', Date.yesterday])
+
+	if misses + hits != yesterday_votes
+	     error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_votes}, Actual: #{misses+hits}\n"
+	end
+
+	miss_rate = misses.to_f / yesterday_votes.to_f
+	if miss_rate > 0.1
+	     error_message += "Error! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}\n"
+	end
+        return error_message.blank? ? [success_message, false] : [error_message, true] 
+   end
+
+   def check_object_counter_cache_values_match_actual_values(question)
+        error_message = ""
+        success_message = "All cached object values match actual values within database"
         # Checks that counter_cache is working as expected
 	cached_prompts_size = question.prompts.size
 	actual_prompts_size = question.prompts.count
 
 	if cached_prompts_size != actual_prompts_size
-		error_msg += "Error! Question #{question.id} has an inconsistent # of prompts! cached#: #{cached_prompts_size}, actual#: #{actual_prompts_size}\n"
+		error_message += "Error! Question #{question.id} has an inconsistent # of prompts! cached#: #{cached_prompts_size}, actual#: #{actual_prompts_size}\n"
 	end
 	
 	cached_votes_size = question.votes.size
 	actual_votes_size = question.votes.count
 
 	if cached_votes_size != actual_votes_size
-		error_msg += "Error! Question #{question.id} has an inconsistent # of votes! cached#: #{cached_votes_size}, actual#: #{actual_votes_size}\n"
+		error_message += "Error! Question #{question.id} has an inconsistent # of votes! cached#: #{cached_votes_size}, actual#: #{actual_votes_size}\n"
 	end
 	
 	cached_choices_size = question.choices.size
 	actual_choices_size = question.choices.count
 
 	if cached_choices_size != actual_choices_size
-		error_msg += "Error! Question #{question.id} has an inconsistent # of choices! cached#: #{cached_choices_size}, actual#: #{actual_choices_size}\n"
+		error_message+= "Error! Question #{question.id} has an inconsistent # of choices! cached#: #{cached_choices_size}, actual#: #{actual_choices_size}\n"
 	end
 
 	if cached_prompts_size != question.choices.size **2 - question.choices.size 
-		error_msg += "Error! Question #{question.id} has an incorrect number of prompts! Expected #{question.choices.size **2 - question.choices.size}, Actual: #{cached_prompts_size}\n"
+		error_message += "Error! Question #{question.id} has an incorrect number of prompts! Expected #{question.choices.size **2 - question.choices.size}, Actual: #{cached_prompts_size}\n"
 	end
-
-
-	#catchup specific 
-	if question.uses_catchup?
-		misses = question.get_prompt_cache_misses(Date.yesterday).to_i
-		hits = question.get_prompt_cache_hits(Date.yesterday).to_i
-
-		question.expire_prompt_cache_tracking_keys(Date.yesterday)
-
-
-		
-		yesterday_votes = question.appearances.count(:conditions => ['date(created_at) = ?', Date.yesterday])
-
-		if misses + hits != yesterday_votes
-		     error_msg += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_votes}, Actual: #{misses+hits}\n"
-		end
-
-		miss_rate = misses.to_f / yesterday_votes.to_f
-		if miss_rate > 0.1
-		     error_msg += "Error! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}\n"
-		end
-	end
-
-
-	if error_bool
-	   error_msg += "Question #{question.id}: 2*wins = #{2*total_wins}, total votes = #{total_votes}, vote_count = #{question.votes_count}\n"
-	end
-
-	error_bool = false
-     end
-
+        return error_message.blank? ? [success_message, false] : [error_message, true] 
+   end
+   
+   def ensure_all_votes_and_skips_have_unique_appearance
+     error_message = ""
+     success_message = "All vote and skip objects have an associated appearance object"
      votes_without_appearances= Vote.count(:conditions => {:appearance_id => nil})
      if (votes_without_appearances > 0)
-	     error_msg += "Error! There are #{votes_without_appearances} votes without associated appearance objects."
+	     error_message += "Error! There are #{votes_without_appearances} votes without associated appearance objects."
      end
 
      skips_without_appearances= Skip.count(:conditions => {:appearance_id => nil})
      if (skips_without_appearances > 0)
-	     error_msg += "Error! There are #{skips_without_appearances} skips without associated appearance objects."
+	     error_message += "Error! There are #{skips_without_appearances} skips without associated appearance objects."
      end
+     
+     return error_message.blank? ? [success_message, false] : [error_message, true] 
+   end
 
+   def response_time_tests
+     error_message = ""
+     success_message = "All Vote objects have an client response time < calculated server roundtrip time\n" 
 
      recording_client_time_start_date = Vote.find(:all, :conditions => 'time_viewed IS NOT NULL', :order => 'created_at', :limit => 1).first.created_at
 
      Vote.find_each(:batch_size => 1000, :include => :appearance) do |v|
-
 
 	     # Subtracting DateTime objects results in the difference in days
 	     server_response_time = v.created_at.to_f - v.appearance.created_at.to_f
 	     if server_response_time < 0
 	        the_error_msg = "Error! Vote #{v.id} was created before the appearance associated with it: Appearance id: #{v.appearance.id}, Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}\n"
 
-
-		error_msg += the_error_msg
-	        print the_error_msg
-
-		print "Error!"
+		error_message += the_error_msg
+		print "Error!" + the_error_msg
 	     end
 
 	     if v.time_viewed && v.time_viewed/1000 > server_response_time 
 		     the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}, Client side response time: #{v.time_viewed}\n"
 
-		     error_msg += the_error_msg
-		     print the_error_msg
-
-		     bad_votes << v.id
+		     error_message += the_error_msg
+	             print the_error_msg
 
              elsif v.time_viewed.nil?
 		     if v.created_at > recording_client_time_start_date && v.missing_response_time_exp != 'invalid'
 	                the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, does not have a client response, even though it should! Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}, Client side response time: #{v.time_viewed}\n"
-			error_msg += the_error_msg
+		        error_message += the_error_msg
 	                print the_error_msg
 		     end
 
 	     end
 
-
+       end
+	
+        return error_message.blank? ? [success_message, false] : [error_message, true] 
      end
-            
-     if error_msg.blank?
-        
-	success_msg = "Conducted the following tests on API data and found no inconsistencies.\n" +
-			 "For each of the #{questions.length} questions in the database: \n" +
-			 "     2 x Total Wins = Total Votes\n" +
-			 "     Total Votes (wins + losses) is Even\n" +
-			 "     Total Votes (wins + losses) = 2 x the number of vote objects that belong to the question\n" +
-		         "     Total generated prompts on left = Total generated prompts on right\n" + 
-		         "     Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question\n" +
-			 "             Note: this applies only to seed choices (not user submitted) and choices currently marked active\n" + 
-			 "     The cached score value matches the calculated score value for each choice\n" +
-			 "     The cached vote count matches the actual number of votes for each question\n" +
-			 "     The cached choices count matches the actual number of choices for each question\n" +
-			 "     The cached prompt count matches the actual number of prompts for each question\n" +
-			 "     The prompt count matches the expected number of prompts ( num_choices ^2 - num choices) for each question\n" +
-			 "     All Vote objects have an associated appearance object\n" +
-			 "     All Vote objects have an client response time < calculated server roundtrip time\n" 
-			 "     More than 90% of prompts on catchup algorithm questions were served from cache\n" 
-
-	print success_msg
-
-	CronMailer.deliver_info_message(CRON_EMAIL, "Test of API Vote Consistency passed", success_msg)
-     else
-     	CronMailer.deliver_info_message("#{CRON_EMAIL},#{ERRORS_EMAIL}", "Error! Failure of API Vote Consistency " , error_msg)
-
-	puts "There were errors: "
-	puts error_msg
-
-	unless bad_choices.blank?
-
-		puts "Here's a list of choice ids that you may want to modify: #{bad_choices.uniq.inspect}"
-
-	end
-	unless bad_votes.blank?
-
-		puts "Here's a list of vote ids that you may want to modify: #{bad_votes.uniq.inspect}"
-
-	end
-	print error_msg
-     end
-
-   end
 end
 
