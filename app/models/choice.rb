@@ -45,7 +45,7 @@ class Choice < ActiveRecord::Base
     votes_count || 0
   end
   
-  after_create :generate_prompts
+  #after_create :generate_prompts
   def before_create
     puts "just got inside choice#before_create. is set to active? #{self.active?}"
     unless item
