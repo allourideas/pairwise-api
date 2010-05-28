@@ -26,13 +26,13 @@ class Question < ActiveRecord::Base
   attr_accessor :ideas
     
   def item_count
-    choices_count
+    choices.size
   end
    
   def choose_prompt(options = {})
 
           # if there is one or fewer active choices, we won't be able to find a prompt
-	  if self.choices_count - self.inactive_choices_count <= 1 
+	  if self.choices.size - self.inactive_choices_count <= 1 
 		  return nil
 	  end
 

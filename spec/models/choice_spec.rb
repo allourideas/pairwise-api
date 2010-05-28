@@ -24,8 +24,9 @@ describe Choice do
   end
   
   it "should generate prompts after creation" do
+    prev_choices = @question.choices.size
     @question.prompts.should_not be_empty
-    choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+    proc {choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))}.should change(@question.prompts, :count).by(prev_choices*2)
     @question.prompts.should_not be_empty
   end
 
@@ -33,5 +34,32 @@ describe Choice do
     choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
     choice1.deactivate!
     choice1.should_not be_active
+  end
+
+  it "should update a question's counter cache on creation" do
+	  @question.choices.size.should == 2
+          choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+	  @question.reload
+	  @question.choices.size.should == 3
+  end
+
+  it "should update a question's counter cache on activation" do
+	  prev_inactive = @question.inactive_choices_count
+          choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+	  choice1.deactivate!
+	  @question.reload
+	  @question.inactive_choices_count.should == prev_inactive + 1
+	  choice1.activate!
+	  @question.reload
+	  @question.inactive_choices_count.should == prev_inactive
+	  choice1.should be_active
+  end
+
+  it "should update a question's counter cache on deactivation" do 
+	  prev_inactive = @question.inactive_choices_count
+          choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+	  choice1.deactivate!
+	  @question.reload
+	  @question.inactive_choices_count.should == prev_inactive + 1
   end
 end

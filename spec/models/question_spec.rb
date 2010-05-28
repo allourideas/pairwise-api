@@ -52,6 +52,15 @@ describe Question do
     prompt.active?.should == true
   end
 
+  it "should return nil if there is no possible prompt to choose" do
+    q = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
+    q.choices.first.deactivate!
+    q.reload
+    q.choose_prompt.should be_nil
+
+  end
+
+
   
   context "catchup algorithm" do 
 	  before(:all) do
