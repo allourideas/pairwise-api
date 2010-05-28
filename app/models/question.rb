@@ -31,6 +31,11 @@ class Question < ActiveRecord::Base
    
   def choose_prompt(options = {})
 
+          # if there is one or fewer active choices, we won't be able to find a prompt
+	  if self.choices_count - self.inactive_choices_count <= 1 
+		  return nil
+	  end
+
 	  if self.uses_catchup? || options[:algorithm] == "catchup"
 	      logger.info("Question #{self.id} is using catchup algorithm!")
 	      next_prompt = self.pop_prompt_queue

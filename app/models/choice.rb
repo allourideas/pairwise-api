@@ -1,5 +1,4 @@
 class Choice < ActiveRecord::Base
-  include Activation
   
   belongs_to :question, :counter_cache => true
   belongs_to :item
@@ -10,6 +9,7 @@ class Choice < ActiveRecord::Base
   #validates_length_of :item, :maximum => 140
   
   has_many :votes
+  has_many :flags
   has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id"
   has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
   named_scope :active, :conditions => { :active => true }
@@ -102,6 +102,22 @@ class Choice < ActiveRecord::Base
 
   end
 
+  def activate!
+    (self.active = true)
+    self.save!
+    Question.update_counters(self.question_id, :inactive_choices_count => -1)
+  end
+  
+  def suspend!
+    (self.active = false)
+    self.save!
+  end
+  
+  def deactivate!
+    (self.active = false)
+    self.save!
+    Question.update_counters(self.question_id, :inactive_choices_count => 1)
+  end
   
   protected
 

@@ -3,6 +3,8 @@ class ChoicesController < InheritedResources::Base
   actions :show, :index, :create, :update
   belongs_to :question
   has_scope :active, :boolean => true, :only => :index
+
+  before_filter :authenticate, :only => [:flag]
   #caches_page :index
   
   def index
@@ -78,7 +80,7 @@ class ChoicesController < InheritedResources::Base
         visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
 
         format.xml { render :xml => @choice.to_xml(:procs => [saved_choice_id, choice_status, visitor_votes, visitor_ideas]), :status => :ok }
-        # format.xml { render :xml => @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text], :procs => [saved_choice_id, choice_status]), :status => :ok }
+	# TODO: Why are we rendering a question here? Is the prompt being used later on?
         format.json { render :json => @question.to_json(:procs => [saved_choice_id, choice_status]), :status => :ok }
       else
         format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
@@ -96,7 +98,6 @@ class ChoicesController < InheritedResources::Base
     respond_to do |format|
       if @choice.activate!
         logger.info "successfully activated choice #{@choice.inspect}"
-	Question.update_counters(@question.id, :inactive_choices_count => -1)
         format.xml { render :xml => true }
         format.json { render :json => true }
       else
@@ -119,7 +120,6 @@ class ChoicesController < InheritedResources::Base
         format.json { render :json => false }
       elsif @choice.deactivate!
         logger.info "successfully deactivated choice #{@choice.inspect}"
-	Question.update_counters(@question.id, :inactive_choices_count => 1 )
         format.xml { render :xml => true }
         format.json { render :json => true }
       else
@@ -177,4 +177,35 @@ class ChoicesController < InheritedResources::Base
       end
     end
   end
+
+  def flag
+    @question = current_user.questions.find(params[:question_id])
+    @choice = @question.choices.find(params[:id])
+
+    flag_params = {:choice_id => params[:id].to_i, :question_id => params[:question_id].to_i, :site_id => current_user.id}
+
+    if explanation = params[:explanation] 
+	    flag_params.merge!({:explanation => explanation})
+		   
+    end
+    if visitor_identifier = params[:visitor_identifier]
+            visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+	    flag_params.merge!({:visitor_id => visitor.id})
+    end
+    respond_to do |format|
+	    if @choice.deactivate!
+                    flag = Flag.create!(flag_params)
+		    format.xml { render :xml => @choice.to_xml, :status => :created }
+		    format.json { render :json => @choice.to_json, :status => :created }
+	    else
+		    format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
+		    format.json { render :json => @choice.to_json }
+	    end
+    end
+
+  end
+  
+
+
 end
+  

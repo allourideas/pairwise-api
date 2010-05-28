@@ -60,6 +60,17 @@ class QuestionsController < InheritedResources::Base
       
       @p = @question.choose_prompt(:algorithm => params[:algorithm])
 
+      if @p.nil?
+	      # could not find a prompt to choose
+	      # I don't know the best http code for the api to respond, but 409 seems the closes
+	      respond_to do |format|
+              format.xml { render :xml => @question, :status => :conflict  and return} 
+              format.json { render :json => @question, :status => :conflict and return} 
+	      end
+
+      end
+      # @question.create_new_appearance - returns appearance, which we can then get the prompt from.
+      # At the very least add 'if create_appearance is true,
       # we sometimes request a question when no prompt is displayed
       # TODO It would be a good idea to find these places and treat them like barebones
       if !visitor_identifier.blank? 
@@ -96,7 +107,7 @@ class QuestionsController < InheritedResources::Base
       show! do |format|
         session['prompts_ids'] ||= []
         format.xml { 
-          render :xml => @question.to_xml(:methods => [:item_count, :votes_count])
+          render :xml => @question.to_xml(:methods => [:item_count])
         }
       end
     end

@@ -4,6 +4,7 @@ describe Choice do
   
   it {should belong_to :question}
   it {should belong_to :item}
+  it {should have_many :flags}
   it {should validate_presence_of :question}
   
   before(:each) do
@@ -26,5 +27,11 @@ describe Choice do
     @question.prompts.should_not be_empty
     choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
     @question.prompts.should_not be_empty
+  end
+
+  it "should deactivate a choice" do
+    choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+    choice1.deactivate!
+    choice1.should_not be_active
   end
 end
