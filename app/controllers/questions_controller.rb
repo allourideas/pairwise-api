@@ -1,6 +1,7 @@
 require 'fastercsv'
 
 class QuestionsController < InheritedResources::Base
+  actions :all, :except => [ :show ]
   before_filter :authenticate
   respond_to :xml, :json
   respond_to :csv, :only => :export #leave the option for xml export here
@@ -55,61 +56,27 @@ class QuestionsController < InheritedResources::Base
 
   def show
     @question = Question.find(params[:id])
-    visitor_identifier = params[:visitor_identifier]
-    unless params[:barebones]
-      
-      @p = @question.choose_prompt(:algorithm => params[:algorithm])
 
-      if @p.nil?
-	      # could not find a prompt to choose
-	      # I don't know the best http code for the api to respond, but 409 seems the closes
-	      respond_to do |format|
-              format.xml { render :xml => @question, :status => :conflict  and return} 
-              format.json { render :json => @question, :status => :conflict and return} 
-	      end
+    begin
+        @question_optional_information = @question.get_optional_information(params)
+    rescue RuntimeError
+	respond_to do |format|
+           format.xml { render :xml => @question.to_xml, :status => :conflict and return} 
+	end
+    end
 
-      end
-      # @question.create_new_appearance - returns appearance, which we can then get the prompt from.
-      # At the very least add 'if create_appearance is true,
-      # we sometimes request a question when no prompt is displayed
-      # TODO It would be a good idea to find these places and treat them like barebones
-      if !visitor_identifier.blank? 
-         visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
-         @a = current_user.record_appearance(visitor, @p)
-	 logger.info("creating appearance!")
-      else 
-	 @a = nil
-      end
-      
-      left_choice_text = Proc.new { |options| options[:builder].tag!('left_choice_text', @p.left_choice.item.data) }
-      right_choice_text = Proc.new { |options| options[:builder].tag!('right_choice_text', @p.right_choice.item.data) }
-      picked_prompt_id = Proc.new { |options| options[:builder].tag!('picked_prompt_id', @p.id) }
-      appearance_id = Proc.new { |options| options[:builder].tag!('appearance_id', @a.lookup) }
-      
-      visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
-      visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
-      
-      the_procs = [left_choice_text, right_choice_text, picked_prompt_id]
+    optional_information = []
+    @question_optional_information.each do |key, value|
+      optional_information << Proc.new { |options| options[:builder].tag!(key, value)}
+    end
 
-      if @a
-	  the_procs << appearance_id
-	  the_procs << visitor_votes
-	  the_procs << visitor_ideas
-      end
-
-      show! do |format|
-        session['prompts_ids'] ||= []
-        format.xml { 
-          render :xml => @question.to_xml(:methods => [:item_count], :procs => the_procs)
-          }
-      end
-    else
-      show! do |format|
-        session['prompts_ids'] ||= []
-        format.xml { 
-          render :xml => @question.to_xml(:methods => [:item_count])
-        }
-      end
+    respond_to do |format|
+      format.xml { 
+        render :xml => @question.to_xml(:methods => [:item_count], :procs => optional_information)
+      }
+      format.js{
+      	render :json => @question.to_json(:methods => [:item_count], :procs => optional_information)
+      }
     end
   end
   

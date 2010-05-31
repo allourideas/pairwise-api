@@ -19,6 +19,8 @@ describe Question do
       :creator => @aoi_clone.default_visitor
       
     }
+
+    @question = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
     
   end
 
@@ -60,7 +62,52 @@ describe Question do
 
   end
 
+  it "should return nil if optional parameters are empty" do 
+    @question_optional_information = @question.get_optional_information(nil)
+    @question_optional_information.should be_empty
+  end
 
+  it "should return nil if optional parameters are nil" do
+    params = {"id" => '37'}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should be_empty
+  end
+
+  it "should return a hash with an prompt id when optional parameters contains 'with_prompt'" do 
+    params = {:id => 124, :with_prompt => true}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:picked_prompt_id) 
+    @question_optional_information[:picked_prompt_id].should be_an_instance_of(Fixnum)
+  end
+
+  it "should return a hash with an appearance hash when optional parameters contains 'with_appearance'" do
+    params = {:id => 124, :with_prompt => true, :with_appearance=> true, :visitor_identifier => 'jim'}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:appearance_id) 
+    @question_optional_information[:appearance_id].should be_an_instance_of(String)
+  end
+
+  it "should return a hash with two visitor stats when optional parameters contains 'with_visitor_stats'" do
+    params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim"}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:visitor_votes) 
+    @question_optional_information.should include(:visitor_ideas) 
+    @question_optional_information[:visitor_votes].should be_an_instance_of(Fixnum)
+    @question_optional_information[:visitor_ideas].should be_an_instance_of(Fixnum)
+  end
+  
+  it "should return a hash when optional parameters have more than one optional param " do
+    params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:visitor_votes) 
+    @question_optional_information.should include(:visitor_ideas) 
+    @question_optional_information[:visitor_votes].should be_an_instance_of(Fixnum)
+    @question_optional_information[:visitor_ideas].should be_an_instance_of(Fixnum)
+    @question_optional_information.should include(:picked_prompt_id) 
+    @question_optional_information[:picked_prompt_id].should be_an_instance_of(Fixnum)
+    @question_optional_information.should include(:appearance_id) 
+    @question_optional_information[:appearance_id].should be_an_instance_of(String)
+  end
   
   context "catchup algorithm" do 
 	  before(:all) do

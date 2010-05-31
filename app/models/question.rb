@@ -33,7 +33,7 @@ class Question < ActiveRecord::Base
 
           # if there is one or fewer active choices, we won't be able to find a prompt
 	  if self.choices.size - self.inactive_choices_count <= 1 
-		  return nil
+		  raise RuntimeError, "More than one choice needs to be active"
 	  end
 
 	  if self.uses_catchup? || options[:algorithm] == "catchup"
@@ -108,6 +108,37 @@ class Question < ActiveRecord::Base
    end
    normalize!(weights)
    weights
+ end
+
+ def get_optional_information(params)
+
+   return {} if params.nil?
+
+   result = {}
+   visitor_identifier = params[:visitor_identifier]
+   current_user = self.site
+
+   if params[:with_prompt]
+     @prompt = choose_prompt(:algorithm => params[:algorithm])
+     result.merge!({:picked_prompt_id => @prompt.id})
+
+     if params[:with_appearance] && visitor_identifier.present?
+       visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+       @appearance = current_user.record_appearance(visitor, @prompt)
+       result.merge!({:appearance_id => @appearance.lookup})
+     else
+       # throw some error
+     end
+   end
+
+   if params[:with_visitor_stats]
+      visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+      result.merge!(:visitor_votes => visitor.votes.count(:conditions => {:question_id => self.id}))
+      result.merge!(:visitor_ideas => visitor.items.count)
+   end
+
+   return result
+
  end
 
  def normalize!(weighted)
