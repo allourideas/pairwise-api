@@ -13,7 +13,7 @@ describe Question do
   it {should validate_presence_of :creator}
   
   before(:each) do
-    @aoi_clone = Factory.create(:user, :email => "pius@alum.mit.edu", :password => "password", :password_confirmation => "password", :id => 8)
+    @aoi_clone = Factory.create(:user,:password => "password", :password_confirmation => "password", :id => 8)
     @valid_attributes = {
       :site => @aoi_clone,
       :creator => @aoi_clone.default_visitor
@@ -21,44 +21,49 @@ describe Question do
     }
 
     @question = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
+    @question.it_should_autoactivate_ideas = true
+    @question.save!
+
+    2.times.each do |num|
+       @aoi_clone.create_choice("visitor identifier", @question, {:data => num.to_s, :local_identifier => "example"})
+    end
+
+    @question.reload
+
     
+  end
+  
+  it "should have 2 active choices" do
+    @question.choices.active.reload.size.should == 2
   end
 
   it "should create a new instance given valid attributes" do
     Question.create!(@valid_attributes)
   end
   
-  it "should be creatable by a user" do
+  it "should not create two default choices if none are provided" do
     q = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
-  end
-  
-  it "should create two default choices if none are provided" do
-    q = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
-    q.choices(true).size.should == 2
+    q.choices(true).size.should == 0
   end
   
   it "should generate prompts after choices are added" do
-    q = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
-    q.prompts(true).size.should == 2
+    @question.prompts(true).size.should == 2
   end
 
   it "should choose an active prompt randomly" do
-    q = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
-    prompt = q.picked_prompt
+    prompt = @question.picked_prompt
     prompt.active?.should == true
   end
 
   it "should choose an active prompt using catchup algorithm" do 
-    q = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
-    prompt = q.catchup_choose_prompt
+    prompt = @question.catchup_choose_prompt
     prompt.active?.should == true
   end
 
-  it "should return nil if there is no possible prompt to choose" do
-    q = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
-    q.choices.first.deactivate!
-    q.reload
-    q.choose_prompt.should be_nil
+  it "should raise runtime exception if there is no possible prompt to choose" do
+    @question.choices.first.deactivate!
+    @question.reload
+    lambda { @question.choose_prompt}.should raise_error(RuntimeError)
 
   end
 
@@ -121,6 +126,7 @@ describe Question do
 		  100.times.each do |num|
 			  user.create_choice("visitor identifier", @catchup_q, {:data => num.to_s, :local_identifier => "exmaple"})
 		  end
+		  @catchup_q.reload
 	  end
 
 
@@ -131,11 +137,11 @@ describe Question do
 
 	  it "should choose an active prompt using catchup algorithm on a large number of choices" do 
 		  @catchup_q.reload
-		  # Sanity check, 2 extra choices are autocreated when empty question created
-		  @catchup_q.choices.size.should == 102
+		  # Sanity check
+		  @catchup_q.choices.size.should == 100
 
 		  #the catchup algorithm depends on all prompts being generated automatically
-		  @catchup_q.prompts.size.should == 102 **2 - 102
+		  @catchup_q.prompts.size.should == 100 **2 - 100
 
 		  prompt = @catchup_q.catchup_choose_prompt
 		  prompt.active?.should == true

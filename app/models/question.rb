@@ -20,10 +20,17 @@ class Question < ActiveRecord::Base
   has_many :skips
   has_many :densities
   has_many :appearances
- 
-  #comment out to run bt import script! 
-  after_save :ensure_at_least_two_choices
+  
   attr_accessor :ideas
+  after_create :create_choices_from_ideas
+  def create_choices_from_ideas
+    if ideas.any?
+      ideas.each do |idea|
+        item = Item.create!(:data => idea.squish.strip, :creator => self.creator)
+	choices.create!(:item => item, :creator => self.creator, :active => true, :data => idea.squish.strip)
+      end
+    end
+  end
     
   def item_count
     choices.size
@@ -284,19 +291,6 @@ class Question < ActiveRecord::Base
   validates_presence_of :site, :on => :create, :message => "can't be blank"
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
   
-  def ensure_at_least_two_choices
-    the_ideas = (self.ideas.blank? || self.ideas.empty?) ? ['sample idea 1', 'sample idea 2'] : self.ideas
-    the_ideas << 'sample choice' if the_ideas.length < 2
-    if self.choices.empty?
-      the_ideas.each { |choice_text|
-        item = Item.create!({:data => choice_text, :creator => creator})
-        puts item.inspect
-        choice = choices.create!(:item => item, :creator => creator, :active => true, :data => choice_text)
-        puts choice.inspect
-      }
-    end
-  end
-
   def density
       # slow code, only to be run by cron job once at night
 
