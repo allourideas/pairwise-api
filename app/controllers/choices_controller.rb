@@ -74,8 +74,6 @@ class ChoicesController < InheritedResources::Base
           options[:builder].tag!('choice_status', the_status) }
         logger.info "successfully saved the choice #{@choice.inspect}"
 
-	Question.update_counters(@question.id, :inactive_choices_count => @choice.active? ? 0 : 1)
-
 	visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
         visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
 
@@ -203,6 +201,13 @@ class ChoicesController < InheritedResources::Base
 	    end
     end
 
+  end
+
+  def update
+    # prevent AttributeNotFound error and only update actual Choice columns, since we add extra information in 'show' method
+    choice_attributes = Choice.new.attribute_names
+    params[:choice] = params[:choice].delete_if {|key, value| !choice_attributes.include?(key)}
+    update!
   end
   
 

@@ -14,7 +14,12 @@ class Choice < ActiveRecord::Base
   has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
   named_scope :active, :conditions => { :active => true }
   named_scope :inactive, :conditions => { :active => false}
-  
+ 
+  after_save :update_questions_counter
+
+  def update_questions_counter
+    self.question.update_attribute(:inactive_choices_count, self.question.choices.inactive.length)
+  end 
   #attr_accessor :data
   
   def question_name
@@ -105,7 +110,6 @@ class Choice < ActiveRecord::Base
   def activate!
     (self.active = true)
     self.save!
-    Question.update_counters(self.question_id, :inactive_choices_count => -1)
   end
   
   def suspend!
@@ -116,7 +120,6 @@ class Choice < ActiveRecord::Base
   def deactivate!
     (self.active = false)
     self.save!
-    Question.update_counters(self.question_id, :inactive_choices_count => 1)
   end
   
   protected
