@@ -4,24 +4,25 @@ class ChoicesController < InheritedResources::Base
   belongs_to :question
   has_scope :active, :boolean => true, :only => :index
 
-  before_filter :authenticate, :only => [:flag]
+  before_filter :authenticate, :only => [:index, :flag]
   #caches_page :index
   
   def index
     if params[:limit]
-      @question = Question.find(params[:question_id])#, :include => :choices)
-      @question.reload
+      @question = Question.find(params[:question_id])
+
+      find_options = {:conditions => {:question_id => @question.id},
+		      :limit => params[:limit].to_i, 
+		      :order => 'score DESC', 
+		      :include => :item}
       
-      #should compute score after each win/loss
-      #@question.choices.each(&:compute_score!)
-      unless params[:include_inactive]
-        @choices = Choice.find(:all, :conditions => {:question_id => @question.id, :active => true}, :limit => params[:limit].to_i, :order => 'score DESC', :include => :item)
-      else
-        @choices = Choice.find(:all, :conditions => {:question_id => @question.id}, :limit => params[:limit].to_i, :order => 'score DESC', :include => :item)
-      end
+      find_options[:conditions].merge!(:active => true) if params[:include_inactive]
+      find_options.merge!(:offset => params[:offset]) if params[:offset]
+
+      @choices = Choice.find(:all, find_options)
+
     else
       @question = Question.find(params[:question_id], :include => :choices) #eagerloads ALL choices
-      #@question.choices.each(&:compute_score!)
       unless params[:include_inactive]
         @choices = @question.choices(true).active.find(:all, :include => :item)
       else
