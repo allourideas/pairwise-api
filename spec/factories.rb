@@ -39,6 +39,14 @@ Factory.define(:choice) do |f|
   f.creator {|c| c.association(:visitor, :site => c.question.site)}
 end
 
+Factory.define(:vote) do |f|
+  f.association :question, :factory => :aoi_question
+  f.prompt {|v|  v.question.prompts.first}
+  f.choice {|v|  v.prompt.left_choice}
+  f.loser_choice {|v|  v.prompt.right_choice}
+  f.voter {|v|  v.question.creator}
+end
+
 Factory.sequence :email do |n|
   "user#{n}@example.com"
 end

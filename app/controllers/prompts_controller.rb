@@ -5,7 +5,7 @@ class PromptsController < InheritedResources::Base
   has_scope :active, :boolean => true, :only => :index
   
   has_scope :voted_on_by
-  #before_filter :authenticate
+  before_filter :authenticate, :only => [:vote, :skip]
   
   
   def activate
@@ -23,64 +23,44 @@ class PromptsController < InheritedResources::Base
     end
   end
   
+  
+    # To record a vote 
+    #  required parameters - prompt id, ordinality, visitor_identifer?
+    #  optional params - visitor_identifier, appearance_lookup
+    # After recording vote, next prompt display parameters:
+    #   same as in show  - :with_prompt, with_appearance, with visitor_stats, etc
   def vote
-    #NOT IMPLEMENTED
-    @question = Question.find(params[:question_id])
+    @question = current_user.questions.find(params[:question_id])
     @prompt = @question.prompts.find(params[:id])
-    @choices = @prompt.choices.active
-    @choice = @choices[params[:index]]
-    respond_to do |format|
-      format.xml { render :xml => @choice.to_xml }
-      format.json { render :json => @choice.to_xml }
-    end
-  end
-  
-  def vote_left
-    vote_direction(:left)
-  end
-  
-  
-  def vote_right
-    vote_direction(:right)
-  end
-  
-  
-  def vote_direction(direction)
-    authenticate
-  
-    logger.info "#{current_user.inspect} is voting #{direction} at #{Time.now}."
-    @question = Question.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id])
-
-    time_viewed = params['params']['time_viewed']
-    visitor_identifier = params['params']['auto']
-    appearance_lookup = params['params']['appearance_lookup']
     
-    case direction
-    when :left
-      successful = c = current_user.record_vote(params['params']['auto'], appearance_lookup, @prompt, 0, time_viewed)
-    when :right
-      successful = c = current_user.record_vote(params['params']['auto'], appearance_lookup, @prompt, 1, time_viewed)
-    else
-      raise "need to specify either ':left' or ':right' as a direction"
+    vote_options = params[:vote] || {}
+    vote_options.merge!(:prompt => @prompt, :question => @question)
+
+    successful = object= current_user.record_vote(vote_options)
+    optional_information = []
+    if params[:next_prompt]
+       begin
+           params[:next_prompt].merge!(:with_prompt => true) # We always want to get the next possible prompt
+           @question_optional_information = @question.get_optional_information(params[:next_prompt])
+       rescue RuntimeError
+
+           respond_to do |format|
+              format.xml { render :xml => @prompt.to_xml, :status => :conflict and return} 
+           end
+       end
+       object = @question.prompts.find(@question_optional_information.delete(:picked_prompt_id))
+       @question_optional_information.each do |key, value|
+          optional_information << Proc.new { |options| options[:builder].tag!(key, value)}
+       end
     end
-    
-    #@prompt.choices.each(&:compute_score!)
+
     respond_to do |format|
-      if successful && next_prompt = @question.choose_prompt
-
-        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
-        @a = current_user.record_appearance(visitor, next_prompt)
-         
-	appearance_id = Proc.new { |options| options[:builder].tag!('appearance_id', @a.lookup) }
-	visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
-        visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
-
-        format.xml { render :xml => next_prompt.to_xml(:procs => [appearance_id, visitor_votes, visitor_ideas], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
-        format.json { render :json => next_prompt.to_json(:procs => [appearance_id, visitor_votes, visitor_ideas], :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+      if !successful.nil?
+        format.xml { render :xml => object.to_xml(:procs => optional_information , :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+        format.json { render :json => object.to_json(:procs => optional_information, :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
       else
-        format.xml { render :xml => c, :status => :unprocessable_entity }
-        format.json { render :json => c, :status => :unprocessable_entity }
+        format.xml { render :xml => @prompt.to_xml, :status => :unprocessable_entity }
+        format.json { render :json => @prompt.to_xml, :status => :unprocessable_entity }
       end
     end
   end
@@ -106,7 +86,6 @@ class PromptsController < InheritedResources::Base
   
   
   def skip
-    authenticate
     logger.info "#{current_user.inspect} is skipping."
     @question = Question.find(params[:question_id])
 
@@ -124,7 +103,17 @@ class PromptsController < InheritedResources::Base
     
 
     respond_to do |format|
-      if @skip = current_user.record_skip(visitor_identifier, appearance_lookup, @prompt, time_viewed, :skip_reason => skip_reason) && @next_prompt = @question.choose_prompt
+      if @skip = current_user.record_skip(visitor_identifier, appearance_lookup, @prompt, time_viewed, :skip_reason => skip_reason) 
+       
+       #This is not hte right way to do this. See def vote for a better example
+       begin
+          @next_prompt = @question.choose_prompt
+       rescue RuntimeError
+
+           respond_to do |format|
+              format.xml { render :xml => @prompt.to_xml, :status => :conflict and return} 
+           end
+       end
 
         visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
         @a = current_user.record_appearance(visitor, @next_prompt)

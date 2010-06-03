@@ -10,7 +10,6 @@ describe QuestionsController do
      before(:each) do
         @question = Factory.create(:aoi_question)
         sign_in_as(@user = @question.site)
-	@creator = @question.creator
      end
      it "responds with basic question information" do
          get :show, :id => @question.id, :format => "xml"

@@ -36,6 +36,12 @@ class Choice < ActiveRecord::Base
     save!
   end
   
+  def win!
+    self.votes_count += 1 rescue (self.votes_count = 1)
+    self.score = compute_score
+    save!
+  end
+  
   def wins_plus_losses
     #(prompts_on_the_left.collect(&:votes_count).sum + prompts_on_the_right.collect(&:votes_count).sum)
     #Prompt.sum('votes_count', :conditions => "left_choice_id = #{id} OR right_choice_id = #{id}")
@@ -70,11 +76,6 @@ class Choice < ActiveRecord::Base
   end
   
   def compute_score
-    # if wins_plus_losses == 0
-    #   return 0
-    # else
-    #   (wins.to_f / wins_plus_losses ) * 100
-    # end
     (wins.to_f+1)/(wins+1+losses+1) * 100
   end
   

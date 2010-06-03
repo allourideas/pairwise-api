@@ -13,7 +13,7 @@ ActionController::Routing::Routes.draw do |map|
 					    :object_info_totals_by_question_id => :get,
 				            :recent_votes_by_question_id => :get} do |question|
     question.resources :items
-    question.resources :prompts, :member => {:vote_left => :post, :vote_right => :post, :skip => :post, :vote => :post}, 
+    question.resources :prompts, :member => {:skip => :post, :vote => :post}, 
                        :collection => {:single => :get, :index => :get}
     question.resources :choices, :member => { :activate => :put, :suspend => :put, :update_from_abroad => :put, :deactivate_from_abroad => :put, :flag => :put}, :collection => {:create_from_abroad => :post}
   end

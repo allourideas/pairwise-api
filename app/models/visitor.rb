@@ -16,26 +16,25 @@ class Visitor < ActiveRecord::Base
     questions.include? question
   end
   
-  def vote_for!(appearance_lookup, prompt, ordinality, time_viewed)
-    @a = Appearance.find_by_lookup(appearance_lookup)
-    #make votefor fail if we cant find the appearance
-    choices = prompt.choices
-    choice = choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
-    other_choices = choices - [choice]
-    other_choices.each do |c| 
-	    c.lose!
+  def vote_for!(options)
+    return nil if !options || !options[:prompt] || !options[:direction]
+    
+    prompt = options.delete(:prompt)
+    ordinality = (options.delete(:direction) == "left") ? 0 : 1
+    
+    if options[:appearance_lookup] 
+       @appearance = prompt.appearances.find_by_lookup(options.delete(:appearance_lookup))
+       return nil unless @appearance # don't allow people to fake appearance lookups
+       options.merge!(:appearance_id => @appearance.id)
     end
     
+    choice = prompt.choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
+    other_choices = prompt.choices - [choice]
     loser_choice = other_choices.first
-    v = votes.create!(:question_id => prompt.question_id, :prompt_id => prompt.id, :voter_id=> self.id, :choice_id => choice.id, :loser_choice_id => loser_choice.id, :time_viewed => time_viewed, :appearance_id => @a.id)
+    
+    options.merge!(:question_id => prompt.question_id, :prompt_id => prompt.id, :voter_id=> self.id, :choice_id => choice.id, :loser_choice_id => loser_choice.id) 
 
-    # Votes count is a cached value, creating the vote above will increment it in the db, but to get the proper score, we need to increment it in the current object
-    # The updated votes_count object is not saved to the db, so we don't need to worry about double counting
-    # Alternatively, we could just do choice.reload, but that results in another db read
-    choice.votes_count +=1
-    choice.compute_score! #update score after win
-
-
+    v = votes.create!(options)
   end
   
   def skip!(appearance_lookup, prompt, time_viewed, options = {})
