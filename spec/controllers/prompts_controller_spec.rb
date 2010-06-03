@@ -35,7 +35,6 @@ describe PromptsController do
   describe "POST skip" do
     it "records a skip, responds with next prompt" do
       post :skip, :id => @prompt.id, :question_id => @question.id, :params => {:auto => @visitor, :time_viewed => 30, :appearance_lookup => @appearance.lookup}
-      assigns[:next_prompt].should_not == @prompt
       assigns[:next_prompt].should_not be_nil
       assigns[:a].should_not be_nil
       assigns[:a].should_not == @appearance
