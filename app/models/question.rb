@@ -24,7 +24,7 @@ class Question < ActiveRecord::Base
   attr_accessor :ideas
   after_create :create_choices_from_ideas
   def create_choices_from_ideas
-    if ideas.any?
+    if ideas && ideas.any?
       ideas.each do |idea|
         item = Item.create!(:data => idea.squish.strip, :creator => self.creator)
 	choices.create!(:item => item, :creator => self.creator, :active => true, :data => idea.squish.strip)

@@ -13,24 +13,10 @@ describe Question do
   it {should validate_presence_of :creator}
   
   before(:each) do
-    @aoi_clone = Factory.create(:user,:password => "password", :password_confirmation => "password", :id => 8)
-    @valid_attributes = {
-      :site => @aoi_clone,
-      :creator => @aoi_clone.default_visitor
-      
-    }
+   
+    @question = Factory.create(:aoi_question)
+    @aoi_clone = @question.site
 
-    @question = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
-    @question.it_should_autoactivate_ideas = true
-    @question.save!
-
-    2.times.each do |num|
-       @aoi_clone.create_choice("visitor identifier", @question, {:data => num.to_s, :local_identifier => "example"})
-    end
-
-    @question.reload
-
-    
   end
   
   it "should have 2 active choices" do
@@ -38,7 +24,8 @@ describe Question do
   end
 
   it "should create a new instance given valid attributes" do
-    Question.create!(@valid_attributes)
+    # Factory.attributes_for does not return associations, this is a good enough substitute
+    Question.create!(Factory.build(:question).attributes.symbolize_keys)
   end
   
   it "should not create two default choices if none are provided" do
@@ -116,15 +103,15 @@ describe Question do
   
   context "catchup algorithm" do 
 	  before(:all) do
-		  user = Factory.create(:user)
-		  @catchup_q = Factory.create(:aoi_question, :site => user, :creator => user.default_visitor)
+		  @catchup_q = Factory.create(:aoi_question)
 
 		  @catchup_q.it_should_autoactivate_ideas = true
 		  @catchup_q.uses_catchup = true
 		  @catchup_q.save!
 
-		  100.times.each do |num|
-			  user.create_choice("visitor identifier", @catchup_q, {:data => num.to_s, :local_identifier => "exmaple"})
+		  # 2 ideas already exist, so this will make an even hundred
+		  98.times.each do |num|
+			  @catchup_q.site.create_choice("visitor identifier", @catchup_q, {:data => num.to_s, :local_identifier => "exmaple"})
 		  end
 		  @catchup_q.reload
 	  end
@@ -202,8 +189,9 @@ describe Question do
 
   context "exporting data" do
 	  before(:all) do
-		  user = Factory.create(:user)
-		  @question = Factory.create(:aoi_question, :site => user, :creator => user.default_visitor)
+		  @question = Factory.create(:aoi_question)
+		  user = @question.site
+
 		  @question.it_should_autoactivate_ideas = true
 		  @question.save!
 
