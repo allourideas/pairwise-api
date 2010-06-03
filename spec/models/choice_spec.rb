@@ -8,12 +8,14 @@ describe Choice do
   it {should validate_presence_of :question}
   
   before(:each) do
-    @aoi_clone = Factory.create(:user, :email => "pius@alum.mit.edu", :password => "password", :password_confirmation => "password", :id => 8)
-    @johndoe = Factory.create(:visitor, :identifier => 'johndoe', :site => @aoi_clone)
-    @question = Question.create(:name => 'which do you like better?', :site => @aoi_clone, :creator => @johndoe)
+    @aoi_clone = Factory.create(:email_confirmed_user)
+    @visitor= Factory.create(:visitor, :site => @aoi_clone)
+    @question = Question.create(:name => 'which do you like better?', 
+				:site => @aoi_clone, 
+				:creator => @visitor)
     
     @valid_attributes = {
-      :creator => @johndoe,
+      :creator => @visitor,
       :question => @question,
       :data => 'hi there'
     }
@@ -23,11 +25,11 @@ describe Choice do
     Choice.create!(@valid_attributes)
   end
   
-  it "should generate prompts after creation" do
-    prev_choices = @question.choices.size
-    @question.prompts.should_not be_empty
-    proc {choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))}.should change(@question.prompts, :count).by(prev_choices*2)
-    @question.prompts.should_not be_empty
+  it "should generate prompts after two choices are created" do
+    proc {
+	  choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+          choice2 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+    }.should change(@question.prompts, :count).by(2)
   end
 
   it "should deactivate a choice" do
@@ -37,10 +39,13 @@ describe Choice do
   end
 
   it "should update a question's counter cache on creation" do
-	  @question.choices.size.should == 2
-          choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+	  @question.choices_count.should == 0
+	  @question.choices.size.should == 0
+          Choice.create!(@valid_attributes.merge(:data => '1234'))
 	  @question.reload
-	  @question.choices.size.should == 3
+	  @question.choices_count.should == 1
+	  @question.choices.size.should == 1
+	
   end
 
   it "should update a question's counter cache on activation" do

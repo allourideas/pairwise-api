@@ -7,13 +7,9 @@ describe PromptsController do
    end
   #   
    before(:each) do
-    @aoi_clone = Factory.create(:user)
-    sign_in_as(@user = Factory(:email_confirmed_user))
-    @johndoe = Factory.create(:visitor, :identifier => 'johndoe', :site => @aoi_clone)
-    @question = Factory.create(:question, :name => 'which do you like better?', :site => @aoi_clone, :creator => @aoi_clone.default_visitor)
-    @lc = Factory.create(:choice, :question => @question, :creator => @johndoe, :data => 'hello gorgeous')
-    @rc = Factory.create(:choice, :question => @question, :creator => @johndoe, :data => 'goodbye gorgeous')
-    @prompt = Factory.create(:prompt, :question => @question, :tracking => 'sample', :left_choice => @lc, :right_choice => @rc)
+    @question = Factory.create(:aoi_question)
+    sign_in_as(@aoi_clone = @question.site)
+    @prompt = @question.prompts.first
     
     @visitor = @aoi_clone.visitors.find_or_create_by_identifier("test_visitor_identifier")
     @appearance = @aoi_clone.record_appearance(@visitor, @prompt)

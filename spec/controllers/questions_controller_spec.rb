@@ -2,23 +2,22 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe QuestionsController do
   
-  # integrate_views
-  #   
      def sign_in_as(user)
        @controller.current_user = user
        return user
      end
-  #   
+
      before(:each) do
-        @user = Factory.create(:user, :email => "pius@alum.mit.edu", :password => "password", :password_confirmation => "password", :id => 8)
-        sign_in_as(@user = Factory(:email_confirmed_user))
-        @question = @user.create_question("foobarbaz", {:name => 'foo'})
+        @question = Factory.create(:aoi_question)
+        sign_in_as(@user = @question.site)
+	@creator = @question.creator
      end
      it "responds with basic question information" do
          get :show, :id => @question.id, :format => "xml"
 
          assigns[:question].should == @question
 	 @response.body.should have_tag("question")
+	 @response.code.should == "200"
      end
 
 
@@ -27,6 +26,7 @@ describe QuestionsController do
 
          assigns[:question].should == @question
 	 #@response.body.should be_nil
+	 @response.code.should == "200"
 	 @response.body.should have_tag("question")
 	 @response.body.should have_tag("picked_prompt_id")
 	 @response.body.should have_tag("appearance_id")
