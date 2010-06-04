@@ -16,7 +16,7 @@ class ChoicesController < InheritedResources::Base
 		      :order => 'score DESC', 
 		      :include => :item}
       
-      find_options[:conditions].merge!(:active => true) if params[:include_inactive]
+      find_options[:conditions].merge!(:active => true) unless params[:include_inactive]
       find_options.merge!(:offset => params[:offset]) if params[:offset]
 
       @choices = Choice.find(:all, find_options)
