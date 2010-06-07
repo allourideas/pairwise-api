@@ -4,8 +4,7 @@ class ChoicesController < InheritedResources::Base
   belongs_to :question
   has_scope :active, :boolean => true, :only => :index
 
-  before_filter :authenticate, :only => [:index, :flag]
-  #caches_page :index
+  before_filter :authenticate
   
   def index
     if params[:limit]
@@ -46,16 +45,6 @@ class ChoicesController < InheritedResources::Base
     end 
   end
   
-  def single
-    @question = current_user.questions.find(params[:question_id])
-    @prompt = @question.prompts.pick
-    show! do |format|
-      format.xml { render :xml => @prompt.to_xml}
-      format.json { render :json => @prompt.to_json}
-    end
-  end
-  
-  
   def create_from_abroad
     authenticate
     #expire_page :action => :index
@@ -88,95 +77,6 @@ class ChoicesController < InheritedResources::Base
     end
   end
   
-  def update_from_abroad
-    authenticate
-    #expire_page :action => :index
-    @question = current_user.questions.find(params[:question_id])
-    @choice = @question.choices.find(params[:id])
-    
-    respond_to do |format|
-      if @choice.activate!
-        logger.info "successfully activated choice #{@choice.inspect}"
-        format.xml { render :xml => true }
-        format.json { render :json => true }
-      else
-         logger.info "failed to activate choice  #{@choice.inspect}"
-        format.xml { render :xml => @choice.to_xml(:methods => [:data, :votes_count, :wins_plus_losses])}
-        format.json { render :json => @choice.to_json(:methods => [:data])}
-      end
-    end
-  end
-  
-  def deactivate_from_abroad
-    authenticate
-    @question = current_user.questions.find(params[:question_id])
-    @choice = @question.choices.find(params[:id])
-    
-    respond_to do |format|
-      if @question.choices.active.size < 3
-        logger.info "will not deactivate choice because that would lead to fewer than two active choices for the question, #{@question.name}"
-        format.xml { render(:xml => false) and return}
-        format.json { render :json => false }
-      elsif @choice.deactivate!
-        logger.info "successfully deactivated choice #{@choice.inspect}"
-        format.xml { render :xml => true }
-        format.json { render :json => true }
-      else
-        logger.info "failed to deactivate choice  #{@choice.inspect}"
-        format.xml { render :xml => @choice.to_xml(:methods => [:data, :votes_count, :wins_plus_losses])}
-        format.json { render :json => @choice.to_json(:methods => [:data])}
-      end
-    end
-  end
-  
-  def activate
-    authenticate
-    @question = current_user.questions.find(params[:question_id])
-    @choice = @question.choices.find(params[:id])
-    respond_to do |format|
-      if @choice.activate!
-        format.xml { render :xml => @choice.to_xml, :status => :created }
-        format.json { render :json => @choice.to_json, :status => :created }
-      else
-        format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
-        format.json { render :json => @choice.to_json }
-      end
-    end
-  end
-
-
-    def suspend
-      authenticate
-      @question = current_user.questions.find(params[:question_id])
-      @choice = @question.choices.find(params[:id])
-      respond_to do |format|
-        if @choice.suspend!
-          format.xml { render :xml => @choice.to_xml, :status => :created }
-          format.json { render :json => @choice.to_json, :status => :created }
-        else
-          format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
-          format.json { render :json => @choice.to_json }
-        end
-      end
-    end
-    
-  
-  def skip
-    voter = User.by_sid(params['params']['auto'])
-    logger.info "#{voter.inspect} is skipping."
-    @question = Question.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id])
-    respond_to do |format|
-      if @skip = voter.skip(@prompt)
-        format.xml { render :xml =>  @question.picked_prompt.to_xml(:methods => [:left_choice_text, :right_choice_text]), :status => :ok }
-        format.json { render :json => @question.picked_prompt.to_json, :status => :ok }
-      else
-        format.xml { render :xml => c, :status => :unprocessable_entity }
-        format.json { render :json => c, :status => :unprocessable_entity }
-      end
-    end
-  end
-
   def flag
     @question = current_user.questions.find(params[:question_id])
     @choice = @question.choices.find(params[:id])
