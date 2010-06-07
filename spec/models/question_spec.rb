@@ -205,10 +205,16 @@ describe Question do
 
 			  @a = user.record_appearance(visitor, @p)
 
+			  vote_options = {:visitor_identifier => visitor.identifier,
+					  :appearance_lookup => @a.lookup,
+					  :prompt => @p,
+					  :time_viewed => rand(1000),
+					  :direction => (rand(2) == 0) ? "left" : "right"}
+			  
 			  choice = rand(3)
 			  case choice
 			  when 0
-			    user.record_vote(visitor.identifier, @a.lookup, @p, rand(2), rand(1000))
+			    user.record_vote(vote_options)
 			  when 1
 			    user.record_skip(visitor.identifier, @a.lookup, @p, rand(1000))
 			  when 2
