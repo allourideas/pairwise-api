@@ -15,7 +15,7 @@ ActionController::Routing::Routes.draw do |map|
     question.resources :items
     question.resources :prompts, :member => {:skip => :post, :vote => :post}, 
                        :collection => {:single => :get, :index => :get}
-    question.resources :choices, :member => {:flag => :put}, :collection => {:create_from_abroad => :post}
+    question.resources :choices, :member => {:flag => :put} 
   end
   map.resources :algorithms
   map.connect "/questions/:question_id/prompts/:id/vote/:index", :controller => 'prompts', :action => 'vote'

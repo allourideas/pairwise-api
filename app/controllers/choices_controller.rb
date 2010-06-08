@@ -38,43 +38,27 @@ class ChoicesController < InheritedResources::Base
     show! do |format|
       format.xml { 
         @choice.reload
-      #  @choice.compute_score!
-      #  @choice.reload
         render :xml => @choice.to_xml(:methods => [:item_data, :wins_plus_losses, :question_name])}
       format.json { render :json => @choice.to_json(:methods => [:data])}
     end 
   end
-  
-  def create_from_abroad
-    authenticate
-    #expire_page :action => :index
-    logger.info "inside create_from_abroad"
 
-    @question = Question.find params[:question_id]
+  def create
+    
+    visitor_identifier = params[:choice].delete(:visitor_identifier)
 
-    visitor_identifier = params['params']['auto']
-    visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
-
-    respond_to do |format|
-      if @choice = current_user.create_choice(visitor_identifier, @question, {:data => params['params']['data'], 
-                                                                                    :local_identifier => params['params']['local_identifier']})
-        saved_choice_id = Proc.new { |options| options[:builder].tag!('saved_choice_id', @choice.id) }
-        choice_status = Proc.new { |options| 
-          the_status = @choice.active? ? 'active' : 'inactive'
-          options[:builder].tag!('choice_status', the_status) }
-        logger.info "successfully saved the choice #{@choice.inspect}"
-
-	visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
-        visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
-
-        format.xml { render :xml => @choice.to_xml(:procs => [saved_choice_id, choice_status, visitor_votes, visitor_ideas]), :status => :ok }
-	# TODO: Why are we rendering a question here? Is the prompt being used later on?
-        format.json { render :json => @question.to_json(:procs => [saved_choice_id, choice_status]), :status => :ok }
-      else
-        format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
-        format.json { render :json => @choice.errors, :status => :unprocessable_entity }
-      end
+    visitor = current_user.default_visitor 
+    if visitor_identifier
+      visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
     end
+    params[:choice].merge!(:creator => visitor)
+
+    @question = current_user.questions.find(params[:question_id])
+    params[:choice].merge!(:question_id => @question.id)
+
+
+    @choice = Choice.new(params[:choice])
+    create!
   end
   
   def flag

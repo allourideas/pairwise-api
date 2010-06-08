@@ -75,6 +75,31 @@ describe ChoicesController do
 
 	    assigns[:choice].should == mock_choice
        end
+
      end
+       
+     describe "POST create" do
+	before(:each) do
+		@question = Factory.create(:aoi_question)
+                sign_in_as(@user = @question.site)
+	end
+	
+       
+       it "creates a choice" do
+	       post :create, :question_id => @question.id, :choice => {:data => "blahblah"}
+	       assigns[:choice].should_not be_nil
+	       assigns[:choice].creator.should == @question.site.default_visitor
+	       assigns[:choice].should_not be_active
+	       assigns[:choice].should_not be_active
+       end
+
+       it "creates a choice with a correct visitor creator" do
+	       post :create, :question_id => @question.id, :choice => {:data => "blahblah", :visitor_identifier => "new user"}
+	       assigns[:choice].should_not be_nil
+	       assigns[:choice].creator.identifier.should == "new user"
+	       assigns[:choice].should_not be_active
+	       assigns[:choice].user_created.should == true
+       end
+    end
   
 end
