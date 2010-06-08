@@ -1,28 +1,10 @@
 class PromptsController < InheritedResources::Base
   respond_to :xml, :json
-  actions :show, :index
+  actions :show
   belongs_to :question
-  has_scope :active, :boolean => true, :only => :index
   
   has_scope :voted_on_by
-  before_filter :authenticate, :only => [:vote, :skip]
-  
-  
-  def activate
-    # turning off auth for now: @question = current_user.questions.find(params[:question_id])
-    @question = Question.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id])
-    respond_to do |format|
-      if @prompt.activate!
-        format.xml { render :xml => @choice.to_xml, :status => :created }
-        format.json { render :json => @choice.to_json, :status => :created }
-      else
-        format.xml { render :xml => @choice.errors, :status => :unprocessable_entity }
-        format.json { render :json => @choice.to_json }
-      end
-    end
-  end
-  
+  before_filter :authenticate
   
     # To record a vote 
     #  required parameters - prompt id, ordinality, visitor_identifer?
@@ -64,26 +46,6 @@ class PromptsController < InheritedResources::Base
       end
     end
   end
-  
-  
-  
-  
-  
-  def suspend
-    @question = current_user.questions.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id])
-    respond_to do |format|
-      if @prompt.suspend!
-        format.xml { render :xml => @prompt.to_xml, :status => :created }
-        format.json { render :json => @prompt.to_json, :status => :created }
-      else
-        format.xml { render :xml => @prompt.errors, :status => :unprocessable_entity }
-        format.json { render :json => @prompt.to_json }
-      end
-    end
-  end
-  
-  
   
   def skip
     logger.info "#{current_user.inspect} is skipping."
@@ -134,47 +96,8 @@ class PromptsController < InheritedResources::Base
   end
   
 
-  # GET /prompts
-  # ==== Return
-  # Array of length n. Prompts matching parameters
-  # ==== Options (params)
-  # question_id<String>:: Converted to integer. Must be greater than 0 and
-  # belong to the current user.  Must belong to user.
-  # item_ids<String>:: Comma seperated list of items to include. May only
-  # include commas and digits.  Must belong to user.  Optional value.
-  # data<String>:: Flag for whether to include item data.  Data included
-  # if value is not nil.
-  # ==== Raises
-  # PermissionError:: If question or any item doesn't belong to current user.
-  
-  def index
-    # turning off auth for now: @question = current_user.questions.find(params[:question_id])
-    #authenticate
-    @question = Question.find(params[:question_id])
-    @prompts = @question.prompts
-    #raise @question.inspect
-    index! do |format|
-      if !params[:voter_id].blank?
-        format.xml { render :xml => User.find(params[:voter_id]).prompts_voted_on.to_xml(:include => [:items, :votes], 
-                                                                                          :methods => [ :active_items_count, 
-                                                                                                        :all_items_count, 
-                                                                                                        :votes_count ]) }
-        format.json { render :json => User.find(params[:voter_id]).prompts_voted_on.to_json(:include => [:items, :votes], 
-                                                                            :methods => [ :active_items_count, 
-                                                                                          :all_items_count, 
-                                                                                          :votes_count ]) }
-      else
-        format.xml { render :xml => params[:data].blank? ? 
-                                    @prompts.to_xml : 
-                                    @prompts.to_xml(:include => [:items]) 
-                                    }
-        format.json { render :json => params[:data].blank? ? @prompts.to_json : @prompts.to_json(:include => [:items]) }
-      end
-    end
-  end
-  
   def show
-    @question = Question.find(params[:question_id])
+    @question = current_user.questions.find(params[:question_id])
     @prompt = @question.prompts.find(params[:id], :include => [{ :left_choice => :item }, { :right_choice => :item }])
     show! do |format|
       format.xml { render :xml => @prompt.to_xml(:methods => [:left_choice_text, :right_choice_text])}
