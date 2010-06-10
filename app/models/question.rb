@@ -84,16 +84,16 @@ class Question < ActiveRecord::Base
 
    until prompt && prompt.active?
 	   target = rand 
-	   prompt_id = nil
+	   left_choice_id = right_choice_id = nil
 
 	   weighted.each do |item, weight|
 		   if target <= weight
-			   prompt_id = item
+			   left_choice_id, right_choice_id = item.split(", ")
 			   break
 		   end
 		   target -= weight
 	   end
-	   prompt = Prompt.find(prompt_id, :include => ['left_choice', 'right_choice'])
+           prompt = prompts.find_or_create_by_left_choice_id_and_right_choice_id(left_choice_id, right_choice_id, :include => [{ :left_choice => :item }, { :right_choice => :item }])
    end
    # check if prompt has two active choices here, maybe we can set this on the prompt level too?
    prompt
@@ -104,16 +104,31 @@ class Question < ActiveRecord::Base
  def catchup_prompts_weights
    weights = Hash.new(0)
    throttle_min = 0.05
-   #assuming all prompts exist
+   sum = 0.0
 
-   #the_prompts = prompts.find(:all, :select => 'id, votes_count')
-   #We don't really need to instantiate all the objects
-   the_prompts = ActiveRecord::Base.connection.select_all("SELECT id, votes_count from prompts where question_id =#{self.id}")
-
-   the_prompts.each do |p|
-	   weights[p["id"].to_i] = [(1.0/ (p["votes_count"].to_i + 1).to_f).to_f, throttle_min].min
+   prompts.find_each(:select => 'votes_count, left_choice_id, right_choice_id') do |p|
+	   value = [(1.0/ (p.votes.size + 1).to_f).to_f, throttle_min].min
+           weights["#{p.left_choice_id}, #{p.right_choice_id}"] = value
+	   sum += value
    end
-   normalize!(weights)
+
+   # This will not run once all prompts have been generated, 
+   # 	but it prevents us from having to pregenerate all possible prompts
+   if weights.size < choices.size ** 2 - choices.size
+      choices.each do |l|
+	   choices.each do |r|
+		   if l.id == r.id
+			   next
+		   end
+		   if !weights.has_key?("#{l.id}, #{r.id}")
+                      weights["#{l.id}, #{r.id}"] = throttle_min
+		      sum+=throttle_min
+		   end
+	   end
+      end
+   end
+
+   normalize!(weights, sum)
    weights
  end
 
@@ -148,18 +163,21 @@ class Question < ActiveRecord::Base
 
  end
 
- def normalize!(weighted)
+ #passing precomputed sum saves us a traversal through the array
+ def normalize!(weighted, sum=nil)
    if weighted.instance_of?(Hash)
-	   sum = weighted.inject(0) do |sum, item_and_weight|
-	      sum += item_and_weight[1]
+	   if sum.nil?
+	     sum = weighted.inject(0) do |sum, item_and_weight|
+	        sum += item_and_weight[1]
+	     end
+	     sum = sum.to_f
 	   end
-	   sum = sum.to_f
 	   weighted.each do |item, weight| 
 		   weighted[item] = weight/sum 
 		   weighted[item] = 0.0 unless weighted[item].finite?
 	   end
    elsif weighted.instance_of?(Array)
-	   sum = weighted.inject(0) {|sum, item| sum += item}
+	   sum = weighted.inject(0) {|sum, item| sum += item} if sum.nil?
 	   weighted.each_with_index do |item, i| 
 		   weighted[i] = item/sum
 		   weighted[i] = 0.0 unless weighted[i].finite?

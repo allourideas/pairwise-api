@@ -11,11 +11,14 @@ namespace :test_api do
  
  
      current_user = User.first
-      3000.times do 
-	      question = Question.find(120) # test question change as needed
-	      @p = Prompt.find(question.catchup_choose_prompt_id)
+      1000.times do |n|
+	      puts "#{n} votes completed" if n % 100 == 0
+              question = Question.find(214) # test question change as needed
+	      @prompt = question.catchup_choose_prompt
+              @appearance = current_user.record_appearance(current_user.default_visitor, @prompt)
 
-	      current_user.record_vote("test_vote", @p, rand(2))
+	      direction = (rand(2) == 0) ? "left" : "right"
+	      current_user.record_vote(:prompt => @prompt, :direction => direction, :appearance_lookup => @appearance.lookup)
       end
 
    end
@@ -183,20 +186,29 @@ namespace :test_api do
    desc "Dump votes of a question by left vs right id"
    task(:make_csv => :environment) do
 
-	   q = Question.find(120)
+	   q = Question.find(214)
+
 
 	   the_prompts = q.prompts_hash_by_choice_ids
 
 	   #hash_of_choice_ids_from_left_to_right_to_votes
 	   the_hash = {}
-	   the_prompts.each do |key, p|
-		   left_id, right_id = key.split(", ")
-		   if not the_hash.has_key?(left_id)
-			   the_hash[left_id] = {}
-			   the_hash[left_id][left_id] = 0
+	   q.choices.each do |l|
+	     q.choices.each do |r|
+		   next if l.id == r.id
+		   
+		   if not the_hash.has_key?(l.id)
+			   the_hash[l.id] = {}
+			   the_hash[l.id][l.id] = 0
 		   end
 
-		   the_hash[left_id][right_id] = p.votes.size
+		   p = the_prompts["#{l.id}, #{r.id}"]
+		   if p.nil?
+		   	the_hash[l.id][r.id] = 0
+	           else
+		   	the_hash[l.id][r.id] = p.appearances.size
+		   end
+	     end
 	   end
 
 	   the_hash.sort.each do |xval, row|
