@@ -25,12 +25,12 @@ describe Choice do
     Choice.create!(@valid_attributes)
   end
   
-  it "should generate prompts after two choices are created" do
-    proc {
-	  choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
-          choice2 = Choice.create!(@valid_attributes.merge(:data => '1234'))
-    }.should change(@question.prompts, :count).by(2)
-  end
+  #it "should generate prompts after two choices are created" do
+  #  proc {
+#	  choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+#          choice2 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+#    }.should change(@question.prompts, :count).by(2)
+#  end
 
   it "should deactivate a choice" do
     choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))

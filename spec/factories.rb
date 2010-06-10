@@ -22,6 +22,17 @@ Factory.define(:aoi_question, :parent => :question) do |f|
 	      end
 	     result
 	    end
+  f.prompts do |question|
+	      result = []
+	      1.times do 
+		result << Factory.build(:prompt, 
+					:question => question.result,
+					:left_choice => question.choices.first,
+					:right_choice => question.choices.second)
+
+	      end
+	     result
+	    end
 end
 
 Factory.define(:visitor) do |f|

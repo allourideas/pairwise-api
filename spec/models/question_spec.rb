@@ -33,9 +33,9 @@ describe Question do
     q.choices(true).size.should == 0
   end
   
-  it "should generate prompts after choices are added" do
-    @question.prompts(true).size.should == 2
-  end
+  #it "should generate prompts after choices are added" do
+    #@question.prompts(true).size.should == 2
+  #end
 
   it "should choose an active prompt randomly" do
     prompt = @question.picked_prompt
@@ -126,9 +126,6 @@ describe Question do
 		  @catchup_q.reload
 		  # Sanity check
 		  @catchup_q.choices.size.should == 100
-
-		  #the catchup algorithm depends on all prompts being generated automatically
-		  @catchup_q.prompts.size.should == 100 **2 - 100
 
 		  prompt = @catchup_q.catchup_choose_prompt
 		  prompt.active?.should == true
