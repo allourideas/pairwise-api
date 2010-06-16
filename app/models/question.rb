@@ -152,8 +152,14 @@ class Question < ActiveRecord::Base
        else
 	  #only display a new prompt and new appearance if the old prompt has not been voted on
 	  @appearance = visitor.appearances.last
-          @prompt = @appearance.prompt
-          result.merge!({:picked_prompt_id => @prompt.id})
+          possible_prompt = @appearance.prompt
+	  
+	  #edge case, it's possible that the previous prompt has become deactivated in the elapsed time
+	  if possible_prompt.active?
+            result.merge!({:picked_prompt_id => possible_prompt.id})
+	  else
+            @appearance = current_user.record_appearance(visitor, @prompt)
+	  end
 	end
        result.merge!({:appearance_id => @appearance.lookup})
      else
