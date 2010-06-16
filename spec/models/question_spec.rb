@@ -13,10 +13,8 @@ describe Question do
   it {should validate_presence_of :creator}
   
   before(:each) do
-   
     @question = Factory.create(:aoi_question)
     @aoi_clone = @question.site
-
   end
   
   it "should have 2 active choices" do
@@ -99,6 +97,19 @@ describe Question do
     @question_optional_information[:picked_prompt_id].should be_an_instance_of(Fixnum)
     @question_optional_information.should include(:appearance_id) 
     @question_optional_information[:appearance_id].should be_an_instance_of(String)
+  end
+  
+  it "should return the same appearance when a visitor requests two prompts without voting" do
+    params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information[:appearance_id].should be_an_instance_of(String)
+    @question_optional_information[:picked_prompt_id].should be_an_instance_of(Fixnum)
+    saved_appearance_id = @question_optional_information[:appearance_id]
+    saved_prompt_id = @question_optional_information[:picked_prompt_id]
+
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information[:appearance_id].should == saved_appearance_id
+    @question_optional_information[:picked_prompt_id].should == saved_prompt_id
   end
   
   context "catchup algorithm" do 

@@ -7,4 +7,8 @@ class Appearance < ActiveRecord::Base
       # we could refactor this to use rails polymorphism, but currently the foreign key is stored in the vote and skip object
       has_one :vote
       has_one :skip
+
+      def answered?
+	 vote || skip
+      end
 end

@@ -5,7 +5,7 @@ class Visitor < ActiveRecord::Base
   has_many :skips, :class_name => "Skip", :foreign_key => "skipper_id"
   has_many :items, :class_name => "Item", :foreign_key => "creator_id"
   has_many :clicks
-  has_many :appearances
+  has_many :appearances, :foreign_key => "voter_id"
   
   validates_presence_of :site, :on => :create, :message => "can't be blank"
 # validates_uniqueness_of :identifier, :on => :create, :message => "must be unique", :scope => :site_id

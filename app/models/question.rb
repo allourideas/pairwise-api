@@ -146,7 +146,15 @@ class Question < ActiveRecord::Base
 
      if params[:with_appearance] && visitor_identifier.present?
        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
-       @appearance = current_user.record_appearance(visitor, @prompt)
+
+       if visitor.appearances.last.nil? || visitor.appearances.last.answered?
+          @appearance = current_user.record_appearance(visitor, @prompt)
+       else
+	  #only display a new prompt and new appearance if the old prompt has not been voted on
+	  @appearance = visitor.appearances.last
+          @prompt = @appearance.prompt
+          result.merge!({:picked_prompt_id => @prompt.id})
+	end
        result.merge!({:appearance_id => @appearance.lookup})
      else
        # throw some error
