@@ -239,8 +239,11 @@ class QuestionsController < InheritedResources::Base
     object_type = params[:object_type]
 
     @question = current_user.questions.find(params[:id])
+
     if object_type == 'votes'
       hash = Vote.count(:conditions => "question_id = #{@question.id}", :group => "date(created_at)")
+    elsif object_type == 'skips'
+      hash = Skip.count(:conditions => {:question_id => @question.id}, :group => "date(created_at)")
     elsif object_type == 'user_submitted_ideas'
       hash = Choice.count(:include => 'item', 
 		          :conditions => "choices.question_id = #{@question.id} AND items.creator_id <> #{@question.creator_id}", 
