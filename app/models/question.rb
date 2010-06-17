@@ -147,11 +147,14 @@ class Question < ActiveRecord::Base
      if params[:with_appearance] && visitor_identifier.present?
        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
 
-       if visitor.appearances.last.nil? || visitor.appearances.last.answered?
+       last_appearance = visitor.appearances.find(:first, :conditions => {:question_id => self.id},
+				 		  :order => 'created_at DESC',
+						  :limit => 1)
+       if last_appearance.nil?|| last_appearance.answered?
           @appearance = current_user.record_appearance(visitor, @prompt)
        else
 	  #only display a new prompt and new appearance if the old prompt has not been voted on
-	  @appearance = visitor.appearances.last
+	  @appearance = last_appearance
           possible_prompt = @appearance.prompt
 	  
 	  #edge case, it's possible that the previous prompt has become deactivated in the elapsed time
