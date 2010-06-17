@@ -161,6 +161,16 @@ class QuestionsController < InheritedResources::Base
 	    votes_by_visitor_id.each do |visitor|
 		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
 	    end
+    elsif object_type == "skips"
+	    skips_by_visitor_id= Skip.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
+					  :joins => :skipper, 
+					  :conditions => {:question_id => @question.id }, 
+					  :group => "skipper_id")
+
+
+	    skips_by_visitor_id.each do |visitor|
+		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+	    end
     elsif object_type == "uploaded_ideas"
 
 	    uploaded_ideas_by_visitor_id = @question.choices.find(:all, :select => 'creator_id, count(*) as ideas_count', 
