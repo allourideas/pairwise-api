@@ -534,9 +534,9 @@ namespace :test_api do
 		error_message+= "Error! Question #{question.id} has an inconsistent # of choices! cached#: #{cached_choices_size}, actual#: #{actual_choices_size}\n"
 	end
 
-	if cached_prompts_size != question.choices.size **2 - question.choices.size 
-		error_message += "Error! Question #{question.id} has an incorrect number of prompts! Expected #{question.choices.size **2 - question.choices.size}, Actual: #{cached_prompts_size}\n"
-	end
+	#if cached_prompts_size != question.choices.size **2 - question.choices.size 
+	#	error_message += "Error! Question #{question.id} has an incorrect number of prompts! Expected #{question.choices.size **2 - question.choices.size}, Actual: #{cached_prompts_size}\n"
+	#end
         return error_message.blank? ? [success_message, false] : [error_message, true] 
    end
    
