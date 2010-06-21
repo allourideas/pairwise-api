@@ -1,7 +1,6 @@
 class Choice < ActiveRecord::Base
   
   belongs_to :question, :counter_cache => true
-  belongs_to :item
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
   
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
@@ -48,11 +47,6 @@ class Choice < ActiveRecord::Base
   end
   
   def before_create
-    #puts "just got inside choice#before_create. is set to active? #{self.active?}"
-    unless item
-      @item = Item.create!(:creator => creator, :data => data)
-      self.item = @item
-    end
     unless self.score
       self.score = 50.0
     end
@@ -75,7 +69,7 @@ class Choice < ActiveRecord::Base
   end
 
   def user_created
-    self.item.creator_id != self.question.creator_id
+    self.creator_id != self.question.creator_id
   end
 
   def compute_bt_score(btprobs = nil)

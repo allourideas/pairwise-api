@@ -27,12 +27,12 @@ class QuestionsController < InheritedResources::Base
   end
 
   def object_info_totals_by_question_id
-      total_ideas_by_q_id = Choice.count(:include => ['item', 'question'], 
-		          :conditions => "items.creator_id <> questions.creator_id", 
+      total_ideas_by_q_id = Choice.count(:include => :question, 
+		          :conditions => "choices.creator_id <> questions.creator_id", 
 			  :group => "choices.question_id")
 
-      active_ideas_by_q_id = Choice.count(:include => ['item', 'question'], 
-		          :conditions => "choices.active = 1 AND items.creator_id <> questions.creator_id", 
+      active_ideas_by_q_id = Choice.count(:include => :question, 
+		          :conditions => "choices.active = 1 AND choices.creator_id <> questions.creator_id", 
 			  :group => "choices.question_id")
 
       combined_hash = {}
@@ -174,8 +174,7 @@ class QuestionsController < InheritedResources::Base
     elsif object_type == "uploaded_ideas"
 
 	    uploaded_ideas_by_visitor_id = @question.choices.find(:all, :select => 'creator_id, count(*) as ideas_count', 
-								   :joins => [:item], 
-								   :conditions => "items.creator_id != #{@question.creator_id}", 
+								   :conditions => "choices.creator_id != #{@question.creator_id}", 
 	                                                           :group => 'creator_id')
 
 	    count = 0
@@ -255,8 +254,7 @@ class QuestionsController < InheritedResources::Base
     elsif object_type == 'skips'
       hash = Skip.count(:conditions => {:question_id => @question.id}, :group => "date(created_at)")
     elsif object_type == 'user_submitted_ideas'
-      hash = Choice.count(:include => 'item', 
-		          :conditions => "choices.question_id = #{@question.id} AND items.creator_id <> #{@question.creator_id}", 
+      hash = Choice.count(:conditions => "choices.question_id = #{@question.id} AND choices.creator_id <> #{@question.creator_id}", 
 			  :group => "date(choices.created_at)")
       # we want graphs to go from date of first vote -> date of last vote, so adding those two boundries here.
       mindate = Vote.minimum('date(created_at)', :conditions => {:question_id => @question.id})
@@ -299,8 +297,8 @@ class QuestionsController < InheritedResources::Base
     if object_type == 'votes'
       hash = Vote.count(:group => "date(created_at)")
     elsif object_type == 'user_submitted_ideas'
-      hash = Choice.count(:include => ['item', 'question'], 
-		          :conditions => "items.creator_id <> questions.creator_id", 
+      hash = Choice.count(:include => :question, 
+		          :conditions => "choices.creator_id <> questions.creator_id", 
 			  :group => "date(choices.created_at)")
     elsif object_type == 'user_sessions'
       result = Vote.find(:all, :select => 'date(created_at) as date, voter_id, count(*) as vote_count', 

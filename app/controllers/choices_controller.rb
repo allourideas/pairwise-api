@@ -12,8 +12,8 @@ class ChoicesController < InheritedResources::Base
 
       find_options = {:conditions => {:question_id => @question.id},
 		      :limit => params[:limit].to_i, 
-		      :order => 'score DESC', 
-		      :include => :item}
+		      :order => 'score DESC'
+		      }
       
       find_options[:conditions].merge!(:active => true) unless params[:include_inactive]
       find_options.merge!(:offset => params[:offset]) if params[:offset]
@@ -23,9 +23,9 @@ class ChoicesController < InheritedResources::Base
     else
       @question = Question.find(params[:question_id], :include => :choices) #eagerloads ALL choices
       unless params[:include_inactive]
-        @choices = @question.choices(true).active.find(:all, :include => :item)
+        @choices = @question.choices(true).active.find(:all)
       else
-        @choices = @question.choices.find(:all, :include =>:item)
+        @choices = @question.choices.find(:all)
       end
     end
     index! do |format|

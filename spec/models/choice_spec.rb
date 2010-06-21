@@ -3,7 +3,6 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 describe Choice do
   
   it {should belong_to :question}
-  it {should belong_to :item}
   it {should belong_to :creator}
   it {should have_many :flags}
   it {should have_many :votes}

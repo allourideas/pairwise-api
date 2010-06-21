@@ -3,7 +3,6 @@ class User < ActiveRecord::Base
   has_many :visitors, :class_name => "Visitor", :foreign_key => "site_id"
   has_many :questions, :class_name => "Question", :foreign_key => "site_id"
   has_many :clicks, :class_name => "Click", :foreign_key => "site_id"
-  has_many :items, :class_name => "Item", :foreign_key => "site_id"
   
   def default_visitor
     visitors.find(:first, :conditions => {:identifier => 'owner'})

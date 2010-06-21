@@ -7,7 +7,7 @@ class VisitorsController < InheritedResources::Base
 
 		visitor_ids = Visitor.find(:all, :conditions => { :identifier => session_ids})
 		votes_by_visitor_id = Vote.with_voter_ids(visitor_ids).count(:group => :voter_id) 
-		ideas_by_visitor_id = Item.with_creator_ids(visitor_ids).count(:group => :creator_id) 
+		ideas_by_visitor_id = Choice.count(:group => :creator_id) 
 
 		objects_by_session_id = {}
 		

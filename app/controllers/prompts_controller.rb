@@ -83,7 +83,7 @@ class PromptsController < InheritedResources::Base
 	appearance_id = Proc.new { |options| options[:builder].tag!('appearance_id', @a.lookup) }
       
 	visitor_votes = Proc.new { |options| options[:builder].tag!('visitor_votes', visitor.votes.count(:conditions => {:question_id => @question.id})) }
-        visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.items.count) }
+        visitor_ideas = Proc.new { |options| options[:builder].tag!('visitor_ideas', visitor.choices.count) }
 
 
         format.xml { render :xml =>  @next_prompt.to_xml(:procs => [appearance_id, visitor_votes, visitor_ideas],:methods => [:left_choice_text, :right_choice_text]), :status => :ok }
@@ -98,7 +98,7 @@ class PromptsController < InheritedResources::Base
 
   def show
     @question = current_user.questions.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id], :include => [{ :left_choice => :item }, { :right_choice => :item }])
+    @prompt = @question.prompts.find(params[:id], :include => [:left_choice ,:right_choice ])
     show! do |format|
       format.xml { render :xml => @prompt.to_xml(:methods => [:left_choice_text, :right_choice_text])}
       format.json { render :json => @prompt.to_json(:methods => [:left_choice_text, :right_choice_text])}

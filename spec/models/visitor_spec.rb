@@ -8,6 +8,7 @@ describe Visitor do
   it {should have_many :skips}
   it {should have_many :clicks}
   it {should have_many :appearances}
+  it {should have_many :choices}
   
   before(:each) do
     @question = Factory.create(:aoi_question)

@@ -10,6 +10,9 @@ class Prompt < ActiveRecord::Base
   belongs_to :left_choice, :class_name => "Choice", :foreign_key => "left_choice_id", :counter_cache => true
   belongs_to :right_choice, :class_name => "Choice", :foreign_key => "right_choice_id", :counter_cache => true
   
+  validates_presence_of :left_choice, :on => :create, :message => "can't be blank"
+  validates_presence_of :right_choice, :on => :create, :message => "can't be blank"
+
   named_scope :with_left_choice, lambda { |*args| {:conditions => ["left_choice_id = ?", (args.first.id)]} }
   named_scope :with_right_choice, lambda { |*args| {:conditions => ["right_choice_id = ?", (args.first.id)]} }
   named_scope :with_choice, lambda { |*args| {:conditions => ["(right_choice_id = ?) OR (left_choice_id = ?)", (args.first.id)]} }
@@ -25,8 +28,6 @@ class Prompt < ActiveRecord::Base
     select {|z| z.voted_on_by_user?(u)}
   end
   
-  validates_presence_of :left_choice, :on => :create, :message => "can't be blank"
-  validates_presence_of :right_choice, :on => :create, :message => "can't be blank"
   
   def choices
     [left_choice, right_choice]
@@ -37,7 +38,7 @@ class Prompt < ActiveRecord::Base
   end
   
   def left_choice_text(prompt = nil)
-    left_choice.item.data
+    left_choice.data
   end
   
   def active?
@@ -46,7 +47,7 @@ class Prompt < ActiveRecord::Base
   
   
   def right_choice_text(prompt = nil)
-    right_choice.item.data
+    right_choice.data
   end
   
 end

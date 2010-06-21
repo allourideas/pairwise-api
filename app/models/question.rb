@@ -26,8 +26,7 @@ class Question < ActiveRecord::Base
   def create_choices_from_ideas
     if ideas && ideas.any?
       ideas.each do |idea|
-        item = Item.create!(:data => idea.squish.strip, :creator => self.creator)
-	choices.create!(:item => item, :creator => self.creator, :active => true, :data => idea.squish.strip)
+	choices.create!(:creator => self.creator, :active => true, :data => idea.squish.strip)
       end
     end
   end
@@ -70,7 +69,7 @@ class Question < ActiveRecord::Base
    raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
    begin
      choice_id_array = distinct_array_of_choice_ids(rank)
-     @p = prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [{ :left_choice => :item }, { :right_choice => :item }])
+     @p = prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [:left_choice ,:right_choice ])
      logger.info "#{@p.inspect} is active? #{@p.active?}"
    end until @p.active?
    return @p
@@ -173,7 +172,7 @@ class Question < ActiveRecord::Base
    if params[:with_visitor_stats]
       visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
       result.merge!(:visitor_votes => visitor.votes.count(:conditions => {:question_id => self.id}))
-      result.merge!(:visitor_ideas => visitor.items.count)
+      result.merge!(:visitor_ideas => visitor.choices.count)
    end
 
    return result
@@ -303,14 +302,6 @@ class Question < ActiveRecord::Base
      picked_prompt.id
    end
  
-   def left_choice_text(prompt = nil)
-     picked_prompt.left_choice.item.data
-   end
-
-   def right_choice_text(prompt = nil)
-     picked_prompt.right_choice.item.data
-   end
-
    def self.voted_on_by(u)
      select {|z| z.voted_on_by_user?(u)}
    end
@@ -516,7 +507,7 @@ class Question < ActiveRecord::Base
 	     num_skips = self.skips.count(:conditions => {:prompt_id => left_prompts_ids + right_prompts_ids})
 
 	       csv << [c.question_id, c.id, "'#{c.data.strip}'", c.wins, c.losses, num_skips, c.score,
-		       user_submitted , c.item.creator_id, c.created_at, c.updated_at, c.active,
+		       user_submitted , c.creator_id, c.created_at, c.updated_at, c.active,
 		       left_appearances, right_appearances]
          end
        when 'non_votes'

@@ -112,6 +112,12 @@ describe Question do
     @question_optional_information[:picked_prompt_id].should == saved_prompt_id
   end
   
+  it "should auto create ideas when 'ideas' attribute is set" do
+      @question = Factory.build(:question)
+      @question.ideas = %w(one two three)
+      @question.save
+      @question.choices.count.should == 3
+  end
   context "catchup algorithm" do 
 	  before(:all) do
 		  @catchup_q = Factory.create(:aoi_question)
@@ -277,7 +283,6 @@ describe Question do
 		  rows.first.should include("Record ID")
 		  rows.first.should include("Record Type")
 		  rows.first.should_not include("Idea ID")
-		  puts filename
 		  File.delete(filename).should_not be_nil 
 
 
@@ -294,7 +299,6 @@ describe Question do
 		  rows = FasterCSV.read(filename)
 		  rows.first.should include("Idea ID")
 		  rows.first.should_not include("Skip ID")
-		  puts filename
 		  File.delete(filename).should_not be_nil
 
 	  end
