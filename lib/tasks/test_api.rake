@@ -496,15 +496,15 @@ namespace :test_api do
 
 	question.expire_prompt_cache_tracking_keys(Date.yesterday)
 		
-	yesterday_votes = question.appearances.count(:conditions => ['date(created_at) = ?', Date.yesterday])
+	yesterday_appearances = question.appearances.count(:conditions => ['date(created_at) = ?', Date.yesterday])
 
-	if misses + hits != yesterday_votes
-	     error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_votes}, Actual: #{misses+hits}\n"
+	if misses + hits != yesterday_appearances
+	     error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}\n"
 	end
 
-	miss_rate = misses.to_f / yesterday_votes.to_f
+	miss_rate = misses.to_f / yesterday_appearances.to_f
 	if miss_rate > 0.1
-	     error_message += "Error! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}\n"
+	     error_message += "Error! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}, total appearances yesterday: #{yesterday_appearances}\n"
 	end
         return error_message.blank? ? [success_message, false] : [error_message, true] 
    end
