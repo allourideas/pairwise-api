@@ -57,16 +57,6 @@ class User < ActiveRecord::Base
     question.activate!
   end
   
-  def activate_choice(choice_id, options)
-    choice = Choice.find(choice_id)
-    choice.activate!
-  end
-  
-  def deactivate_choice(choice_id, options)
-    choice = Choice.find(choice_id)
-    choice.deactivate!
-  end
-  
   def deactivate_question(question_id, options)
     question = questions.find(question_id)
     question.deactivate!
