@@ -4,8 +4,7 @@ describe Choice do
   
   it {should belong_to :question}
   it {should belong_to :item}
-  #uncomment after adding creator to choice model
-  #it {should belong_to :creator}
+  it {should belong_to :creator}
   it {should have_many :flags}
   it {should have_many :votes}
   it {should have_many :prompts_on_the_left}
