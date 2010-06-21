@@ -38,7 +38,7 @@ class ChoicesController < InheritedResources::Base
     show! do |format|
       format.xml { 
         @choice.reload
-        render :xml => @choice.to_xml(:methods => [:item_data, :wins_plus_losses, :question_name])}
+        render :xml => @choice.to_xml(:methods => [:wins_plus_losses])}
       format.json { render :json => @choice.to_json(:methods => [:data])}
     end 
   end

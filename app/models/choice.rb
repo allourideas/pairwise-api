@@ -22,14 +22,6 @@ class Choice < ActiveRecord::Base
   end 
   #attr_accessor :data
   
-  def question_name
-    question.name
-  end
-  
-  def item_data
-    item.data
-  end
-  
   def lose!
     self.loss_count += 1 rescue (self.loss_count = 1)
     self.score = compute_score
@@ -46,6 +38,7 @@ class Choice < ActiveRecord::Base
     wins + losses
   end
   
+  # TODO delete these and refactor loss_count and votes_count into losses and wins
   def losses
     loss_count || 0
   end
@@ -107,11 +100,6 @@ class Choice < ActiveRecord::Base
 
   def activate!
     (self.active = true)
-    self.save!
-  end
-  
-  def suspend!
-    (self.active = false)
     self.save!
   end
   
