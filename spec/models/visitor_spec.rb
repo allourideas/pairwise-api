@@ -18,6 +18,7 @@ describe Visitor do
     
     @required_vote_params = {:prompt => @prompt, 
                             :direction => "left"}
+    @required_skip_params = {:prompt => @prompt}
   end
 
   it "should create a new instance given valid attributes" do
@@ -93,7 +94,13 @@ describe Visitor do
   
   it "should be able to skip a prompt" do
     @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
-    s = @visitor.skip! @appearance.lookup, @prompt, 304
+    @optional_skip_params = {
+      :appearance_lookup => @appearance.lookup,
+      :time_viewed => 304,
+      :skip_reason => "some reason"
+    }
+    allparams = @required_skip_params.merge(@optional_skip_params)
+    s = @visitor.skip!(allparams)
   end
 
   it "should accurately update score counts after vote" do
