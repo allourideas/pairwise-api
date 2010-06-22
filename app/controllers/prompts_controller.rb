@@ -67,6 +67,7 @@ class PromptsController < InheritedResources::Base
               format.xml { render :xml => @prompt.to_xml, :status => :conflict and return} 
            end
        end
+
        response = @question.prompts.find(@question_optional_information.delete(:picked_prompt_id))
        @question_optional_information.each do |key, value|
           optional_information << Proc.new { |options| options[:builder].tag!(key, value)}
@@ -85,7 +86,7 @@ class PromptsController < InheritedResources::Base
 
   def show
     @question = current_user.questions.find(params[:question_id])
-    @prompt = @question.prompts.find(params[:id], :include => [{ :left_choice => :item }, { :right_choice => :item }])
+    @prompt = @question.prompts.find(params[:id], :include => [:left_choice ,:right_choice ])
     show! do |format|
       format.xml { render :xml => @prompt.to_xml(:methods => [:left_choice_text, :right_choice_text])}
       format.json { render :json => @prompt.to_json(:methods => [:left_choice_text, :right_choice_text])}

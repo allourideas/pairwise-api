@@ -1,7 +1,6 @@
 class Choice < ActiveRecord::Base
   
   belongs_to :question, :counter_cache => true
-  belongs_to :item
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
   
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
@@ -22,14 +21,6 @@ class Choice < ActiveRecord::Base
   end 
   #attr_accessor :data
   
-  def question_name
-    question.name
-  end
-  
-  def item_data
-    item.data
-  end
-  
   def lose!
     self.loss_count += 1 rescue (self.loss_count = 1)
     self.score = compute_score
@@ -46,6 +37,7 @@ class Choice < ActiveRecord::Base
     wins + losses
   end
   
+  # TODO delete these and refactor loss_count and votes_count into losses and wins
   def losses
     loss_count || 0
   end
@@ -55,11 +47,6 @@ class Choice < ActiveRecord::Base
   end
   
   def before_create
-    #puts "just got inside choice#before_create. is set to active? #{self.active?}"
-    unless item
-      @item = Item.create!(:creator => creator, :data => data)
-      self.item = @item
-    end
     unless self.score
       self.score = 50.0
     end
@@ -82,7 +69,7 @@ class Choice < ActiveRecord::Base
   end
 
   def user_created
-    self.item.creator_id != self.question.creator_id
+    self.creator_id != self.question.creator_id
   end
 
   def compute_bt_score(btprobs = nil)
@@ -107,11 +94,6 @@ class Choice < ActiveRecord::Base
 
   def activate!
     (self.active = true)
-    self.save!
-  end
-  
-  def suspend!
-    (self.active = false)
     self.save!
   end
   

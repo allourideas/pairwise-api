@@ -3,7 +3,6 @@ class User < ActiveRecord::Base
   has_many :visitors, :class_name => "Visitor", :foreign_key => "site_id"
   has_many :questions, :class_name => "Question", :foreign_key => "site_id"
   has_many :clicks, :class_name => "Click", :foreign_key => "site_id"
-  has_many :items, :class_name => "Item", :foreign_key => "site_id"
   
   def default_visitor
     visitors.find(:first, :conditions => {:identifier => 'owner'})
@@ -60,16 +59,6 @@ class User < ActiveRecord::Base
   def activate_question(question_id, options)
     question = questions.find(question_id)
     question.activate!
-  end
-  
-  def activate_choice(choice_id, options)
-    choice = Choice.find(choice_id)
-    choice.activate!
-  end
-  
-  def deactivate_choice(choice_id, options)
-    choice = Choice.find(choice_id)
-    choice.deactivate!
   end
   
   def deactivate_question(question_id, options)

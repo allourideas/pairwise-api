@@ -3,7 +3,7 @@ class Visitor < ActiveRecord::Base
   has_many :questions, :class_name => "Question", :foreign_key => "creator_id"
   has_many :votes, :class_name => "Vote", :foreign_key => "voter_id"
   has_many :skips, :class_name => "Skip", :foreign_key => "skipper_id"
-  has_many :items, :class_name => "Item", :foreign_key => "creator_id"
+  has_many :choices, :class_name => "Choice", :foreign_key => "creator_id"
   has_many :clicks
   has_many :appearances, :foreign_key => "voter_id"
   
