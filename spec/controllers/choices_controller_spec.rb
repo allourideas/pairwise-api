@@ -100,6 +100,14 @@ describe ChoicesController do
 	       assigns[:choice].should_not be_active
 	       assigns[:choice].user_created.should == true
        end
+
+       it "creates a choice and activates it when set_autoactivate_is set" do
+         @question.update_attribute(:it_should_autoactivate_ideas, true)
+         post :create, :question_id => @question.id, :choice => {:data => "blahblah"}
+         assigns[:choice].should_not be_nil
+         assigns[:choice].creator.should == @question.site.default_visitor
+         assigns[:choice].should be_active
+       end
     end
   
 end
