@@ -21,16 +21,41 @@ describe PromptsController do
       assigns[:prompt].should == @prompt
     end
   end
-  
-  describe "POST skip" do
-    it "records a skip, responds with next prompt" do
-      post :skip, :id => @prompt.id, :question_id => @question.id, :params => {:auto => @visitor, :time_viewed => 30, :appearance_lookup => @appearance.lookup}
-      assigns[:next_prompt].should_not be_nil
-      assigns[:a].should_not be_nil
-      assigns[:a].should_not == @appearance
-      assigns[:skip].should_not be_nil
+
+  describe "POST skip" do  
+    it "records a skip without any optional params" do
+      controller.current_user.should_receive(:record_skip).and_return(true)
+      post(:skip, :question_id => @question.id, :id => @prompt.id,
+           :format => :xml)
     end
-  end
+
+    it "records a skip with optional params" do
+      controller.current_user.should_receive(:record_skip).and_return(true)
+      post(:skip, :question_id => @question.id, :id => @prompt.id,
+           :skip => {
+             :visitor_identifier => "jim",
+             :time_viewed => rand(1000),
+             :skip_reason => "some reason"})
+    end
+
+    it "records a skip, responds with next prompt" do
+       controller.current_user.should_receive(:record_skip).and_return(true)
+       post(:skip, :question_id => @question.id, :id => @prompt.id,
+            :skip => {
+             :visitor_identifier => "jim",
+             :time_viewed => rand(1000),
+             :skip_reason => "some reason"},
+            :next_prompt => {
+              :with_appearance => true, 
+              :with_visitor_stats => true, 
+              :visitor_identifier => "jim"}
+            )
+       assigns[:question_optional_information].should_not be_nil
+       assigns[:question_optional_information][:appearance_id].should_not be_nil
+       assigns[:question_optional_information][:visitor_votes].should_not be_nil
+       assigns[:question_optional_information][:visitor_ideas].should_not be_nil
+     end
+   end
 
   describe "POST vote" do
     it "votes on a prompt" do 

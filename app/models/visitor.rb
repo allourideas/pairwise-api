@@ -36,14 +36,19 @@ class Visitor < ActiveRecord::Base
 
     v = votes.create!(options)
   end
-  
-  def skip!(appearance_lookup, prompt, time_viewed, options = {})
-    @a = Appearance.find_by_lookup(appearance_lookup)
-    
-    skip_create_options  = { :question_id => prompt.question_id, :prompt_id => prompt.id, :skipper_id=> self.id, :time_viewed => time_viewed, :appearance_id => @a.id} 
 
-    #the most common optional reason is 'skip_reason', probably want to refactor to make time viewed an optional parameter
-    prompt_skip = skips.create!(skip_create_options.merge(options))
+  def skip!(options)
+    return nil if !options || !options[:prompt]
 
+    prompt = options.delete(:prompt)
+
+    if options[:appearance_lookup]
+      @appearance = prompt.appearances.find_by_lookup(options.delete(:apperance_lookup))
+      return nil unless @appearance
+      options.merge!(:appearance_id => @appearance.id)
+    end
+
+    options.merge!(:question_id => prompt.question_id, :prompt_id => prompt.id, :skipper_id => self.id)
+    prompt_skip = skips.create!(options)
   end
 end

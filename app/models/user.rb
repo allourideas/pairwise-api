@@ -46,9 +46,14 @@ class User < ActiveRecord::Base
   end
 
   
-  def record_skip(visitor_identifier, appearance_lookup, prompt, time_viewed, options = {})
-    visitor = visitors.find_or_create_by_identifier(visitor_identifier)
-    visitor.skip!(appearance_lookup, prompt, time_viewed, options)
+  def record_skip(options)
+    visitor_identifier = options.delete(:visitor_identifier)
+    if visitor_identifier.nil?
+      visitor = default_visitor
+    else
+      visitor = visitors.find_or_create_by_identifier(visitor_identifier)
+    end
+    visitor.skip!(options)
   end
   
   def activate_question(question_id, options)

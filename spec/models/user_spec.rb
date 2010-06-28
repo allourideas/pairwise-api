@@ -83,7 +83,14 @@ describe User do
   it "should be able to record a visitor's skip" do
     @visitor = @aoi_clone.visitors.find_or_create_by_identifier("test_visitor_identifier")
     @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
-    s = @aoi_clone.record_skip("johnnydoe", @appearance.lookup, @prompt, 340)
+    optional_skip_params = {
+      :visitor_identifier => @visitor.identifier,
+      :appearance_lookup => @appearance.lookup,
+      :time_viewed => 340
+    }
+    required_skip_params = {:prompt => @prompt }
+    params = optional_skip_params.merge(required_skip_params)
+    s = @aoi_clone.record_skip(params)
   end
 
 end
