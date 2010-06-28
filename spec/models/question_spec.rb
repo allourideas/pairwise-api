@@ -199,6 +199,15 @@ describe Question do
 
 		  @catchup_q.pop_prompt_queue.should == nil
 	  end
+	  it "should not return prompts from queue that are deactivated" do
+		  @catchup_q.clear_prompt_queue
+		  @catchup_q.pop_prompt_queue.should == nil
+		  prompt1 = @catchup_q.add_prompt_to_queue
+	          
+		  prompt = Prompt.find(prompt1)
+		  prompt.left_choice.deactivate!
+		  @catchup_q.choose_prompt.should_not == prompt1 
+          end
   end
 
   context "exporting data" do

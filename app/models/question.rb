@@ -413,8 +413,11 @@ class Question < ActiveRecord::Base
   end
 
   def pop_prompt_queue
-	  prompt_id = $redis.lpop(self.pq_key)
-	  prompt = prompt_id.nil? ? nil : Prompt.find(prompt_id.to_i)
+	  begin
+	     prompt_id = $redis.lpop(self.pq_key)
+	     prompt = prompt_id.nil? ? nil : Prompt.find(prompt_id.to_i)
+          end until (prompt.nil? || prompt.active?)
+          prompt
   end
 
   def record_prompt_cache_miss
