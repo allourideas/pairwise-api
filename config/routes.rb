@@ -5,7 +5,6 @@ ActionController::Routing::Routes.draw do |map|
   map.resources :questions, :member => { :object_info_totals_by_date => :get, 
 	  				 :object_info_by_visitor_id => :get, 
 					 :export => :post, 
-					 :set_autoactivate_ideas_from_abroad => :put,  
 					 :activate => :put, 
 					 :suspend => :put}, 
 			    :collection => {:all_num_votes_by_visitor_id => :get, 

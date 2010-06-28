@@ -33,12 +33,4 @@ describe QuestionsController do
 	 @response.body.should have_tag("visitor_ideas")
 
      end
-
-     it "can be set to autoactivate questions" do
-       put :set_autoactivate_ideas_from_abroad, :id => @question.id, :format => "xml", :question => {:it_should_autoactivate_ideas => true}
-       assigns[:question].should == @question
-       assigns[:question].it_should_autoactivate_ideas.should be_true
-       @response.body.should == "true"
-     end
-  
 end

@@ -94,29 +94,6 @@ class QuestionsController < InheritedResources::Base
     end
   end
 
-
-
-  def set_autoactivate_ideas_from_abroad
-    #expire_page :action => :index
-    logger.info("INSIDE autoactivate ideas")
-
-    
-    @question = current_user.questions.find(params[:id])
-    @question.it_should_autoactivate_ideas = params[:question][:it_should_autoactivate_ideas]
-
-    respond_to do |format|
-      if @question.save
-        logger.info "successfully set this question to autoactive ideas #{@question.inspect}"
-        format.xml { render :xml => true }
-        format.json { render :json => true}
-      else
-        logger.info "Some error in saving question, #{@question.inspect}"
-        format.xml { render(:xml => false) and return}
-        format.json { render :json => false }
-      end
-    end
-
-  end
   def export
     type = params[:type]
     response_type = params[:response_type]
@@ -312,6 +289,13 @@ class QuestionsController < InheritedResources::Base
     respond_to do |format|
 	    format.xml { render :xml => hash.to_xml and return}
     end
+  end
+
+  def update
+    # prevent AttributeNotFound error and only update actual Question columns, since we add extra information in 'show' method
+    question_attributes = Question.new.attribute_names
+    params[:question] = params[:question].delete_if {|key, value| !question_attributes.include?(key)}
+    update!
   end
 
   protected 
