@@ -16,7 +16,11 @@ namespace :testserver do
 
 	       u.email_confirmed = true
 	       u.save
-
+	       
+               #photocracy username
+               u = User.create!(:email => 'photocracytest@dkapadia.com', :password => 'saltines', :password_confirmation => "saltines")
+	       u.email_confirmed = true
+	       u.save
        end
 
        task :launch => [:prepare, :start]
