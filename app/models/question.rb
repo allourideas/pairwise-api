@@ -140,34 +140,32 @@ class Question < ActiveRecord::Base
    current_user = self.site
 
    if params[:with_prompt]
-     @prompt = choose_prompt(:algorithm => params[:algorithm])
-     result.merge!({:picked_prompt_id => @prompt.id})
-
-     if params[:with_appearance] && visitor_identifier.present?
+     
+    if params[:with_appearance] && visitor_identifier.present?
        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
 
        last_appearance = visitor.appearances.find(:first, :conditions => {:question_id => self.id},
 				 		  :order => 'created_at DESC',
 						  :limit => 1)
-       if last_appearance.nil?|| last_appearance.answered?
+       if last_appearance.nil?|| last_appearance.answered? || !last_appearance.prompt.active?
+          @prompt = choose_prompt(:algorithm => params[:algorithm])
           @appearance = current_user.record_appearance(visitor, @prompt)
        else
 	  #only display a new prompt and new appearance if the old prompt has not been voted on
 	  @appearance = last_appearance
-          possible_prompt = @appearance.prompt
-	  
-	  #edge case, it's possible that the previous prompt has become deactivated in the elapsed time
-	  if possible_prompt.active?
-            result.merge!({:picked_prompt_id => possible_prompt.id})
-	  else
-            @appearance = current_user.record_appearance(visitor, @prompt)
-	  end
-	end
+          @prompt= @appearance.prompt
+       end
+
        result.merge!({:appearance_id => @appearance.lookup})
      else
        # throw some error
+     end 
+    
+     if !@prompt 
+       @prompt = choose_prompt(:algorithm => params[:algorithm])
      end
-   end
+     result.merge!({:picked_prompt_id => @prompt.id})
+   end 
 
    if params[:with_visitor_stats]
       visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
@@ -433,6 +431,11 @@ class Question < ActiveRecord::Base
   end
   def get_prompt_cache_hits(date)
 	  $redis.get(self.pq_key + "_" + date.to_s + "_"+ "hits")
+  end
+
+  def reset_cache_tracking_keys(date)
+	  $redis.del(self.pq_key + "_" + date.to_s + "_"+ "misses")
+	  $redis.del(self.pq_key + "_" + date.to_s + "_"+ "hits")
   end
 
 

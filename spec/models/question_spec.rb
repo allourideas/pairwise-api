@@ -112,6 +112,16 @@ describe Question do
     @question_optional_information[:picked_prompt_id].should == saved_prompt_id
   end
   
+  it "should properly handle tracking the prompt cache hit rate when returning the same appearance when a visitor requests two prompts without voting" do
+    params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true}
+    @question.clear_prompt_queue
+    @question.reset_cache_tracking_keys(Date.today)
+    @question.get_optional_information(params)
+    @question.get_prompt_cache_misses(Date.today).should == "1"
+    @question.get_optional_information(params)
+    @question.get_prompt_cache_misses(Date.today).should == "1"
+  end
+  
   it "should auto create ideas when 'ideas' attribute is set" do
       @question = Factory.build(:question)
       @question.ideas = %w(one two three)
