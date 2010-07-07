@@ -43,7 +43,7 @@ class Visitor < ActiveRecord::Base
     prompt = options.delete(:prompt)
 
     if options[:appearance_lookup]
-      @appearance = prompt.appearances.find_by_lookup(options.delete(:apperance_lookup))
+      @appearance = prompt.appearances.find_by_lookup(options.delete(:appearance_lookup))
       return nil unless @appearance
       options.merge!(:appearance_id => @appearance.id)
     end

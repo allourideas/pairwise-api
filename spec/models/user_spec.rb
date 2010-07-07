@@ -91,6 +91,8 @@ describe User do
     required_skip_params = {:prompt => @prompt }
     params = optional_skip_params.merge(required_skip_params)
     s = @aoi_clone.record_skip(params)
+    s.appearance.should == @appearance
+    s.skipper.should == @visitor
   end
 
 end

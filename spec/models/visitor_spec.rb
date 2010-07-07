@@ -102,6 +102,21 @@ describe Visitor do
     }
     allparams = @required_skip_params.merge(@optional_skip_params)
     s = @visitor.skip!(allparams)
+    s.appearance.should == @appearance
+  end
+  
+  it "should not create a skip when the appearance look up is wrong" do
+    skip_count = Skip.count
+    @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+    @optional_skip_params = {
+      :appearance_lookup => "not a valid appearancelookup",
+      :time_viewed => 304,
+      :skip_reason => "some reason"
+    }
+    allparams = @required_skip_params.merge(@optional_skip_params)
+    s = @visitor.skip!(allparams)
+    s.should be_nil
+    Skip.count.should == skip_count
   end
 
   it "should accurately update score counts after vote" do
