@@ -43,6 +43,11 @@ class ChoicesController < InheritedResources::Base
     end 
   end
 
+  def votes
+    @choice = Choice.find(params[:id])
+    render :xml => @choice.votes.to_xml
+  end
+
   def create
     
     visitor_identifier = params[:choice].delete(:visitor_identifier)
