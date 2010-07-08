@@ -3,7 +3,7 @@
 
 development: &default
   adapter: mysql
-  database: rebirth_development
+  database: pairwise_development
   pool: 5
   timeout: 5000
 
