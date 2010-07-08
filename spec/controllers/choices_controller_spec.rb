@@ -35,6 +35,10 @@ describe ChoicesController do
        @mock_flag ||= mock_model(Flag, stubs)
      end
      
+     def mock_vote(stubs={})
+       @mock_vote || mock_model(Vote, stubs)
+     end
+
      describe "PUT flag" do
        before(:each) do
 	  question_list = [mock_question]
@@ -108,6 +112,17 @@ describe ChoicesController do
          assigns[:choice].creator.should == @question.site.default_visitor
          assigns[:choice].should be_active
        end
+    end
+
+    describe "GET votes" do
+      it "returns a choice's votes" do
+        Choice.should_receive(:find).and_return(mock_choice)
+        votes_array = [mock_vote]
+        votes_array.should_receive(:to_xml)
+        mock_choice.should_receive(:votes).and_return(votes_array)
+
+        get :votes, :id => mock_choice.id, :question_id => mock_question.id
+      end
     end
   
 end
