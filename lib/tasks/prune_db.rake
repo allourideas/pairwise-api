@@ -30,7 +30,37 @@ namespace :prune_db do
      else
        puts "Could not find any bad votes. Yay."
      end
-
+  end
+  
+  task(:associate_skips_with_appearances => :environment) do
+     skips_to_fix = Skip.find(:all, :conditions => {:appearance_id => nil})
+     skips_to_fix.each do |skip|
+	puts "Skip #{skip.id} : "
+        possible_appearances = skip.skipper.appearances.find(:all, :conditions => {:prompt_id => skip.prompt_id})
+	if possible_appearances.nil? || possible_appearances.empty?
+	   puts " I couldn't find any matches!"
+	   skip.delete
+	   next
+	end
+	if possible_appearances.size > 1
+	    puts " More than one possible appearance"
+	    possible_appearances.delete_if{|a| a.answered?}
+	    if possible_appearances.size > 1 || possible_appearances.size == 0
+		puts"   And I couldn't narrow it down.... moving on"
+		skip.delete
+	        next
+	    end
+	end
+	possible_appearance = possible_appearances.first
+        if possible_appearance.answered?
+	   puts " This appearance has been answered already! Moving on" 
+	   skip.delete
+	else
+	   puts " MATCH"
+	   skip.appearance_id = possible_appearance.id
+	   skip.save!
+	end
+     end
   end
 
 end
