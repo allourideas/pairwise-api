@@ -108,6 +108,7 @@ describe Choice do
           @winning_choice.score.should be_close(67, 1)
      end
      it "should update score on a loss" do
+	  @losing_choice.reload
           @losing_choice.score.should be_close(33,1)
      end
      it "should update win count on a win" do

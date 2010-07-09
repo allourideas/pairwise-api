@@ -22,9 +22,9 @@ class Choice < ActiveRecord::Base
   #attr_accessor :data
   
   def lose!
-    self.loss_count += 1 rescue (self.loss_count = 1)
-    self.score = compute_score
-    self.save!
+    Choice.increment_counter(:loss_count, self.id)
+    self.loss_count +=1 # reflect the update just done above, so score is correct
+    Choice.update(self.id, :score => compute_score)
   end
   
   def win!
