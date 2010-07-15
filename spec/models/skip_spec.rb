@@ -3,6 +3,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 describe Skip do
   it {should belong_to :prompt}
   it {should belong_to :skipper}
+  it {should have_one :appearance}
   before(:each) do
     @valid_attributes = {
       

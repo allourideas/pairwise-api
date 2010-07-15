@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100621164536) do
+ActiveRecord::Schema.define(:version => 20100714160406) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -19,6 +19,8 @@ ActiveRecord::Schema.define(:version => 20100621164536) do
     t.string   "lookup"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "answerable_id"
+    t.string   "answerable_type"
   end
 
   add_index "appearances", ["lookup"], :name => "index_appearances_on_lookup"

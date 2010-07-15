@@ -6,7 +6,7 @@ describe Vote do
   it {should belong_to :prompt}
   it {should belong_to :choice}
   it {should belong_to :loser_choice}
-  it {should belong_to :appearance}
+  it {should have_one :appearance}
 
   before(:each) do
     @question = Factory.create(:aoi_question)

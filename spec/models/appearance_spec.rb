@@ -7,8 +7,7 @@ describe Appearance do
   it {should belong_to :voter}
   it {should belong_to :prompt}
   it {should belong_to :question}
-  it {should have_one :vote}
-  it {should have_one :skip}
+  it {should belong_to :answerable}
 
   it "should create a new instance given valid attributes" do
     Appearance.create!(@valid_attributes)

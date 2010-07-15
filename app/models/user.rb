@@ -41,8 +41,7 @@ class User < ActiveRecord::Base
   end
 
   def record_appearance(visitor, prompt)
-    a = Appearance.create(:voter => visitor, :prompt => prompt, :question_id => prompt.question_id, 
-			  :lookup =>  Digest::MD5.hexdigest(rand(10000000000).to_s + visitor.id.to_s + prompt.id.to_s) )
+    a = Appearance.create(:voter => visitor, :prompt => prompt, :question_id => prompt.question_id, :site_id => self.id, :lookup =>  Digest::MD5.hexdigest(rand(10000000000).to_s + visitor.id.to_s + prompt.id.to_s) )
   end
 
   

@@ -62,5 +62,20 @@ namespace :prune_db do
 	end
      end
   end
+  
+  task(:move_vote_and_skip_ids_to_appearance => :environment) do
+      Vote.find_each do |v|
+          @appearance = Appearance.find(v.appearance_id)
+	  @appearance.answerable = v
+	  @appearance.save
+
+      end
+      Skip.find_each do |s|
+          @appearance = Appearance.find(s.appearance_id)
+	  @appearance.answerable = s
+	  @appearance.save
+      end
+  end
+
 
 end
