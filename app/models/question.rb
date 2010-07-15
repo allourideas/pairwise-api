@@ -144,8 +144,11 @@ class Question < ActiveRecord::Base
     if params[:with_appearance] && visitor_identifier.present?
        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
 
-       last_appearance = visitor.appearances.find(:first, :conditions => {:question_id => self.id},
-				 		  :order => 'created_at DESC',
+       last_appearance = visitor.appearances.find(:first, 
+						  :conditions => {:question_id => self.id,
+							          :answerable_id => nil
+       						                 },
+				 		  :order => 'id ASC',
 						  :limit => 1)
        if last_appearance.nil?|| last_appearance.answered? || !last_appearance.prompt.active?
           @prompt = choose_prompt(:algorithm => params[:algorithm])
@@ -154,6 +157,40 @@ class Question < ActiveRecord::Base
 	  #only display a new prompt and new appearance if the old prompt has not been voted on
 	  @appearance = last_appearance
           @prompt= @appearance.prompt
+       end
+
+       if params[:future_prompts]
+	       num_future = params[:future_prompts][:number].to_i rescue 1
+	       num_future.times do |number|
+		  offset = number + 1
+                  last_appearance = visitor.appearances.find(:first, 
+						  :conditions => {:question_id => self.id,
+							          :answerable_id => nil
+		                                                 },
+				 		  :order => 'id ASC',
+						  :offset => offset)
+                  if last_appearance.nil?|| last_appearance.answered? || !last_appearance.prompt.active?
+                      @future_prompt = choose_prompt(:algorithm => params[:algorithm])
+                      @future_appearance = current_user.record_appearance(visitor, @future_prompt)
+		  else
+	              @future_appearance = last_appearance
+                      @future_prompt= @future_appearance.prompt
+		  end
+	
+                  result.merge!({"future_appearance_id_#{offset}".to_sym => @future_appearance.lookup})
+                  result.merge!({"future_prompt_id_#{offset}".to_sym => @future_prompt.id})
+
+		  ["left", "right"].each do |side|
+		      ["text", "id"].each do |param|
+			 choice = (side == "left") ? @future_prompt.left_choice : @future_prompt.right_choice
+			 param_val = (param == "text") ? choice.data : choice.id
+
+                         result.merge!({"future_#{side}_choice_#{param}_#{offset}".to_sym => param_val})
+		      end
+		  end
+	          
+	       end
+
        end
 
        result.merge!({:appearance_id => @appearance.lookup})

@@ -112,6 +112,64 @@ describe Question do
     @question_optional_information[:picked_prompt_id].should == saved_prompt_id
   end
   
+  it "should return future prompts for a given visitor when future prompt param is passed" do
+    params = {:id => 124, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true, :future_prompts => {:number => 1} }
+    @question_optional_information = @question.get_optional_information(params)
+    appearance_id= @question_optional_information[:appearance_id]
+    future_appearance_id_1 = @question_optional_information[:future_appearance_id_1]
+    future_prompt_id_1 = @question_optional_information[:future_prompt_id_1]
+    
+    #check that required attributes are included 
+    appearance_id.should be_an_instance_of(String)
+    future_appearance_id_1.should be_an_instance_of(String)
+    future_prompt_id_1.should be_an_instance_of(Fixnum)
+
+    #appearances should have unique lookups
+    appearance_id.should_not == future_appearance_id_1
+    # check that all required parameters for choices are available
+
+    ['left', 'right'].each do |side|
+       ['text', 'id'].each do |param|
+	       the_type = (param == 'text') ? String : Fixnum
+	       @question_optional_information["future_#{side}_choice_#{param}_1".to_sym].should be_an_instance_of(the_type)
+       end
+    end
+
+  end
+  
+  it "should return the same appearance for future prompts when future prompt param is passed" do
+    params = {:id => 124, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true, :future_prompts => {:number => 1} }
+    @question_optional_information = @question.get_optional_information(params)
+    saved_appearance_id = @question_optional_information[:appearance_id]
+    saved_future_appearance_id_1 = @question_optional_information[:future_appearance_id_1]
+    
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information[:appearance_id].should == saved_appearance_id
+    @question_optional_information[:future_appearance_id_1].should == saved_future_appearance_id_1
+  end
+  
+  it "should return the next future appearance in future prompts sequence after a vote is made" do
+    params = {:id => 124, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true, :future_prompts => {:number => 1} }
+    @question_optional_information = @question.get_optional_information(params)
+    appearance_id = @question_optional_information[:appearance_id]
+    prompt_id = @question_optional_information[:picked_prompt_id]
+    future_appearance_id_1 = @question_optional_information[:future_appearance_id_1]
+    future_prompt_id_1 = @question_optional_information[:future_prompt_id_1]
+    
+    vote_options = {:visitor_identifier => "jim",
+		    :appearance_lookup => appearance_id,
+		    :prompt => Prompt.find(prompt_id),
+		    :direction => "left"}
+
+    @aoi_clone.record_vote(vote_options)
+    
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information[:appearance_id].should_not == appearance_id
+    @question_optional_information[:appearance_id].should == future_appearance_id_1
+    @question_optional_information[:picked_prompt_id].should == future_prompt_id_1
+    @question_optional_information[:future_appearance_id_1].should_not == future_appearance_id_1
+  end
+  
   it "should properly handle tracking the prompt cache hit rate when returning the same appearance when a visitor requests two prompts without voting" do
     params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true}
     @question.clear_prompt_queue
