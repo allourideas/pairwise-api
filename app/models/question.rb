@@ -144,13 +144,9 @@ class Question < ActiveRecord::Base
     if params[:with_appearance] && visitor_identifier.present?
        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
 
-       last_appearance = visitor.appearances.find(:first, 
-						  :conditions => {:question_id => self.id,
-							          :answerable_id => nil
-       						                 },
-				 		  :order => 'id ASC',
-						  :limit => 1)
-       if last_appearance.nil?|| last_appearance.answered? || !last_appearance.prompt.active?
+       last_appearance = get_first_unanswered_appearance(visitor)
+
+       if last_appearance.nil?
           @prompt = choose_prompt(:algorithm => params[:algorithm])
           @appearance = current_user.record_appearance(visitor, @prompt)
        else
@@ -163,13 +159,8 @@ class Question < ActiveRecord::Base
 	       num_future = params[:future_prompts][:number].to_i rescue 1
 	       num_future.times do |number|
 		  offset = number + 1
-                  last_appearance = visitor.appearances.find(:first, 
-						  :conditions => {:question_id => self.id,
-							          :answerable_id => nil
-		                                                 },
-				 		  :order => 'id ASC',
-						  :offset => offset)
-                  if last_appearance.nil?|| last_appearance.answered? || !last_appearance.prompt.active?
+                  last_appearance = get_first_unanswered_appearance(visitor, offset)
+                  if last_appearance.nil?
                       @future_prompt = choose_prompt(:algorithm => params[:algorithm])
                       @future_appearance = current_user.record_appearance(visitor, @future_prompt)
 		  else
@@ -595,6 +586,23 @@ class Question < ActiveRecord::Base
     end
 
     filename
+  end
+
+  def get_first_unanswered_appearance(visitor, offset=0)
+       last_appearance = visitor.appearances.find(:first, 
+						  :conditions => {:question_id => self.id,
+							          :answerable_id => nil
+       						                 },
+				 		  :order => 'id ASC',
+						  :offset => offset)
+       if last_appearance && !last_appearance.prompt.active?
+		  last_appearance.valid_record = false
+		  last_appearance.validity_information = "Deactivated Prompt"
+		  last_appearance.save
+
+		  return get_first_unanswered_appearance(visitor)
+       end
+       last_appearance
   end
 
 
