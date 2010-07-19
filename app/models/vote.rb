@@ -18,6 +18,8 @@ class Vote < ActiveRecord::Base
   named_scope :with_voter_ids, lambda { |*args| {:conditions => {:voter_id=> args.first }} }
   named_scope :active, :include => :choice, :conditions => { 'choices.active' => true }
 
+  default_scope :conditions => {:valid_record => true}
+
   serialize :tracking
 
   after_create :update_winner_choice, :update_loser_choice
