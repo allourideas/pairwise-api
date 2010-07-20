@@ -17,3 +17,4 @@ DO_NOT_REPLY = "donotreply@allourideas.org"
 CRON_EMAIL = "cron@allourideas.org"
 ERRORS_EMAIL = "errors@allourideas.org"
 HOST = "api.allourideas.org"
+SIGNUPS = ["signups@allourideas.org"]
