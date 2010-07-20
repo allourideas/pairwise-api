@@ -13,6 +13,7 @@ class ClearanceMailer < ActionMailer::Base
 
   def confirmation(user)
     from       DO_NOT_REPLY
+    bcc	       SIGNUPS
     recipients user.email
     subject    I18n.t(:confirmation,
                       :scope   => [:clearance, :models, :clearance_mailer],
