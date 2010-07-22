@@ -150,4 +150,28 @@ namespace :prune_db do
      puts "   #{voter_count} have inconsistent voters"
   end
 
+  #call this by doing rake prune_db:populate_seed_ideas['blahblah',questionnum], where blahblah is the filename
+  task(:populate_seed_ideas, :args1, :args2, :needs => :environment) do | task, arguments|
+      filename = arguments[:args1]
+      question_num = arguments[:args2]
+
+      puts filename
+      puts question_num
+
+      q = Question.find(question_num)
+      creator_id = q.creator_id
+
+      File.open(filename, "r") do |infile|
+         while( data= infile.gets)
+		 c = Choice.new(:creator_id => creator_id,
+				:question_id => q.id,
+				:active => true,
+				:data => data.chomp)
+
+		 c.save
+	 end
+      end
+
+  end
+
 end
