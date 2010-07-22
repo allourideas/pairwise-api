@@ -23,12 +23,40 @@ describe Choice do
       :question => @question,
       :data => 'hi there'
     }
+
+    @unreasonable_value = 9999
+    @protected_attributes = {}
+    [ :prompts_count,
+      :votes_count,
+      :loss_count,
+      :wins,
+      :losses,
+      :score,
+      :prompts_on_the_right_count,
+      :prompts_on_the_left_count
+    ].each{|key| @protected_attributes[key] = @unreasonable_value}
+
   end
 
   it "should create a new instance given valid attributes" do
     Choice.create!(@valid_attributes)
   end
-  
+
+  it "should not manually set protected attributes when created" do
+    choice1 = Choice.create!(@valid_attributes.merge(@protected_attributes))
+    @protected_attributes.each_key do |key|
+      choice1[key].should_not == @unreasonable_value
+    end
+  end
+
+  it "should not allow mass assignment of protected attributes" do
+    choice1 = Choice.create!(@valid_attributes)
+    choice1.update_attributes(@protected_attributes)
+    @protected_attributes.each_key do |key|
+      choice1[key].should_not == @unreasonable_value
+    end
+  end
+
   it "should deactivate a choice" do
     choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
     choice1.deactivate!

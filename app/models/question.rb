@@ -20,9 +20,13 @@ class Question < ActiveRecord::Base
   has_many :skips
   has_many :densities
   has_many :appearances
-  
+
   attr_accessor :ideas
   after_create :create_choices_from_ideas
+
+  attr_protected :votes_count, :inactive_choices_count, :choices_count,
+                 :active_items_count, :prompts_count
+
   def create_choices_from_ideas
     if ideas && ideas.any?
       ideas.each do |idea|
