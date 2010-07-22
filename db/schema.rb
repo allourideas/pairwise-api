@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100719030739) do
+ActiveRecord::Schema.define(:version => 20100722052215) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -127,17 +127,13 @@ ActiveRecord::Schema.define(:version => 20100719030739) do
   end
 
   create_table "prompts", :force => true do |t|
-    t.integer  "algorithm_id"
     t.integer  "question_id"
     t.integer  "left_choice_id"
     t.integer  "right_choice_id"
-    t.integer  "voter_id"
-    t.boolean  "active"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.text     "tracking"
     t.integer  "votes_count",     :default => 0
-    t.integer  "randomkey"
   end
 
   add_index "prompts", ["left_choice_id", "right_choice_id", "question_id"], :name => "a_cool_index", :unique => true
@@ -150,18 +146,14 @@ ActiveRecord::Schema.define(:version => 20100719030739) do
     t.string   "name",                         :default => ""
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer  "items_count",                  :default => 0
-    t.integer  "active_items_count",           :default => 0
     t.integer  "choices_count",                :default => 0
     t.integer  "prompts_count",                :default => 0
     t.boolean  "active",                       :default => false
     t.text     "tracking"
-    t.integer  "first_prompt_algorithm_id"
     t.text     "information"
     t.integer  "site_id"
     t.string   "local_identifier"
     t.integer  "votes_count",                  :default => 0
-    t.text     "bloom"
     t.boolean  "it_should_autoactivate_ideas", :default => false
     t.integer  "inactive_choices_count",       :default => 0
     t.boolean  "uses_catchup",                 :default => true
