@@ -38,18 +38,18 @@ describe Vote do
   end
   it "should update counter cache on choice" do
     @prompt.left_choice.votes.size.should == 0
-    @prompt.left_choice.votes_count.should == 0
+    @prompt.left_choice.wins.should == 0
     Factory.create(:vote, :question => @question, :prompt => @prompt, 
                           :choice => @prompt.left_choice)
 
     @prompt.left_choice.reload
     @prompt.left_choice.votes.size.should == 1
-    @prompt.left_choice.votes_count.should == 1
+    @prompt.left_choice.wins.should == 1
   end
   it "should update counter cache on loser_choice" do
     @prompt.left_choice.votes.size.should == 0
     @prompt.right_choice.losses.should == 0
-    @prompt.left_choice.votes_count.should == 0
+    @prompt.left_choice.wins.should == 0
     Factory.create(:vote, :question => @question, :prompt => @prompt,
                           :choice => @prompt.left_choice,
                           :loser_choice => @prompt.right_choice)
@@ -57,8 +57,7 @@ describe Vote do
 
     @prompt.right_choice.reload
     @prompt.right_choice.votes.size.should == 0
-    @prompt.right_choice.votes_count.should == 0
-    @prompt.right_choice.loss_count.should == 1
+    @prompt.right_choice.wins.should == 0
     @prompt.right_choice.losses.should == 1
   end
 

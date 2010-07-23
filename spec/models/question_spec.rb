@@ -173,7 +173,7 @@ describe Question do
   it "should provide average voter information" do
     params = {:id => 124, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true, :with_average_votes => true }
     @question_optional_information = @question.get_optional_information(params)
-    @question_optional_information[:average_votes].should be_an_instance_of(Float)
+    @question_optional_information[:average_votes].should be_an_instance_of(Fixnum)
     @question_optional_information[:average_votes].should be_close(0.0, 0.1)
     
     vote_options = {:visitor_identifier => "jim",

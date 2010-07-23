@@ -9,8 +9,8 @@ class Vote < ActiveRecord::Base
   belongs_to :voter, :class_name => "Visitor", :foreign_key => "voter_id"
   belongs_to :question, :counter_cache => true
   belongs_to :prompt, :counter_cache => true
-  belongs_to :choice, :counter_cache => true
-  belongs_to :loser_choice, :class_name => "Choice", :foreign_key => "loser_choice_id"
+  belongs_to :choice, :counter_cache => true, :counter_cache => :wins
+  belongs_to :loser_choice, :class_name => "Choice", :foreign_key => "loser_choice_id", :counter_cache => :losses
   has_one :appearance, :as => :answerable
 
   named_scope :recent, lambda { |*args| {:conditions => ["created_at > ?", (args.first || Date.today.beginning_of_day)]} }
@@ -25,10 +25,12 @@ class Vote < ActiveRecord::Base
   after_create :update_winner_choice, :update_loser_choice
 
   def update_winner_choice
-     choice.win!
+    choice.reload              # make sure we're using updated counter values
+    choice.compute_score!
   end
   
   def update_loser_choice 
-     loser_choice.lose!
+    loser_choice.reload
+    loser_choice.compute_score!
   end
 end

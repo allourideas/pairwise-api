@@ -34,15 +34,6 @@ class ChoicesController < InheritedResources::Base
 
   end
   
-  def show
-    show! do |format|
-      format.xml { 
-        @choice.reload
-        render :xml => @choice.to_xml(:methods => [:wins_plus_losses])}
-      format.json { render :json => @choice.to_json(:methods => [:data])}
-    end 
-  end
-
   def votes
     @choice = Choice.find(params[:id])
     render :xml => @choice.votes.to_xml

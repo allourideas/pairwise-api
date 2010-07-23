@@ -16,39 +16,11 @@ class Choice < ActiveRecord::Base
  
   after_save :update_questions_counter
 
-  attr_protected :prompts_count, :votes_count, :loss_count, :wins, :losses, :score,
-                 :prompts_on_the_right_count, :prompts_on_the_left_count
+  attr_protected :prompts_count, :wins, :losses, :score, :prompts_on_the_right_count, :prompts_on_the_left_count
 
   def update_questions_counter
     self.question.update_attribute(:inactive_choices_count, self.question.choices.inactive.length)
   end 
-  #attr_accessor :data
-  
-  def lose!
-    Choice.increment_counter(:loss_count, self.id)
-    self.loss_count +=1 # reflect the update just done above, so score is correct
-    self.score = compute_score
-    self.save
-  end
-  
-  def win!
-    self.votes_count += 1 rescue (self.votes_count = 1)
-    self.score = compute_score
-    self.save!
-  end
-  
-  def wins_plus_losses
-    wins + losses
-  end
-  
-  # TODO delete these and refactor loss_count and votes_count into losses and wins
-  def losses
-    loss_count || 0
-  end
-  
-  def wins
-    votes_count || 0
-  end
   
   def before_create
     unless self.score

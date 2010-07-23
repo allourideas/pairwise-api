@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100722052215) do
+ActiveRecord::Schema.define(:version => 20100727203816) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -32,9 +32,7 @@ ActiveRecord::Schema.define(:version => 20100722052215) do
     t.integer  "item_id"
     t.integer  "question_id"
     t.integer  "position"
-    t.integer  "wins"
     t.integer  "ratings"
-    t.integer  "losses"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer  "request_id"
@@ -45,8 +43,8 @@ ActiveRecord::Schema.define(:version => 20100722052215) do
     t.string   "local_identifier"
     t.integer  "prompts_on_the_left_count",  :default => 0
     t.integer  "prompts_on_the_right_count", :default => 0
-    t.integer  "votes_count",                :default => 0
-    t.integer  "loss_count",                 :default => 0
+    t.integer  "wins",                       :default => 0
+    t.integer  "losses",                     :default => 0
     t.integer  "prompts_count",              :default => 0
     t.string   "data"
     t.integer  "creator_id"
