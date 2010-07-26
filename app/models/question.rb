@@ -216,7 +216,7 @@ class Question < ActiveRecord::Base
 	 average = 0.0
       end
 
-      result.merge!(:average_votes => (average*100).round / 100.0) # round to 2 decimals
+      result.merge!(:average_votes => average.round) # round to 2 decimals
    end
 
    return result
