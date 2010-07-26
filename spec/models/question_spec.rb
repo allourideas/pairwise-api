@@ -170,6 +170,22 @@ describe Question do
     @question_optional_information[:future_appearance_id_1].should_not == future_appearance_id_1
   end
   
+  it "should provide average voter information" do
+    params = {:id => 124, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true, :with_average_votes => true }
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information[:average_votes].should be_an_instance_of(Float)
+    @question_optional_information[:average_votes].should be_close(0.0, 0.1)
+    
+    vote_options = {:visitor_identifier => "jim",
+		    :appearance_lookup => @question_optional_information[:appearance_id],
+		    :prompt => Prompt.find(@question_optional_information[:picked_prompt_id]),
+		    :direction => "left"}
+
+    @aoi_clone.record_vote(vote_options)
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information[:average_votes].should be_close(1.0, 0.1)
+  end
+  
   it "should properly handle tracking the prompt cache hit rate when returning the same appearance when a visitor requests two prompts without voting" do
     params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true}
     @question.clear_prompt_queue

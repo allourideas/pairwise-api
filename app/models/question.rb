@@ -204,6 +204,20 @@ class Question < ActiveRecord::Base
       result.merge!(:visitor_votes => visitor.votes.count(:conditions => {:question_id => self.id}))
       result.merge!(:visitor_ideas => visitor.choices.count)
    end
+   
+   # this might get cpu intensive if used too often. If so, store the calculated value in redis
+   #   and expire after X minutes
+   if params[:with_average_votes]
+      votes_by_visitors = self.votes.count(:group => 'voter_id')
+      
+      if votes_by_visitors.size > 0
+         average = votes_by_visitors.inject(0){|total, (k,v)| total = total + v}.to_f / votes_by_visitors.size.to_f
+      else
+	 average = 0.0
+      end
+
+      result.merge!(:average_votes => (average*100).round / 100.0) # round to 2 decimals
+   end
 
    return result
 
