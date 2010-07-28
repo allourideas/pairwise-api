@@ -38,8 +38,8 @@ class PromptsController < InheritedResources::Base
 
     respond_to do |format|
       if !successful.nil?
-        format.xml { render :xml => object.to_xml(:procs => optional_information , :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
-        format.json { render :json => object.to_json(:procs => optional_information, :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+        format.xml { render :xml => object.to_xml(:procs => optional_information , :methods => [:left_choice_text, :right_choice_text]), :status => :ok }
+        format.json { render :json => object.to_json(:procs => optional_information, :methods => [:left_choice_text, :right_choice_text]), :status => :ok }
       else
         format.xml { render :xml => @prompt.to_xml, :status => :unprocessable_entity }
         format.json { render :json => @prompt.to_xml, :status => :unprocessable_entity }
@@ -75,8 +75,8 @@ class PromptsController < InheritedResources::Base
     end
     respond_to do |format|
       if !successful.nil?
-        format.xml { render :xml => response.to_xml(:procs => optional_information , :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
-        format.json { render :json => response.to_json(:procs => optional_information, :methods => [:left_choice_text, :right_choice_text, :left_choice_id, :right_choice_id]), :status => :ok }
+        format.xml { render :xml => response.to_xml(:procs => optional_information , :methods => [:left_choice_text, :right_choice_text]), :status => :ok }
+        format.json { render :json => response.to_json(:procs => optional_information, :methods => [:left_choice_text, :right_choice_text]), :status => :ok }
       else
         format.xml { render :xml => @prompt.to_xml, :status => :unprocessable_entity }
         format.json { render :json => @prompt.to_xml, :status => :unprocessable_entity }
