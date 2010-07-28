@@ -79,4 +79,32 @@ describe Vote do
     @prompt.right_choice.reload
     @prompt.right_choice.score.should be_close 33, 1
   end
+  
+  it "should not display invalid votes by default" do 
+    5.times do
+       Factory.create(:vote)
+    end
+    Vote.count.should == 5
+
+    v = Vote.last
+    v.valid_record.should be_true
+
+    v.valid_record = false
+    v.save
+    Vote.count.should == 4
+  end
+  
+  it "should allow default valid_record behavior to be overriden by default" do
+     required_params = {:question => @question, :prompt => @prompt,
+                          :choice => @prompt.left_choice,
+                          :voter=> @question.site.default_visitor,
+                          :loser_choice => @prompt.right_choice}
+
+     vote = Vote.create!(required_params)
+     vote.valid_record.should be_true
+     
+     
+     vote = Vote.create!(required_params.merge!(:valid_record => false))
+     vote.valid_record.should be_false
+  end
 end

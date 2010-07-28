@@ -118,6 +118,46 @@ describe Visitor do
     s.should be_nil
     Skip.count.should == skip_count
   end
+  
+  it "should mark a skip as invalid if submitted with an already answered appearance" do
+    @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+    @optional_skip_params = {:appearance_lookup => @appearance.lookup} 
+    allparams = @required_skip_params.merge(@optional_skip_params)
+
+    valid_skip = @visitor.skip!(allparams)
+    @visitor.skips.count.should == 1
+    @appearance.reload.answerable.should == valid_skip
+
+    # we need to reset because vote_for deletes keys from the params
+    allparams = @required_skip_params.merge(@optional_skip_params)
+    invalid_skip = @visitor.skip!(allparams)
+    invalid_skip.should_not be_nil
+
+    invalid_skip.valid_record.should be_false
+    invalid_skip.validity_information.should == "Appearance #{@appearance.id} already answered"
+    @appearance.reload.answerable.should == valid_skip
+    @visitor.reload.skips.count.should == 1
+  end
+
+  it "should mark a vote as invalid if submitted with an already answered appearance" do
+    @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+    @optional_vote_params = {:appearance_lookup => @appearance.lookup} 
+    allparams = @required_vote_params.merge(@optional_vote_params)
+
+    valid_vote = @visitor.vote_for!(allparams)
+    @visitor.votes.count.should == 1
+    @appearance.reload.answerable.should == valid_vote
+
+    # we need to reset because vote_for deletes keys from the params
+    allparams = @required_vote_params.merge(@optional_vote_params)
+    invalid_vote = @visitor.vote_for!(allparams)
+    invalid_vote.should_not be_nil
+
+    invalid_vote.valid_record.should be_false
+    invalid_vote.validity_information.should == "Appearance #{@appearance.id} already answered"
+    @appearance.reload.answerable.should == valid_vote
+    @visitor.reload.votes.count.should == 1
+  end
 
   it "should accurately update score counts after vote" do
    

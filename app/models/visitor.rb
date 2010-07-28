@@ -25,7 +25,13 @@ class Visitor < ActiveRecord::Base
     if options[:appearance_lookup] 
        @appearance = prompt.appearances.find_by_lookup(options.delete(:appearance_lookup))
        return nil unless @appearance # don't allow people to fake appearance lookups
-       options.merge!(:appearance => @appearance)
+
+       if @appearance.answered?
+          options.merge!(:valid_record => false)
+          options.merge!(:validity_information => "Appearance #{@appearance.id} already answered")
+       else
+          options.merge!(:appearance => @appearance)
+       end
     end
     
     choice = prompt.choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
@@ -45,7 +51,12 @@ class Visitor < ActiveRecord::Base
     if options[:appearance_lookup]
       @appearance = prompt.appearances.find_by_lookup(options.delete(:appearance_lookup))
       return nil unless @appearance
-      options.merge!(:appearance => @appearance)
+       if @appearance.answered?
+          options.merge!(:valid_record => false)
+          options.merge!(:validity_information => "Appearance #{@appearance.id} already answered")
+       else
+          options.merge!(:appearance => @appearance)
+       end
     end
 
     options.merge!(:question_id => prompt.question_id, :prompt_id => prompt.id, :skipper_id => self.id)
