@@ -545,16 +545,16 @@ namespace :test_api do
    def ensure_all_votes_and_skips_have_unique_appearance
      error_message = ""
      success_message = "All vote and skip objects have an associated appearance object"
-     votes_without_appearances= Vote.count(:conditions => {:appearance_id => nil})
-     if (votes_without_appearances > 0)
-	     error_message += "Error! There are #{votes_without_appearances} votes without associated appearance objects."
+
+     total_answered_appearances = Appearance.count(:conditions => 'answerable_id IS NOT NULL')
+     total_votes = Vote.count
+     total_skips = Skip.count
+
+     if (total_answered_appearances != total_votes+ total_skips)
+             difference = (total_votes+ total_skips) - total_answered_appearances 
+	     error_message += "Error! There are #{difference} votes or skips without associated appearance objects."
      end
 
-     skips_without_appearances= Skip.count(:conditions => {:appearance_id => nil})
-     if (skips_without_appearances > 0)
-	     error_message += "Error! There are #{skips_without_appearances} skips without associated appearance objects."
-     end
-     
      return error_message.blank? ? [success_message, false] : [error_message, true] 
    end
 

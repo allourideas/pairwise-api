@@ -64,90 +64,60 @@ namespace :prune_db do
   end
   
   task(:move_vote_and_skip_ids_to_appearance => :environment) do
-      Vote.find_each do |v|
-          @appearance = Appearance.find(v.appearance_id)
-	  @appearance.answerable = v
-	  @appearance.save
-	  if v.id % 1000 == 0
-		  puts v.id
-	  end
-      end
+      #Vote.find_each do |v|
+      #    @appearance = Appearance.find(v.appearance_id)
+#	  @appearance.answerable = v
+#	  @appearance.save
+#	  if v.id % 1000 == 0
+#		  puts v.id
+#	  end
+#      end
       Skip.find_each do |s|
 	  if s.appearance_id
              @appearance = Appearance.find(s.appearance_id)
-	     @appearance.answerable = s
-	     @appearance.save
+
+	     if @appearance.answerable
+		puts "Appearance #{@appearance.id} has more than one skip!"
+	     else
+	        @appearance.answerable = s
+	        @appearance.save
+	     end
 	  end
       end
   end
 
   task(:remove_double_counted_votes_with_same_appearance => :environment) do 
-     problem_appearances = Vote.count(:group => :appearance_id, :having => "count(*) > 1")
-     count = 0
-     choice_count = 0
-     voter_count = 0
-     problem_appearances.each do |id, num|
-         votes = Vote.find(:all, :conditions => {:appearance_id => id}, :order => 'id ASC')
-	 choices = votes.map{|v| v.choice_id}
-	 voters = votes.map{|v| v.voter_id}
-	 questions = votes.map{|v| v.question_id}
 
-	 if choices.uniq.size > 1 || voters.uniq.size > 1 
-	    count+=1
-	    puts "Appearance #{id}, on Question #{questions.uniq.first} has more than one inconsistent vote"
-	    if choices.uniq.size > 1
-		    puts "  There are #{choices.uniq.size} different choices!"
-		    choice_count +=1
-	    end
-	    if voters.uniq.size > 1
-		    puts "  There are #{voters.uniq.size} different voters!"
-		    voter_count +=1
-	    end
+     votes_with_no_appearance = []
+     Vote.find_each(:include => :appearance) do |v|
+	    puts v.id if v.id % 1000 == 0
 
-	    if votes.size == 2
-		    puts "  There was #{votes.second.created_at.to_f - votes.first.created_at.to_f} seconds between votes"
-	    end
-	 end
+	    votes_with_no_appearance << v if v.appearance.nil?
+     end
+     
+     skips_with_no_appearance = []
+     Skip.find_each(:include => :appearance) do |s|
+	    puts s.id if s.id % 1000 == 0
 
-	 votes = votes - [votes.first] # keep the first valid vote
-	 votes.each do |v|
-		 v.valid_record = false
-		 v.validity_information = "Double counted vote"
-		 v.save
-	 end
+	    skips_with_no_appearance << s if s.appearance.nil?
      end
 
-     # one vote and one skip:
-     #
-     double_counted_appearances = ActiveRecord::Base.connection.select_all("select votes.appearance_id from skips inner join votes using (appearance_id) where votes.valid_record=1 AND skips.valid_record=1;")
 
-     puts double_counted_appearances.inspect
+     puts "#{votes_with_no_appearance.size} Votes"
+     puts "#{skips_with_no_appearance.size} Skips"
 
-     double_counted_appearances.each do |result|
-	     v = result["appearance_id"]
-	     vote = Vote.find(:first, :conditions => {:appearance_id => v})
-	     skip = Skip.find(:first, :conditions => {:appearance_id => v})
-
-	     if vote.created_at < skip.created_at
-		     object = skip
-		     good_object = vote
-	     else
-		     object = vote
-		     good_object = skip
-	     end
-
-	     object.valid_record = false
-	     object.validity_information = "Double counted vote"
-	     object.save
-
-	     @appearance = Appearance.find(good_object.appearance_id)
-	     @appearance.answerable = good_object
-	     @appearance.save
+     votes_with_no_appearance.each do |v|
+             v.valid_record = false
+	     v.validity_information = "No associated appearance object"
+	     v.save!
      end
 
-     puts "Total inconsistent appearances: #{count}"
-     puts "   #{choice_count} have inconsistent choices voted on"
-     puts "   #{voter_count} have inconsistent voters"
+     skips_with_no_appearance.each do |s|
+         s.valid_record = false
+	 s.validity_information = "No associated appearance object"
+	 s.save!
+     end
+
   end
 
   #call this by doing rake prune_db:populate_seed_ideas['blahblah',questionnum], where blahblah is the filename
