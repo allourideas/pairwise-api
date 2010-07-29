@@ -126,6 +126,7 @@ describe Visitor do
 
     valid_skip = @visitor.skip!(allparams)
     @visitor.skips.count.should == 1
+    @visitor.skips.size.should == 1
     @appearance.reload.answerable.should == valid_skip
 
     # we need to reset because vote_for deletes keys from the params
@@ -137,6 +138,7 @@ describe Visitor do
     invalid_skip.validity_information.should == "Appearance #{@appearance.id} already answered"
     @appearance.reload.answerable.should == valid_skip
     @visitor.reload.skips.count.should == 1
+    @visitor.reload.skips.size.should == 1
   end
 
   it "should mark a vote as invalid if submitted with an already answered appearance" do
@@ -146,6 +148,7 @@ describe Visitor do
 
     valid_vote = @visitor.vote_for!(allparams)
     @visitor.votes.count.should == 1
+    @question.reload.votes.size.should == 1
     @appearance.reload.answerable.should == valid_vote
 
     # we need to reset because vote_for deletes keys from the params
@@ -157,6 +160,7 @@ describe Visitor do
     invalid_vote.validity_information.should == "Appearance #{@appearance.id} already answered"
     @appearance.reload.answerable.should == valid_vote
     @visitor.reload.votes.count.should == 1
+    @question.reload.votes.size.should == 1  #test counter cache works as well
   end
 
   it "should accurately update score counts after vote" do

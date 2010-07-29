@@ -11,6 +11,10 @@ describe Vote do
   before(:each) do
     @question = Factory.create(:aoi_question)
     @prompt = @question.prompts.first
+    @required_params = {:question => @question, :prompt => @prompt,
+                          :choice => @prompt.left_choice,
+                          :voter=> @question.site.default_visitor,
+                          :loser_choice => @prompt.right_choice}
   end
 
   it "should create a new instance with factory girl" do
@@ -95,16 +99,89 @@ describe Vote do
   end
   
   it "should allow default valid_record behavior to be overriden by default" do
-     required_params = {:question => @question, :prompt => @prompt,
-                          :choice => @prompt.left_choice,
-                          :voter=> @question.site.default_visitor,
-                          :loser_choice => @prompt.right_choice}
-
-     vote = Vote.create!(required_params)
+     vote = Vote.create!(@required_params)
      vote.valid_record.should be_true
      
-     
-     vote = Vote.create!(required_params.merge!(:valid_record => false))
+     vote = Vote.create!(@required_params.merge!(:valid_record => false))
      vote.valid_record.should be_false
   end
+  
+  it "should update counter cache on question when vote is flagged as invalid" do
+    vote = Factory.create(:vote, :question => @question)
+    @question.reload
+    @question.votes.size.should == 1
+    @question.votes_count.should == 1
+    
+    vote.valid_record = false;
+    vote.save
+    
+    @question.reload
+    @question.votes.size.should == 0
+    @question.votes_count.should == 0
+
+    the_vote = Factory.create(:vote, :question => @question)
+    the_vote.validity_information = "blah blah blah"
+    the_vote.save
+
+    @question.reload.votes.size.should == 1
+
+  end
+  it "should update counter cache on question when vote is created with invalid flag" do
+     vote = Vote.create!(@required_params)
+     @question.reload.votes.size.should == 1
+     
+     vote = Vote.create!(@required_params.merge!(:valid_record => false))
+     @question.reload.votes.size.should == 1
+  end
+  
+  it "should update counter cache on choice after changing valid status" do
+    vote = Factory.create(:vote, :question => @question, :prompt => @prompt, 
+                          :choice => @prompt.left_choice)
+
+    @prompt.left_choice.reload
+    @prompt.left_choice.votes.size.should == 1
+    @prompt.left_choice.wins.should == 1
+
+    vote.valid_record = false
+    vote.save
+    @prompt.left_choice.reload
+    @prompt.left_choice.votes.size.should == 0
+    @prompt.left_choice.wins.should == 0
+
+  end
+  it "should update counter cache on prompt after changing valid status" do
+    vote = Factory.create(:vote, :question => @question, :prompt => @prompt)
+
+    @prompt.reload
+    @prompt.votes.size.should == 1
+    @prompt.votes_count.should == 1
+    
+    vote.valid_record = false
+    vote.save
+    @prompt.reload
+    @prompt.votes.size.should == 0
+    @prompt.votes_count.should == 0
+
+  end
+  
+  it "should update counter cache on loser_choice after invalid is changed" do
+    vote = Factory.create(:vote, :question => @question, :prompt => @prompt,
+                          :choice => @prompt.left_choice,
+                          :loser_choice => @prompt.right_choice)
+
+    @prompt.right_choice.reload
+    @prompt.right_choice.votes.size.should == 0
+    @prompt.right_choice.wins.should == 0
+    @prompt.right_choice.losses.should == 1
+
+    vote.valid_record = false
+    vote.save
+    
+    @prompt.right_choice.reload
+    @prompt.right_choice.votes.size.should == 0
+    @prompt.right_choice.wins.should == 0
+    @prompt.right_choice.losses.should == 0
+
+  end
+
 end

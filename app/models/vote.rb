@@ -23,6 +23,7 @@ class Vote < ActiveRecord::Base
   serialize :tracking
 
   after_create :update_winner_choice, :update_loser_choice
+  after_save :update_counter_caches_based_on_flags
 
   def update_winner_choice
     choice.reload              # make sure we're using updated counter values
@@ -32,5 +33,23 @@ class Vote < ActiveRecord::Base
   def update_loser_choice 
     loser_choice.reload
     loser_choice.compute_score!
+  end
+
+  # this is necessary to handle counter cache, at least until the following patch is accepted:
+  # https://rails.lighthouseapp.com/projects/8994/tickets/3521-patch-add-conditional-counter-cache
+  def update_counter_caches_based_on_flags
+     if valid_record_changed?
+	     if valid_record
+		     Question.increment_counter(:votes_count, self.question_id)
+		     Prompt.increment_counter(:votes_count, self.prompt_id)
+		     Choice.increment_counter(:wins, self.choice_id)
+		     Choice.increment_counter(:losses, self.loser_choice_id)
+	     else
+		     Question.decrement_counter(:votes_count, self.question_id)
+		     Prompt.decrement_counter(:votes_count, self.prompt_id)
+		     Choice.decrement_counter(:wins, self.choice_id)
+		     Choice.decrement_counter(:losses, self.loser_choice_id)
+	     end
+     end
   end
 end
