@@ -198,6 +198,27 @@ describe Visitor do
     @rc.losses.should ==  prev_loser_losses + 1
     @rc.wins.should ==  prev_winner_wins
   end
+  
+  it "should invalidate vote after skips when :skip_fraud_protection option passed" do
+    
+    # If a visitor skips a prompt, the vote after should be conisdered invalid
+    @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+    @visitor.skip!(@required_skip_params.merge({ :appearance_lookup => @appearance.lookup}))
+
+    @appearance_2 = @aoi_clone.record_appearance(@visitor, @prompt)
+    @optional_vote_params = {:appearance_lookup => @appearance_2.lookup, :skip_fraud_protection => true }
+
+    vote = @visitor.vote_for! @required_vote_params.merge(@optional_vote_params)
+    vote.valid_record.should be_false
+    
+    @appearance_3 = @aoi_clone.record_appearance(@visitor, @prompt)
+    @optional_vote_params = {:appearance_lookup => @appearance_3.lookup, :skip_fraud_protection => true }
+    
+    vote_2 = @visitor.vote_for! @required_vote_params.merge(@optional_vote_params)
+
+    vote_2.valid_record.should be_true
+
+  end
 
     
 end

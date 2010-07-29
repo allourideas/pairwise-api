@@ -33,6 +33,16 @@ class Visitor < ActiveRecord::Base
           options.merge!(:appearance => @appearance)
        end
     end
+
+    if options.delete(:skip_fraud_protection)
+       last_answered_appearance = self.appearances.find(:first,
+			:conditions => ["appearances. question_id = ? AND appearances.answerable_id IS NOT NULL", prompt.question_id],
+			:order => 'id DESC')
+       if last_answered_appearance && last_answered_appearance.answerable_type == "Skip"
+              options.merge!(:valid_record => false)
+              options.merge!(:validity_information => "Fraud protection: last visitor action was a skip")
+       end
+    end
     
     choice = prompt.choices[ordinality] #we need to guarantee that the choices are in the right order (by position)
     other_choices = prompt.choices - [choice]
