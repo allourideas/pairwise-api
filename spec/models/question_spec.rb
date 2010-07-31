@@ -1,7 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe Question do
-  
+  include DBSupport
+
   it {should belong_to :creator}
   it {should belong_to :site}
   it {should have_many :choices}
@@ -292,6 +293,7 @@ describe Question do
 		  prompt.left_choice.deactivate!
 		  @catchup_q.choose_prompt.should_not == prompt1 
           end
+    after(:all) { truncate_all }
   end
 
   context "exporting data" do
@@ -416,6 +418,7 @@ describe Question do
 
 	  end
 
+    after(:all) { truncate_all }
   end
 
 end

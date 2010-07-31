@@ -117,7 +117,7 @@ class QuestionsController < InheritedResources::Base
 
     @question = current_user.questions.find(params[:id])
 
-    puts "redis key is::::: #{redis_key}"
+    # puts "redis key is::::: #{redis_key}"
 
     @question.send_later :export_and_delete, type, 
 	                        :response_type => response_type, :redis_key => redis_key, :delete_at => 3.days.from_now
