@@ -183,5 +183,24 @@ describe Vote do
     @prompt.right_choice.losses.should == 0
 
   end
+  
+  it "should update score choice and loser_choice after invalid is changed" do
+    vote = Factory.create(:vote, :question => @question, :prompt => @prompt,
+                          :choice => @prompt.left_choice,
+                          :loser_choice => @prompt.right_choice)
+
+    @prompt.left_choice.reload
+    @prompt.left_choice.score.should be_close(67, 1)
+    @prompt.right_choice.reload
+    @prompt.right_choice.score.should be_close(33, 1)
+
+    vote.valid_record = false
+    vote.save
+    
+    @prompt.left_choice.reload
+    @prompt.left_choice.score.should == 50
+    @prompt.right_choice.reload
+    @prompt.right_choice.score.should == 50
+  end
 
 end
