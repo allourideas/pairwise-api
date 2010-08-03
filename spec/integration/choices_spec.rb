@@ -120,17 +120,16 @@ describe "Choices" do
 
     context "when trying to access another site's choices" do
       before do
-        @other_user = Factory(:email_confirmed_user)
-        @other_question = Factory.create(:aoi_question, :site => @other_user)
-        5.times{ Factory.create(:choice, :question => @other_question) }
+        @orig_user = @api_user
+        @api_user = Factory(:email_confirmed_user)
       end
 
       it "should fail" do
-        pending("user scope") do
-          get_auth question_choices_path(@question, :format => 'xml'), :offset => 2, :limit => 4
-          response.should_not be_success
-        end
+        get_auth question_choices_path(@question, :format => 'xml'), :offset => 2, :limit => 4
+        response.should_not be_success
       end
+
+      after { @api_user = @orig_user }
     end
 
   end
@@ -156,10 +155,8 @@ describe "Choices" do
       end
 
       it "should fail" do
-        pending("user scope") do
-          get_auth question_choice_path(@other_question, @other_choice, :format => 'xml')
-          response.should_not be_success
-        end
+        get_auth question_choice_path(@other_question, @other_choice, :format => 'xml')
+        response.should_not be_success
       end
     end
     
@@ -185,11 +182,9 @@ describe "Choices" do
       end
 
       it "should fail" do
-        pending("user scope") do
-          params = { :choice => { :data => "foo" } }
-          put_auth question_choice_path(@question, @choice, :format => 'xml'), params
-          response.should_not be_success
-        end
+        params = { :choice => { :data => "foo" } }
+        put_auth question_choice_path(@question, @choice, :format => 'xml'), params
+        response.should_not be_success
       end
 
       after { @api_user = @orig_user }

@@ -27,6 +27,8 @@ class Question < ActiveRecord::Base
   attr_protected :votes_count, :inactive_choices_count, :choices_count,
                  :active_items_count, :prompts_count
 
+  attr_readonly :site_id
+
   def create_choices_from_ideas
     if ideas && ideas.any?
       ideas.each do |idea|

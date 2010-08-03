@@ -17,6 +17,7 @@ class Choice < ActiveRecord::Base
   after_save :update_questions_counter
 
   attr_protected :prompts_count, :wins, :losses, :score, :prompts_on_the_right_count, :prompts_on_the_left_count
+  attr_readonly :question_id
 
   def update_questions_counter
     self.question.update_attribute(:inactive_choices_count, self.question.choices.inactive.length)

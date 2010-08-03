@@ -55,7 +55,7 @@ class QuestionsController < InheritedResources::Base
 
 
   def show
-    @question = Question.find(params[:id])
+    @question = current_user.questions.find(params[:id])
 
     begin
         @question_optional_information = @question.get_optional_information(params)
@@ -302,7 +302,13 @@ class QuestionsController < InheritedResources::Base
     # prevent AttributeNotFound error and only update actual Question columns, since we add extra information in 'show' method
     question_attributes = Question.new.attribute_names
     params[:question] = params[:question].delete_if {|key, value| !question_attributes.include?(key)}
+    @question = current_user.questions.find(params[:id])
     update!
+  end
+
+  def index
+    @questions = current_user.questions.find(:all)
+    index!
   end
 
   protected 

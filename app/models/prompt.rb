@@ -24,6 +24,7 @@ class Prompt < ActiveRecord::Base
   named_scope :ids_only, :select => 'id'
   
   attr_protected :votes_count, :left_choice_id, :right_choice_id
+  attr_readonly :question_id
 
   def self.voted_on_by(u)
     select {|z| z.voted_on_by_user?(u)}

@@ -13,14 +13,18 @@ describe "Questions" do
       response.should be_success
     end
 
-    it "should not return the questions of other api users" do
-      pending ("doesn't scope to the level of the user") do
-        other_user = Factory(:email_confirmed_user)
-        Factory.create(:aoi_question, :site => other_user)
-        get_auth questions_path
+    context "when calling index as another user" do
+      before do
+        @orig_user = @api_user
+        @api_user = Factory(:email_confirmed_user)
+      end
+      
+      it "should not return the questions of the original user" do
+        get_auth questions_path(:format => 'xml')
         response.should be_success
         response.body.should_not have_tag("question")
       end
+      after { @api_user = @orig_user }
     end
   end
 
@@ -135,20 +139,18 @@ describe "Questions" do
       end
     end
 
-    context "GET 'show' trying to view others sites' questions"
+    context "GET 'show' trying to view others sites' questions" do
       before do
         @orig_user = @api_user
         @api_user = Factory(:email_confirmed_user)
       end
 
-    it "should fail" do
-      pending("user scope") do
+      it "should fail" do
         get_auth question_path(@question, :format => 'xml')
         response.should_not be_success
       end
+      after { @api_user = @orig_user }
     end
-
-    after { @api_user = @orig_user }
   end
 
   describe "PUT 'update'" do
@@ -166,12 +168,10 @@ describe "Questions" do
     end
 
     it "should not be able to change the site id" do
-      pending("needs attr_protected") do
-        original_site_id = @question.site_id
-        params = { :question => { :site_id => -1 } }
-        put_auth question_path(@question, :format => 'xml'), params
-        @question.reload.site_id.should == original_site_id
-      end
+      original_site_id = @question.site_id
+      params = { :question => { :site_id => -1 } }
+      put_auth question_path(@question, :format => 'xml'), params
+      @question.reload.site_id.should == original_site_id
     end
 
     it "should ignore protected attributes" do
@@ -188,11 +188,9 @@ describe "Questions" do
       end
 
       it "should fail" do
-        pending("user scope") do
-          params = { :question => { :name => "foo" } }
-          put_auth question_path(@question, :format => 'xml'), params
-          response.should_not be_success
-        end
+        params = { :question => { :name => "foo" } }
+        put_auth question_path(@question, :format => 'xml'), params
+        response.should_not be_success
       end
 
       after { @api_user = @orig_user }

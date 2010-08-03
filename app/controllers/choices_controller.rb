@@ -8,7 +8,7 @@ class ChoicesController < InheritedResources::Base
   
   def index
     if params[:limit]
-      @question = Question.find(params[:question_id])
+      @question = current_user.questions.find(params[:question_id])
 
       find_options = {:conditions => {:question_id => @question.id},
 		      :limit => params[:limit].to_i, 
@@ -21,7 +21,7 @@ class ChoicesController < InheritedResources::Base
       @choices = Choice.find(:all, find_options)
 
     else
-      @question = Question.find(params[:question_id], :include => :choices) #eagerloads ALL choices
+      @question = current_user.questions.find(params[:question_id], :include => :choices) #eagerloads ALL choices
       unless params[:include_inactive]
         @choices = @question.choices(true).active.find(:all)
       else
@@ -88,9 +88,16 @@ class ChoicesController < InheritedResources::Base
     # prevent AttributeNotFound error and only update actual Choice columns, since we add extra information in 'show' method
     choice_attributes = Choice.new.attribute_names
     params[:choice] = params[:choice].delete_if {|key, value| !choice_attributes.include?(key)}
+    @question = current_user.questions.find(params[:question_id])
+    @choice = @question.choices.find(params[:id])
     update!
   end
-  
+
+  def show
+    @question = current_user.questions.find(params[:question_id])
+    @choice = @question.choices.find(params[:id])
+    show!
+  end
 
 
 end
