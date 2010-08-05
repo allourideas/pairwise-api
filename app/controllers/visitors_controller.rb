@@ -1,6 +1,7 @@
 class VisitorsController < InheritedResources::Base
         respond_to :xml, :json
 	before_filter :authenticate
+  actions :none
 
 	def objects_by_session_ids
 		session_ids = params[:session_ids]

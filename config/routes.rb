@@ -1,32 +1,22 @@
 ActionController::Routing::Routes.draw do |map|
-  #map.resources :clicks
-  map.resources :densities
-  map.resources :visitors, :collection => {:objects_by_session_ids => :post}, :member => {:votes => :get}
-  map.resources :questions, :member => { :object_info_totals_by_date => :get, 
-	  				 :object_info_by_visitor_id => :get, 
-					 :export => :post, 
-					 :activate => :put, 
-					 :suspend => :put}, 
+  map.resources :densities, :only => :index
+  map.resources :visitors, :only => :none,
+                           :collection => {:objects_by_session_ids => :post},
+                           :member => {:votes => :get}
+  map.resources :questions, :except => [:edit, :destroy],
+                            :member => {:object_info_totals_by_date => :get, 
+	  				:object_info_by_visitor_id => :get, 
+                                        :export => :post} , 
 			    :collection => {:all_num_votes_by_visitor_id => :get, 
 					    :all_object_info_totals_by_date => :get,
 					    :object_info_totals_by_question_id => :get,
 				            :recent_votes_by_question_id => :get} do |question|
-    question.resources :items
-    question.resources :prompts, :member => {:skip => :post, :vote => :post}, 
-                       :collection => {:single => :get, :index => :get}
-    question.resources :choices, :member => {:flag => :put, :votes => :get} 
-  end
-  map.resources :algorithms
-  map.connect "/questions/:question_id/prompts/:id/vote/:index", :controller => 'prompts', :action => 'vote'
+      question.resources :prompts, :only => :show,
+                                   :member => {:skip => :post, :vote => :post}
+      question.resources :choices, :only => [:show, :index, :create, :update, :new],
+                                   :member => {:flag => :put, :votes => :get}
+    end
 
-  
-  
-  
-  map.learn '/learn', :controller => 'home', :action => 'learn'
-  map.api '/api', :controller => 'home', :action => 'api'
-  map.about '/about', :controller => 'home', :action => 'about'
   map.root :controller => "clearance/sessions", :action => "new"
 
-  # rake routes
-  # http://guides.rubyonrails.org/routing.html
 end

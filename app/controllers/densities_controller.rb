@@ -1,6 +1,7 @@
 class DensitiesController < InheritedResources::Base
   respond_to :xml, :json
   before_filter :authenticate
+  actions :index
 
   def index
       if params[:question_id]
