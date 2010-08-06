@@ -30,7 +30,11 @@ class VisitorsController < InheritedResources::Base
 
 	def votes
 	  @visitor = Visitor.find_by_identifier!(params[:id])
-	  votes = @visitor.votes(:include => [:choice, :loser_choice, :prompt]).order_by {|v| v.created_at}
+	  votes = Vote.find(:all, :include => [:choice, :loser_choice, :prompt], 
+				  :conditions => {:question_id => params[:question_id],
+					          :voter_id => @visitor.id
+	  				         },
+				  :order => 'created_at ASC')
 	  response = []
 
 	  votes.each do |vote|
