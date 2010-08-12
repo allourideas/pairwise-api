@@ -29,6 +29,10 @@ class Question < ActiveRecord::Base
 
   attr_readonly :site_id
 
+  named_scope :created_by, lambda { |id|
+    {:conditions => { :local_identifier => id } }
+  }
+
   def create_choices_from_ideas
     if ideas && ideas.any?
       ideas.each do |idea|

@@ -158,7 +158,7 @@ class QuestionsController < InheritedResources::Base
     elsif object_type == "uploaded_ideas"
 
 	    uploaded_ideas_by_visitor_id = @question.choices.find(:all, :select => 'creator_id, count(*) as ideas_count', 
-								   :conditions => "choices.creator_id != #{@question.creator_id}", 
+								   :conditions => "choices.creator_id != #{@question.creator_id}",
 	                                                           :group => 'creator_id')
 
 	    count = 0
@@ -307,7 +307,30 @@ class QuestionsController < InheritedResources::Base
   end
 
   def index
-    @questions = current_user.questions.find(:all)
+    @questions = current_user.questions.scoped({})
+    @questions = @questions.created_by(params[:creator]) if params[:creator]
+
+    counts = {}
+    if params[:user_ideas]
+      counts[:user_ideas] = Choice.count(:joins => :question,
+                                         :conditions => "choices.creator_id <> questions.creator_id",
+                                         :group => "choices.question_id")
+    end
+    if params[:active_user_ideas]
+      counts[:active_user_ideas] = Choice.count(:joins => :question,
+                                                :conditions => "choices.active = 1 AND choices.creator_id <> questions.creator_id",
+                                                :group => "choices.question_id")
+    end
+    if params[:votes_since]
+      counts[:recent_votes] = Vote.count(:joins => :question,
+                                         :conditions => ["votes.created_at > ?", params[:votes_since]],
+                                         :group => "votes.question_id")
+    end
+
+    counts.each_pair do |attr,hash|
+      @questions.each{ |q| q[attr] = hash[q.id] || 0 }
+    end
+
     index!
   end
 

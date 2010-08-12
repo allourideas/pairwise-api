@@ -22,7 +22,7 @@ describe "Choices" do
       end
       
       after do
-        post_auth question_choices_path(@question, :format => 'xml'), @params
+        post_auth question_choices_path(@question), @params
         response.should be_success
         response.should have_tag "choice"
       end
@@ -35,7 +35,7 @@ describe "Choices" do
           :data => "foo",
           :local_identifier => "bar" } }
 
-      post_auth question_choices_path(@question, :format => 'xml'), @params
+      post_auth question_choices_path(@question), @params
 
       response.should be_success
       response.should have_tag "choice creator-id", @visitor.id.to_s
@@ -52,32 +52,23 @@ describe "Choices" do
     end
 
     it "should return the deactivated choice given no arguments" do 
-      put_auth flag_question_choice_path(@question, @choice, :format => 'xml')
+      put_auth flag_question_choice_path(@question, @choice)
 
       response.should be_success
       response.should have_tag "choice active", "false"
     end
 
     it "should return the deactivated choice given an explanation" do 
-      put_auth flag_question_choice_path(@question, @choice, :format => 'xml'), :explanation => "foo"
+      put_auth flag_question_choice_path(@question, @choice), :explanation => "foo"
 
       response.should be_success
       response.should have_tag "choice active", "false"
     end
 
-    context "when trying to flag another site's choices" do
-      before do
-        # this is ugly
-        @orig_user = @api_user
-        @api_user = Factory(:email_confirmed_user)
-      end
-
-      it "should fail" do
-        put_auth flag_question_choice_path(@question, @choice, :format => 'xml'), :explanation => "foo"
-        response.should_not be_success
-      end
-
-      after { @api_user = @orig_user }
+    it "should fail when trying to flag another site's choices" do
+      other_user = Factory(:email_confirmed_user)
+      put_auth other_user, flag_question_choice_path(@question, @choice), :explanation => "foo"
+      response.should_not be_success
     end
   end
 
@@ -89,14 +80,14 @@ describe "Choices" do
     end
 
     it "should return all active choices given no optional parameters" do
-      get_auth question_choices_path(@question, :format => 'xml')
+      get_auth question_choices_path(@question)
       
       response.should be_success
       response.should have_tag "choices choice", 5
     end
 
     it "should return all choices if include_inactive is set" do
-      get_auth question_choices_path(@question, :format => 'xml'), :include_inactive => true
+      get_auth question_choices_path(@question), :include_inactive => true
       
       response.should be_success
       response.should have_tag "choices choice", 10
@@ -105,31 +96,23 @@ describe "Choices" do
 
 
     it "should return 3 choices when limt is set to 3" do
-      get_auth question_choices_path(@question, :format => 'xml'), :limit => 3
+      get_auth question_choices_path(@question), :limit => 3
 
       response.should be_success
       response.should have_tag "choices choice", 3
     end
 
     it "should return the remaining choices when offset is provided" do
-      get_auth question_choices_path(@question, :format => 'xml'), :offset => 2, :limit => 4
+      get_auth question_choices_path(@question), :offset => 2, :limit => 4
 
       response.should be_success
       response.should have_tag "choices choice", 3
     end
 
-    context "when trying to access another site's choices" do
-      before do
-        @orig_user = @api_user
-        @api_user = Factory(:email_confirmed_user)
-      end
-
-      it "should fail" do
-        get_auth question_choices_path(@question, :format => 'xml'), :offset => 2, :limit => 4
-        response.should_not be_success
-      end
-
-      after { @api_user = @orig_user }
+    it "should fail when trying to access another site's choices" do
+      other_user = Factory(:email_confirmed_user)
+      get_auth other_user, question_choices_path(@question), :offset => 2, :limit => 4
+      response.should_not be_success
     end
 
   end
@@ -141,23 +124,16 @@ describe "Choices" do
     end
 
     it "should return a choice" do
-      get_auth question_choice_path(@question, @choice, :format => 'xml')
+      get_auth question_choice_path(@question, @choice)
 
       response.should be_success
       response.should have_tag "choice", 1
     end
 
-    context "when requesting a choice from another site" do
-      before do
-        @other_user = Factory(:email_confirmed_user)
-        @other_question = Factory.create(:aoi_question, :site => @other_user)
-        @other_choice = Factory.create(:choice, :question => @other_question)
-      end
-
-      it "should fail" do
-        get_auth question_choice_path(@other_question, @other_choice, :format => 'xml')
-        response.should_not be_success
-      end
+    it "should fail when requesting a choice from another site" do
+      other_user = Factory(:email_confirmed_user)
+      get_auth other_user, question_choice_path(@question, @choice)
+      response.should_not be_success
     end
     
   end
@@ -171,23 +147,15 @@ describe "Choices" do
 
     it "should succeed given valid attributes" do
       params = { :choice => { :data => "foo" } }
-      put_auth question_choice_path(@question, @choice, :format => 'xml'), params
+      put_auth question_choice_path(@question, @choice), params
       response.should be_success
     end
 
-    context "when updatng another site's choice" do
-      before do
-        @orig_user = @api_user
-        @api_user = Factory(:email_confirmed_user)
-      end
-
-      it "should fail" do
-        params = { :choice => { :data => "foo" } }
-        put_auth question_choice_path(@question, @choice, :format => 'xml'), params
-        response.should_not be_success
-      end
-
-      after { @api_user = @orig_user }
+    it "should fail when updating another site's choice" do
+      other_user = Factory(:email_confirmed_user)
+      params = { :choice => { :data => "foo" } }
+      put_auth other_user, question_choice_path(@question, @choice), params
+      response.should_not be_success
     end
   end
 

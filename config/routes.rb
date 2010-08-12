@@ -1,6 +1,6 @@
 ActionController::Routing::Routes.draw do |map|
   map.resources :densities, :only => :index
-  map.resources :visitors, :only => :none,
+  map.resources :visitors, :only => :index,
                            :collection => {:objects_by_session_ids => :post},
                            :member => {:votes => :get}
   map.resources :questions, :except => [:edit, :destroy],

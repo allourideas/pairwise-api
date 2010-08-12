@@ -13,7 +13,7 @@ describe "Prompts" do
     end
 
     it "returns a prompt object" do
-      get_auth question_prompt_path(@question, @prompt, :format => 'xml')
+      get_auth question_prompt_path(@question, @prompt)
       response.should be_success
       response.should have_tag "prompt", 1
     end
@@ -31,11 +31,11 @@ describe "Prompts" do
                                                       :with_prompt => true,
                                                       :visitor_identifier => @visitor.identifier )
       @appearance_id = info[:appearance_id]
-      @prompt_id = info[:picked_prompt_id]
+      @picked_prompt_id = info[:picked_prompt_id]
     end
 
     it "should return a new skip object given no optional parameters" do
-      post_auth skip_question_prompt_path(@question.id, @prompt_id, :format => 'xml')
+      post_auth skip_question_prompt_path(@question.id, @picked_prompt_id)
       response.should be_success
       response.should have_tag "skip", 1
     end
@@ -48,7 +48,7 @@ describe "Prompts" do
             :skip_reason => "bar",
             :appearance_lookup => @appearance_id,
             :time_viewed => 47 } }
-        post_auth skip_question_prompt_path(@question, @prompt_id, :format => 'xml'), params
+        post_auth skip_question_prompt_path(@question, @picked_prompt_id), params
         response.should be_success
         response.should have_tag "skip", 1
         response.should have_tag "skip appearance-id", @appearance_id.to_s
@@ -65,7 +65,7 @@ describe "Prompts" do
           :with_appearance => true,
           :algorithm => "catchup",
           :with_visitor_stats => true } }
-      post_auth skip_question_prompt_path(@question, @prompt_id, :format => 'xml'), params
+      post_auth skip_question_prompt_path(@question, @picked_prompt_id), params
       response.should be_success
       response.should have_tag "prompt", 1
       response.should have_tag "prompt appearance_id", /.+/
@@ -73,19 +73,12 @@ describe "Prompts" do
       response.should have_tag "prompt visitor_ideas", /\d+/
     end
 
-    context "when trying to skip another site's questions" do
-      before do
-        @orig_user = @api_user
-        @api_user = Factory(:email_confirmed_user)
-      end
-
-      it "should fail" do
-        post_auth skip_question_prompt_path(@question.id, @prompt_id, :format => 'xml')
-        response.should_not be_success
-      end
-
-      after { @api_user = @orig_user }
+    it "should fail when trying to skip another site's questions" do
+      other_user = Factory(:email_confirmed_user)
+      post_auth other_user, skip_question_prompt_path(@question, @picked_prompt_id)
+      response.should_not be_success
     end
+
   end
   
   describe "POST 'vote'" do
@@ -101,17 +94,17 @@ describe "Prompts" do
                                                       :with_prompt => true,
                                                       :visitor_identifier => @visitor.identifier )
       @appearance_id = info[:appearance_id]
-      @prompt_id = info[:picked_prompt_id]
+      @picked_prompt_id = info[:picked_prompt_id]
     end
 
     it "should fail without the required 'direction' parameter" do
-      post_auth vote_question_prompt_path(@question.id, @prompt_id, :format => 'xml')
+      post_auth vote_question_prompt_path(@question.id, @picked_prompt_id)
       response.should_not be_success
     end      
 
     it "should return a new vote object given no optional parameters" do
       params = { :vote => { :direction => "left" } }
-      post_auth vote_question_prompt_path(@question.id, @prompt_id, :format => 'xml'), params
+      post_auth vote_question_prompt_path(@question.id, @picked_prompt_id), params
       response.should be_success
       response.should have_tag "vote", 1
     end
@@ -124,7 +117,7 @@ describe "Prompts" do
             :direction => "right",
             :appearance_lookup => @appearance_id,
             :time_viewed => 47 } }
-        post_auth vote_question_prompt_path(@question, @prompt_id, :format => 'xml'), params
+        post_auth vote_question_prompt_path(@question, @picked_prompt_id), params
         response.should be_success
         response.should have_tag "vote", 1
         response.should have_tag "vote appearance-id", @appearance_id.to_s
@@ -143,7 +136,7 @@ describe "Prompts" do
           :with_appearance => true,
           :algorithm => "catchup",
           :with_visitor_stats => true } }
-      post_auth vote_question_prompt_path(@question, @prompt_id, :format => 'xml'), params
+      post_auth vote_question_prompt_path(@question, @picked_prompt_id), params
       response.should be_success
       response.should have_tag "prompt", 1
       response.should have_tag "prompt appearance_id", /.+/
@@ -151,19 +144,11 @@ describe "Prompts" do
       response.should have_tag "prompt visitor_ideas", /\d+/
     end
 
-    context "when trying to vote on another site's questions" do
-      before do
-        @orig_user = @api_user
-        @api_user = Factory(:email_confirmed_user)
-      end
-
-      it "should fail" do
-        params = { :vote => { :direction => "left" } }
-        post_auth vote_question_prompt_path(@question.id, @prompt_id, :format => 'xml'), params
-        response.should_not be_success
-      end
-
-      after { @api_user = @orig_user }
+    it "should fail when trying to vote on another site's questions" do
+      other_user = Factory(:email_confirmed_user)
+      params = { :vote => { :direction => "left" } }
+      post_auth other_user, vote_question_prompt_path(@question.id, @picked_prompt_id), params
+      response.should_not be_success
     end
 
   end

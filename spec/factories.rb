@@ -58,6 +58,19 @@ Factory.define(:vote) do |f|
   f.voter {|v|  v.question.creator}
 end
 
+Factory.define(:skip) do |f|
+  f.association :question, :factory => :aoi_question
+  f.prompt {|s|  s.question.prompts.first}
+  f.skipper {|s|  s.question.creator}
+end
+
+Factory.define(:appearance) do |f|
+  f.association :question, :factory => :aoi_question
+  f.prompt {|a| a.question.prompts.rand}
+  f.voter {|a| a.question.creator}
+  f.answerable { nil }
+end
+
 Factory.sequence :email do |n|
   "user#{n}@example.com"
 end
