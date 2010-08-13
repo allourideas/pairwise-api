@@ -1,5 +1,5 @@
 require 'fastercsv'
-require 'generator'
+require 'generator.rb'
 
 class QuestionsController < InheritedResources::Base
   actions :all, :except => [ :show, :edit, :delete ]
