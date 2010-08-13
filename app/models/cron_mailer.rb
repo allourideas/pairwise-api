@@ -1,6 +1,3 @@
-unless Rails.env == "development"
-	   include SendGrid
-end
 class CronMailer < ActionMailer::Base
 
 	def info_message(recipients, subject, message, sent_at= Time.now)

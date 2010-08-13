@@ -12,8 +12,8 @@ Rails::Initializer.run do |config|
   #config.time_zone = 'Eastern Time (US & Canada)'
 
   config.active_record.default_timezone = 'Eastern Time (US & Canada)'
-  config.action_mailer.delivery_method = :smtp
-  #config.action_mailer.delivery_method = :sendmail
+  #config.action_mailer.delivery_method = :smtp
+  config.action_mailer.delivery_method = :sendmail
 
   config.gem 'hoptoad_notifier',
     :version => '2.3.4'
@@ -55,6 +55,8 @@ Rails::Initializer.run do |config|
   config.gem 'redis',
     :version => '1.0.7'
 
-  config.gem 'sendgrid'
+  config.gem 'newrelic_rpm',
+    :version => '2.12.3'
+
 end
 
