@@ -1,4 +1,5 @@
 require 'fastercsv'
+require 'generator'
 
 class QuestionsController < InheritedResources::Base
   actions :all, :except => [ :show, :edit, :delete ]
@@ -6,53 +7,6 @@ class QuestionsController < InheritedResources::Base
   respond_to :xml, :json
   respond_to :csv, :only => :export #leave the option for xml export here
   belongs_to :site, :optional => true
-
-  def recent_votes_by_question_id
-    creator_id = params[:creator_id]
-    date = params[:date]
-    if creator_id
-	    questions = Question.find(:all, :select => :id, :conditions => { :local_identifier => creator_id})
-	    questions_list = questions.map {|record | record.quoted_id}
-	    question_votes_hash = Vote.with_question(questions_list).recent.count(:group => :question_id)
-
-    elsif date #only for admins
-	    question_votes_hash = Vote.recent(date).count(:group => :question_id)
-    else
-	    question_votes_hash = Vote.recent.count(:group => :question_id)
-    end
-
-    respond_to do |format|
-    	format.xml{ render :xml => question_votes_hash.to_xml and return}
-    end
-  end
-
-  def object_info_totals_by_question_id
-      total_ideas_by_q_id = Choice.count(:include => :question, 
-		          :conditions => "choices.creator_id <> questions.creator_id", 
-			  :group => "choices.question_id")
-
-      active_ideas_by_q_id = Choice.count(:include => :question, 
-		          :conditions => "choices.active = 1 AND choices.creator_id <> questions.creator_id", 
-			  :group => "choices.question_id")
-
-      combined_hash = {}
-
-      total_ideas_by_q_id.each do |q_id, num_total|
-	      combined_hash[q_id] = {}
-	      combined_hash[q_id][:total_ideas] = num_total
-	      if(active_ideas_by_q_id.has_key?(q_id))
-	         combined_hash[q_id][:active_ideas]= active_ideas_by_q_id[q_id]
-	      else
-	         combined_hash[q_id][:active_ideas]= 0
-	      end
-      end
-    respond_to do |format|
-	    format.xml { render :xml => combined_hash.to_xml and return}
-    end
-
-  end
-
-
 
   def show
     @question = current_user.questions.find(params[:id])
@@ -312,26 +266,38 @@ class QuestionsController < InheritedResources::Base
 
     counts = {}
     if params[:user_ideas]
-      counts[:user_ideas] = Choice.count(:joins => :question,
+      counts['user-ideas'] = Choice.count(:joins => :question,
                                          :conditions => "choices.creator_id <> questions.creator_id",
                                          :group => "choices.question_id")
     end
     if params[:active_user_ideas]
-      counts[:active_user_ideas] = Choice.count(:joins => :question,
+      counts['active-user-ideas'] = Choice.count(:joins => :question,
                                                 :conditions => "choices.active = 1 AND choices.creator_id <> questions.creator_id",
                                                 :group => "choices.question_id")
     end
     if params[:votes_since]
-      counts[:recent_votes] = Vote.count(:joins => :question,
+      counts['recent-votes'] = Vote.count(:joins => :question,
                                          :conditions => ["votes.created_at > ?", params[:votes_since]],
                                          :group => "votes.question_id")
     end
 
-    counts.each_pair do |attr,hash|
-      @questions.each{ |q| q[attr] = hash[q.id] || 0 }
+    # There doesn't seem to be a good way to add procs to an array of
+    # objects. This  solution  depends on Array#to_xml rendering each
+    # member in the correct order. Internally, it just uses, #each, so
+    # this _should_ work.
+    ids = Generator.new{ |g|  @questions.each{ |q| g.yield q.id } }
+    extra_info = Proc.new do |o|
+      id = ids.next
+      counts.each_pair do |attr, hash|
+        o[:builder].tag!(attr, hash[id] || 0 , :type => "integer")
+      end
     end
 
-    index!
+    index! do |format|
+      format.xml do
+        render :xml => @questions.to_xml(:procs => [ extra_info ])
+      end
+    end
   end
 
   protected 
