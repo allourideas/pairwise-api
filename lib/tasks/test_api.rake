@@ -398,6 +398,16 @@ namespace :test_api do
 
         end
 	
+	if (choice.wins != choice.votes.count)
+		 error_message += "Error!: Cached choice wins != actual choice wins"
+		 error_bool= true
+	end
+	
+	if (choice.losses != question.votes.count(:conditions => {:loser_choice_id}))
+		 error_message += "Error!: Cached choice wins != actual choice wins"
+		 error_bool= true
+	end
+	
 	if (2*total_wins != total_votes)
 		 error_message += "Error 1: 2 x Total Wins != Total votes"
 		 error_bool= true
@@ -505,7 +515,7 @@ namespace :test_api do
 	if yesterday_appearances > 5 # this test isn't worthwhile for small numbers of appearances
 	  miss_rate = misses.to_f / yesterday_appearances.to_f
 	  if miss_rate > 0.1
-	     error_message += "Error! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}, total appearances yesterday: #{yesterday_appearances}\n"
+	     error_message += "Warning! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}, total appearances yesterday: #{yesterday_appearances}\n"
 	  end
         end
         return error_message.blank? ? [success_message, false] : [error_message, true] 
@@ -576,7 +586,7 @@ namespace :test_api do
 	     end
 
 	     if v.time_viewed && v.time_viewed/1000 > server_response_time 
-		     the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Server roundtrip time is: #{v.created_at.to_f - v.appearance.created_at.to_f} seconds, but client side response time is: #{v.time_viewed.to_f / 1000.0} seconds\n"
+		     the_error_msg = "Warning! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Server roundtrip time is: #{v.created_at.to_f - v.appearance.created_at.to_f} seconds, but client side response time is: #{v.time_viewed.to_f / 1000.0} seconds\n"
 
 		     error_message += the_error_msg
 	             print the_error_msg
