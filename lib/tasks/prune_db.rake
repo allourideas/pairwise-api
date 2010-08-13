@@ -86,6 +86,7 @@ namespace :prune_db do
       end
   end
 
+<<<<<<< HEAD
   task(:remove_double_counted_votes_with_same_appearance => :environment) do 
 
      votes_with_no_appearance = []
