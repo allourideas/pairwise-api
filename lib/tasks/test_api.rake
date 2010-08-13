@@ -403,7 +403,7 @@ namespace :test_api do
 		 error_bool= true
 	end
 	
-	if (choice.losses != question.votes.count(:conditions => {:loser_choice_id}))
+	if (choice.losses != question.votes.count(:conditions => {:loser_choice_id => choice.id}))
 		 error_message += "Error!: Cached choice wins != actual choice wins"
 		 error_bool= true
 	end
