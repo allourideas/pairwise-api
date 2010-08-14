@@ -395,18 +395,18 @@ namespace :test_api do
 		    total_scores_lte_fifty +=1
 	    end
 
+	    if (choice.wins != choice.votes.count)
+		 error_message += "Error!: Cached choice wins != actual choice wins for choice #{choice.id}\n"
+		 error_bool= true
+	    end
+	
+	    if (choice.losses != question.votes.count(:conditions => {:loser_choice_id => choice.id}))
+		 error_message += "Error!: Cached choice wins != actual choice wins for choice #{choice.id}\n"
+		 error_bool= true
+	    end
 
         end
 	
-	if (choice.wins != choice.votes.count)
-		 error_message += "Error!: Cached choice wins != actual choice wins"
-		 error_bool= true
-	end
-	
-	if (choice.losses != question.votes.count(:conditions => {:loser_choice_id => choice.id}))
-		 error_message += "Error!: Cached choice wins != actual choice wins"
-		 error_bool= true
-	end
 	
 	if (2*total_wins != total_votes)
 		 error_message += "Error 1: 2 x Total Wins != Total votes"
