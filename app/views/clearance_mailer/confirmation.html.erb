@@ -1,0 +1,19 @@
+Hi,
+
+To complete your registration as an All Our Ideas pairwise API user, please follow this link:
+
+<%= new_user_confirmation_url(
+      :user_id => @user,
+      :token   => @user.confirmation_token,
+      :encode  => false) %>
+
+If you see "Confirmed email and signed in", then your registration is complete.  Documentation for new users is available at:
+
+http://wiki.github.com/allourideas/pairwise-api/getting-started
+
+Thanks,
+All Our Ideas
+145 Wallace Hall
+Princeton, NJ 08544
+info@allourideas.org
+Follow us on twitter: http://twitter.com/allourideas
