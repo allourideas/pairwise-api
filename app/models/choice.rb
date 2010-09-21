@@ -5,6 +5,7 @@ class Choice < ActiveRecord::Base
   
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
   validates_presence_of :question, :on => :create, :message => "can't be blank"
+  validates_presence_of :data
   #validates_length_of :item, :maximum => 140
   
   has_many :votes

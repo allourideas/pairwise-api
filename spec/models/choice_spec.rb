@@ -10,6 +10,7 @@ describe Choice do
   it {should have_many :prompts_on_the_right}
   it {should validate_presence_of :question}
   it {should validate_presence_of :creator}
+  it {should validate_presence_of :data}
   
   before(:each) do
     @aoi_clone = Factory.create(:email_confirmed_user)
