@@ -1,4 +1,3 @@
-require 'fastercsv'
 namespace :test_api do
 
    task :all => [:question_vote_consistency,:generate_density_information]

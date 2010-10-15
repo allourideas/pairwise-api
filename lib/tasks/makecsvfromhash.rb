@@ -1,4 +1,4 @@
-require 'fastercsv'
+#require 'fastercsv'
 
 q = Question.find(109)
 
