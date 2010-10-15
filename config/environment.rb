@@ -15,6 +15,8 @@ Rails::Initializer.run do |config|
   config.action_mailer.delivery_method = :smtp
   #config.action_mailer.delivery_method = :sendmail
 
+  config.gem 'mysql',
+    :version => '2.8.1'
   config.gem 'hoptoad_notifier',
     :version => '2.3.4'
   config.gem "ambethia-smtp-tls",
