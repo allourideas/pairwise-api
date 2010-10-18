@@ -336,7 +336,7 @@ namespace :test_api do
      if errors.empty?
 	CronMailer.deliver_info_message(CRON_EMAIL, "Test of API Vote Consistency passed", email_text)
      else
-     	CronMailer.deliver_info_message(CRON_EMAIL.to_a + ERRORS_EMAIL.to_a, "Error! Failure of API Vote Consistency " , email_text)
+     	CronMailer.deliver_info_message(CRON_EMAIL, "Error! Failure of API Vote Consistency " , email_text)
      end
 
    end
