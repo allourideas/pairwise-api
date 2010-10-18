@@ -14,3 +14,4 @@ ActionMailer::Base.smtp_settings = {
 
 DO_NOT_REPLY = "donotreply@example.com"
 CRON_EMAIL = ["cron@allourideas.org"]
+ERRORS_EMAIL = ["errors@allourideas.org"]
