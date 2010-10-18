@@ -18,3 +18,5 @@ config.action_mailer.raise_delivery_errors = false
 
 HOST = 'localhost'
 
+config.gem 'mysql', 
+  :version => '2.8.1' 
