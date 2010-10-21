@@ -141,93 +141,92 @@ class Question < ActiveRecord::Base
    weights
  end
 
- def get_optional_information(params)
+  def get_optional_information(params)
 
-   return {} if params.nil?
+    return {} if params.nil?
 
-   result = {}
-   visitor_identifier = params[:visitor_identifier]
-   current_user = self.site
+    result = {}
+    visitor_identifier = params[:visitor_identifier]
+    current_user = self.site
 
-   if params[:with_prompt]
+    if params[:with_prompt]
      
-    if params[:with_appearance] && visitor_identifier.present?
-       visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+      if params[:with_appearance] && visitor_identifier.present?
+        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
 
-       last_appearance = get_first_unanswered_appearance(visitor)
+        last_appearance = get_first_unanswered_appearance(visitor)
 
-       if last_appearance.nil?
+        if last_appearance.nil?
           @prompt = choose_prompt(:algorithm => params[:algorithm])
           @appearance = current_user.record_appearance(visitor, @prompt)
-       else
-    #only display a new prompt and new appearance if the old prompt has not been voted on
-    @appearance = last_appearance
+        else
+        #only display a new prompt and new appearance if the old prompt has not been voted on
+          @appearance = last_appearance
           @prompt= @appearance.prompt
-       end
+        end
 
-       if params[:future_prompts]
-         num_future = params[:future_prompts][:number].to_i rescue 1
-         num_future.times do |number|
-      offset = number + 1
-                  last_appearance = get_first_unanswered_appearance(visitor, offset)
-                  if last_appearance.nil?
-                      @future_prompt = choose_prompt(:algorithm => params[:algorithm])
-                      @future_appearance = current_user.record_appearance(visitor, @future_prompt)
-      else
-                @future_appearance = last_appearance
-                      @future_prompt= @future_appearance.prompt
-      end
+        if params[:future_prompts]
+          num_future = params[:future_prompts][:number].to_i rescue 1
+          num_future.times do |number|
+            offset = number + 1
+            last_appearance = get_first_unanswered_appearance(visitor, offset)
+            if last_appearance.nil?
+              @future_prompt = choose_prompt(:algorithm => params[:algorithm])
+              @future_appearance = current_user.record_appearance(visitor, @future_prompt)
+            else
+              @future_appearance = last_appearance
+              @future_prompt= @future_appearance.prompt
+            end
+
+            result.merge!({"future_appearance_id_#{offset}".to_sym => @future_appearance.lookup})
+            result.merge!({"future_prompt_id_#{offset}".to_sym => @future_prompt.id})
+
+            ["left", "right"].each do |side|
+              ["text", "id"].each do |param|
+                choice = (side == "left") ? @future_prompt.left_choice : @future_prompt.right_choice
+                param_val = (param == "text") ? choice.data : choice.id
   
-                  result.merge!({"future_appearance_id_#{offset}".to_sym => @future_appearance.lookup})
-                  result.merge!({"future_prompt_id_#{offset}".to_sym => @future_prompt.id})
+              result.merge!({"future_#{side}_choice_#{param}_#{offset}".to_sym => param_val})
+              end
+            end
 
-      ["left", "right"].each do |side|
-          ["text", "id"].each do |param|
-       choice = (side == "left") ? @future_prompt.left_choice : @future_prompt.right_choice
-       param_val = (param == "text") ? choice.data : choice.id
-
-                         result.merge!({"future_#{side}_choice_#{param}_#{offset}".to_sym => param_val})
           end
-      end
-            
-         end
 
-       end
+        end
 
-       result.merge!({:appearance_id => @appearance.lookup})
-     else
-       # throw some error
-     end 
+        result.merge!({:appearance_id => @appearance.lookup})
+      else
+        # throw some error
+      end 
     
-     if !@prompt 
-       @prompt = choose_prompt(:algorithm => params[:algorithm])
-     end
-     result.merge!({:picked_prompt_id => @prompt.id})
-   end 
+      if !@prompt 
+        @prompt = choose_prompt(:algorithm => params[:algorithm])
+      end
+      result.merge!({:picked_prompt_id => @prompt.id})
+    end 
 
-   if params[:with_visitor_stats]
+    if params[:with_visitor_stats]
       visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
       result.merge!(:visitor_votes => visitor.votes.count(:conditions => {:question_id => self.id}))
       result.merge!(:visitor_ideas => visitor.choices.count)
-   end
+    end
    
-   # this might get cpu intensive if used too often. If so, store the calculated value in redis
-   #   and expire after X minutes
-   if params[:with_average_votes]
+    # this might get cpu intensive if used too often. If so, store the calculated value in redis
+    #   and expire after X minutes
+    if params[:with_average_votes]
       votes_by_visitors = self.votes.count(:group => 'voter_id')
       
       if votes_by_visitors.size > 0
-         average = votes_by_visitors.inject(0){|total, (k,v)| total = total + v}.to_f / votes_by_visitors.size.to_f
+        average = votes_by_visitors.inject(0){|total, (k,v)| total = total + v}.to_f / votes_by_visitors.size.to_f
       else
-   average = 0.0
+        average = 0.0
       end
 
       result.merge!(:average_votes => average.round) # round to 2 decimals
-   end
+    end
 
-   return result
-
- end
+    return result
+  end
 
  #passing precomputed sum saves us a traversal through the array
  def normalize!(weighted, sum=nil)
