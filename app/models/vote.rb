@@ -25,6 +25,12 @@ class Vote < ActiveRecord::Base
   after_create :update_winner_choice, :update_loser_choice
   after_save :update_cached_values_based_on_flags
 
+  def self.find_without_default_scope(*args)
+    with_exclusive_scope() do
+      find(*args)
+    end
+  end
+
   def update_winner_choice
     choice.reload              # make sure we're using updated counter values
     choice.compute_score!

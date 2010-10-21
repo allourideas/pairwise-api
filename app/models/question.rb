@@ -207,7 +207,7 @@ class Question < ActiveRecord::Base
 
     if params[:with_visitor_stats]
       visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
-      result.merge!(:visitor_votes => visitor.votes.count(:conditions => {:question_id => self.id}))
+      result.merge!(:visitor_votes => Vote.find_without_default_scope(:all, :conditions => {:voter_id => visitor, :question_id => self.id}).length)
       result.merge!(:visitor_ideas => visitor.choices.count)
     end
    
