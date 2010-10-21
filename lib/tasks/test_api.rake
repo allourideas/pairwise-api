@@ -577,6 +577,7 @@ namespace :test_api do
 
      Vote.find_each(:batch_size => 1000, :include => :appearance) do |v|
 
+      next if v.nil? || v.appearance.nil?
        # Subtracting DateTime objects results in the difference in days
        server_response_time = v.created_at.to_f - v.appearance.created_at.to_f
        if server_response_time < 0
