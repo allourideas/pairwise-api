@@ -568,26 +568,27 @@ class Question < ActiveRecord::Base
 
         when 'non_votes'
 
-          self.appearances.find_each(:include => [:skip, :vote, :voter]) do |a|
+          self.appearances.find_each(:include => [:answerable, :voter]) do |a|
             # we only display skips and orphaned appearances in this csv file
-            next unless a.vote.nil?
+            next if a.answerable.class == Vote
       
-            # If no skip and no vote, this is an orphaned appearance
-            if a.skip.nil?
-              prompt = a.prompt
-              csv << [ "Orphaned Appearance", a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, 
-              a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'N/A', 'N/A',
-              a.created_at, a.updated_at, 'N/A', '', a.voter.identifier] 
-        
-            else
+            if a.answerable.class == Skip
                 
               # If this appearance belongs to a skip, show information on the skip instead
-              s = a.skip
+              s = a.answerable
               time_viewed = s.time_viewed.nil? ? "NA": s.time_viewed.to_f / 1000.0
               prompt = s.prompt
               csv << [ "Skip", s.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, 
               s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.appearance_id, s.skip_reason,
               s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier] 
+
+            # If no skip and no vote, this is an orphaned appearance
+            else 
+              prompt = a.prompt
+              csv << [ "Orphaned Appearance", a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, 
+              a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'N/A', 'N/A',
+              a.created_at, a.updated_at, 'N/A', '', a.voter.identifier] 
+        
             end
           end
 
