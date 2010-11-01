@@ -384,6 +384,8 @@ describe Question do
       rows.first.should include("Record ID")
       rows.first.should include("Record Type")
       rows.first.should_not include("Idea ID")
+      # ensure we have more than just the header row
+      rows.length.should be > 1
       File.delete(filename).should_not be_nil 
 
 
