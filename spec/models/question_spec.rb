@@ -298,19 +298,19 @@ describe Question do
 
   context "exporting data" do
 	  before(:all) do
-		  @question = Factory.create(:aoi_question)
-		  user = @question.site
+		  @aoi_question = Factory.create(:aoi_question)
+		  user = @aoi_question.site
 
-		  @question.it_should_autoactivate_ideas = true
-		  @question.save!
+		  @aoi_question.it_should_autoactivate_ideas = true
+		  @aoi_question.save!
 
                   visitor = user.visitors.find_or_create_by_identifier('visitor identifier')
 		  100.times.each do |num|
-			  user.create_choice(visitor.identifier, @question, {:data => num.to_s, :local_identifier => "example creator"})
+			  user.create_choice(visitor.identifier, @aoi_question, {:data => num.to_s, :local_identifier => "example creator"})
 		  end
 
 		  200.times.each do |num|
-			  @p = @question.picked_prompt
+			  @p = @aoi_question.picked_prompt
 
 			  @a = user.record_appearance(visitor, @p)
 
@@ -340,10 +340,10 @@ describe Question do
 	  
 
 	  it "should export vote data to a csv file" do
-		  filename = @question.export('votes')
+		  filename = @aoi_question.export('votes')
 
 		  filename.should_not be nil
-		  filename.should match /.*ideamarketplace_#{@question.id}_votes[.]csv$/
+		  filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
 		  File.exists?(filename).should be_true
 		  # Not specifying exact file syntax, it's likely to change frequently
 		  #
@@ -357,10 +357,10 @@ describe Question do
 	  it "should notify redis after completing an export, if redis option set" do
 		  redis_key = "test_key123"
 		  $redis.del(redis_key) # clear if key exists already
-		  filename = @question.export('votes', :response_type => 'redis', :redis_key => redis_key)
+		  filename = @aoi_question.export('votes', :response_type => 'redis', :redis_key => redis_key)
 
 		  filename.should_not be nil
-		  filename.should match /.*ideamarketplace_#{@question.id}_votes[.]csv$/
+		  filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
 		  File.exists?(filename).should be_true
 		  $redis.lpop(redis_key).should == filename
 		  $redis.del(redis_key) # clean up
@@ -372,10 +372,10 @@ describe Question do
 	  end
 
 	  it "should export non vote data to a csv file" do 
-		  filename = @question.export('non_votes')
+		  filename = @aoi_question.export('non_votes')
 
 		  filename.should_not be nil
-		  filename.should match /.*ideamarketplace_#{@question.id}_non_votes[.]csv$/
+		  filename.should match /.*ideamarketplace_#{@aoi_question.id}_non_votes[.]csv$/
 		  File.exists?(filename).should be_true
 
 		  # Not specifying exact file syntax, it's likely to change frequently
@@ -390,10 +390,10 @@ describe Question do
 	  end
 
 	  it "should export idea data to a csv file" do
-		  filename = @question.export('ideas')
+		  filename = @aoi_question.export('ideas')
 
 		  filename.should_not be nil
-		  filename.should match /.*ideamarketplace_#{@question.id}_ideas[.]csv$/
+		  filename.should match /.*ideamarketplace_#{@aoi_question.id}_ideas[.]csv$/
 		  File.exists?(filename).should be_true
 		  # Not specifying exact file syntax, it's likely to change frequently
 		  #
@@ -405,12 +405,12 @@ describe Question do
 	  end
 
 	  it "should raise an error when given an unsupported export type" do
-		  lambda { @question.export("blahblahblah") }.should raise_error
+		  lambda { @aoi_question.export("blahblahblah") }.should raise_error
 	  end
 
 	  it "should export data and schedule a job to delete export after X days" do
 		  Delayed::Job.delete_all
-		  filename = @question.export_and_delete('votes', :delete_at => 2.days.from_now)
+		  filename = @aoi_question.export_and_delete('votes', :delete_at => 2.days.from_now)
 
 		  Delayed::Job.count.should == 1
 		  Delayed::Job.delete_all
