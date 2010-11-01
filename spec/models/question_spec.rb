@@ -131,8 +131,8 @@ describe Question do
 
     ['left', 'right'].each do |side|
        ['text', 'id'].each do |param|
-	       the_type = (param == 'text') ? String : Fixnum
-	       @question_optional_information["future_#{side}_choice_#{param}_1".to_sym].should be_an_instance_of(the_type)
+         the_type = (param == 'text') ? String : Fixnum
+         @question_optional_information["future_#{side}_choice_#{param}_1".to_sym].should be_an_instance_of(the_type)
        end
     end
 
@@ -158,9 +158,9 @@ describe Question do
     future_prompt_id_1 = @question_optional_information[:future_prompt_id_1]
     
     vote_options = {:visitor_identifier => "jim",
-		    :appearance_lookup => appearance_id,
-		    :prompt => Prompt.find(prompt_id),
-		    :direction => "left"}
+        :appearance_lookup => appearance_id,
+        :prompt => Prompt.find(prompt_id),
+        :direction => "left"}
 
     @aoi_clone.record_vote(vote_options)
     
@@ -178,9 +178,9 @@ describe Question do
     @question_optional_information[:average_votes].should be_close(0.0, 0.1)
     
     vote_options = {:visitor_identifier => "jim",
-		    :appearance_lookup => @question_optional_information[:appearance_id],
-		    :prompt => Prompt.find(@question_optional_information[:picked_prompt_id]),
-		    :direction => "left"}
+        :appearance_lookup => @question_optional_information[:appearance_id],
+        :prompt => Prompt.find(@question_optional_information[:picked_prompt_id]),
+        :direction => "left"}
 
     @aoi_clone.record_vote(vote_options)
     @question_optional_information = @question.get_optional_information(params)
@@ -204,219 +204,219 @@ describe Question do
       @question.choices.count.should == 3
   end
   context "catchup algorithm" do 
-	  before(:all) do
-		  @catchup_q = Factory.create(:aoi_question)
+    before(:all) do
+      @catchup_q = Factory.create(:aoi_question)
 
-		  @catchup_q.it_should_autoactivate_ideas = true
-		  @catchup_q.uses_catchup = true
-		  @catchup_q.save!
+      @catchup_q.it_should_autoactivate_ideas = true
+      @catchup_q.uses_catchup = true
+      @catchup_q.save!
 
-		  # 2 ideas already exist, so this will make an even hundred
-		  98.times.each do |num|
-			  @catchup_q.site.create_choice("visitor identifier", @catchup_q, {:data => num.to_s, :local_identifier => "exmaple"})
-		  end
-		  @catchup_q.reload
-	  end
-
-
-	  it "should create a delayed job after requesting a prompt" do
-		  proc { @catchup_q.choose_prompt}.should change(Delayed::Job, :count).by(1)
-	  end
+      # 2 ideas already exist, so this will make an even hundred
+      98.times.each do |num|
+        @catchup_q.site.create_choice("visitor identifier", @catchup_q, {:data => num.to_s, :local_identifier => "exmaple"})
+      end
+      @catchup_q.reload
+    end
 
 
-	  it "should choose an active prompt using catchup algorithm on a large number of choices" do 
-		  @catchup_q.reload
-		  # Sanity check
-		  @catchup_q.choices.size.should == 100
-
-		  prompt = @catchup_q.catchup_choose_prompt
-		  prompt.active?.should == true
-	  end
-
-	  it "should have a normalized vector of weights to support the catchup algorithm" do
-		  weights = @catchup_q.catchup_prompts_weights
-		  sum = 0
-		  weights.each{|k,v| sum+=v}
-
-		  (sum - 1.0).abs.should < 0.000001
-	  end
-
-	  it "should allow the prompt queue to be cleared" do
-		  @catchup_q.add_prompt_to_queue
-		  @catchup_q.clear_prompt_queue
-
-		  @catchup_q.pop_prompt_queue.should == nil
-	  end
-	  it "should allow a prompt to be added to the prompt queue" do
-		  @catchup_q.clear_prompt_queue
-		  @catchup_q.pop_prompt_queue.should == nil
-
-		  @catchup_q.add_prompt_to_queue
-
-		  prompt = @catchup_q.pop_prompt_queue
-
-		  prompt.should_not == nil
-		  prompt.active?.should == true
-	  end
-	  it "should return prompts from the queue in FIFO order" do
-		  @catchup_q.clear_prompt_queue
-		  @catchup_q.pop_prompt_queue.should == nil
-		  
-		  prompt1 = @catchup_q.add_prompt_to_queue
-		  prompt2 = @catchup_q.add_prompt_to_queue
-		  prompt3 = @catchup_q.add_prompt_to_queue
-
-		  prompt_1 = @catchup_q.pop_prompt_queue
-		  prompt_2 = @catchup_q.pop_prompt_queue
-		  prompt_3 = @catchup_q.pop_prompt_queue
+    it "should create a delayed job after requesting a prompt" do
+      proc { @catchup_q.choose_prompt}.should change(Delayed::Job, :count).by(1)
+    end
 
 
-		  prompt_1.should == prompt1
-		  prompt_2.should == prompt2
-		  prompt_3.should == prompt3
+    it "should choose an active prompt using catchup algorithm on a large number of choices" do 
+      @catchup_q.reload
+      # Sanity check
+      @catchup_q.choices.size.should == 100
 
-		  # there is a small probability that the catchup algorithm
-		  # choose two prompts that are indeed equal
-		  prompt_1.should_not == prompt_2
-		  prompt_1.should_not == prompt_3
-		  prompt_2.should_not == prompt_3
+      prompt = @catchup_q.catchup_choose_prompt
+      prompt.active?.should == true
+    end
+
+    it "should have a normalized vector of weights to support the catchup algorithm" do
+      weights = @catchup_q.catchup_prompts_weights
+      sum = 0
+      weights.each{|k,v| sum+=v}
+
+      (sum - 1.0).abs.should < 0.000001
+    end
+
+    it "should allow the prompt queue to be cleared" do
+      @catchup_q.add_prompt_to_queue
+      @catchup_q.clear_prompt_queue
+
+      @catchup_q.pop_prompt_queue.should == nil
+    end
+    it "should allow a prompt to be added to the prompt queue" do
+      @catchup_q.clear_prompt_queue
+      @catchup_q.pop_prompt_queue.should == nil
+
+      @catchup_q.add_prompt_to_queue
+
+      prompt = @catchup_q.pop_prompt_queue
+
+      prompt.should_not == nil
+      prompt.active?.should == true
+    end
+    it "should return prompts from the queue in FIFO order" do
+      @catchup_q.clear_prompt_queue
+      @catchup_q.pop_prompt_queue.should == nil
+      
+      prompt1 = @catchup_q.add_prompt_to_queue
+      prompt2 = @catchup_q.add_prompt_to_queue
+      prompt3 = @catchup_q.add_prompt_to_queue
+
+      prompt_1 = @catchup_q.pop_prompt_queue
+      prompt_2 = @catchup_q.pop_prompt_queue
+      prompt_3 = @catchup_q.pop_prompt_queue
 
 
-		  @catchup_q.pop_prompt_queue.should == nil
-	  end
-	  it "should not return prompts from queue that are deactivated" do
-		  @catchup_q.clear_prompt_queue
-		  @catchup_q.pop_prompt_queue.should == nil
-		  prompt1 = @catchup_q.add_prompt_to_queue
-	          
-		  prompt = Prompt.find(prompt1)
-		  prompt.left_choice.deactivate!
-		  @catchup_q.choose_prompt.should_not == prompt1 
+      prompt_1.should == prompt1
+      prompt_2.should == prompt2
+      prompt_3.should == prompt3
+
+      # there is a small probability that the catchup algorithm
+      # choose two prompts that are indeed equal
+      prompt_1.should_not == prompt_2
+      prompt_1.should_not == prompt_3
+      prompt_2.should_not == prompt_3
+
+
+      @catchup_q.pop_prompt_queue.should == nil
+    end
+    it "should not return prompts from queue that are deactivated" do
+      @catchup_q.clear_prompt_queue
+      @catchup_q.pop_prompt_queue.should == nil
+      prompt1 = @catchup_q.add_prompt_to_queue
+            
+      prompt = Prompt.find(prompt1)
+      prompt.left_choice.deactivate!
+      @catchup_q.choose_prompt.should_not == prompt1 
           end
     after(:all) { truncate_all }
   end
 
   context "exporting data" do
-	  before(:all) do
-		  @aoi_question = Factory.create(:aoi_question)
-		  user = @aoi_question.site
+    before(:all) do
+      @aoi_question = Factory.create(:aoi_question)
+      user = @aoi_question.site
 
-		  @aoi_question.it_should_autoactivate_ideas = true
-		  @aoi_question.save!
+      @aoi_question.it_should_autoactivate_ideas = true
+      @aoi_question.save!
 
                   visitor = user.visitors.find_or_create_by_identifier('visitor identifier')
-		  100.times.each do |num|
-			  user.create_choice(visitor.identifier, @aoi_question, {:data => num.to_s, :local_identifier => "example creator"})
-		  end
+      100.times.each do |num|
+        user.create_choice(visitor.identifier, @aoi_question, {:data => num.to_s, :local_identifier => "example creator"})
+      end
 
-		  200.times.each do |num|
-			  @p = @aoi_question.picked_prompt
+      200.times.each do |num|
+        @p = @aoi_question.picked_prompt
 
-			  @a = user.record_appearance(visitor, @p)
+        @a = user.record_appearance(visitor, @p)
 
-			  vote_options = {:visitor_identifier => visitor.identifier,
-					  :appearance_lookup => @a.lookup,
-					  :prompt => @p,
-					  :time_viewed => rand(1000),
-					  :direction => (rand(2) == 0) ? "left" : "right"}
-			  
+        vote_options = {:visitor_identifier => visitor.identifier,
+            :appearance_lookup => @a.lookup,
+            :prompt => @p,
+            :time_viewed => rand(1000),
+            :direction => (rand(2) == 0) ? "left" : "right"}
+        
                           skip_options = {:visitor_identifier => visitor.identifier,
                                           :appearance_lookup => @a.lookup,
                                           :prompt => @p,
                                           :time_viewed => rand(1000),
                                           :skip_reason => "some reason"}
 
-			  choice = rand(3)
-			  case choice
-			  when 0
-			    user.record_vote(vote_options)
-			  when 1
-			    user.record_skip(skip_options)
-			  when 2
-			     #this is an orphaned appearance, so do nothing
-			  end
-		  end
-	  end
-	  
+        choice = rand(3)
+        case choice
+        when 0
+          user.record_vote(vote_options)
+        when 1
+          user.record_skip(skip_options)
+        when 2
+           #this is an orphaned appearance, so do nothing
+        end
+      end
+    end
+    
 
-	  it "should export vote data to a csv file" do
-		  filename = @aoi_question.export('votes')
+    it "should export vote data to a csv file" do
+      filename = @aoi_question.export('votes')
 
-		  filename.should_not be nil
-		  filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
-		  File.exists?(filename).should be_true
-		  # Not specifying exact file syntax, it's likely to change frequently
-		  #
-		  rows = FasterCSV.read(filename)
-		  rows.first.should include("Vote ID")
-		  rows.first.should_not include("Idea ID")
-		  File.delete(filename).should be_true
+      filename.should_not be nil
+      filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
+      File.exists?(filename).should be_true
+      # Not specifying exact file syntax, it's likely to change frequently
+      #
+      rows = FasterCSV.read(filename)
+      rows.first.should include("Vote ID")
+      rows.first.should_not include("Idea ID")
+      File.delete(filename).should be_true
 
-	  end
+    end
 
-	  it "should notify redis after completing an export, if redis option set" do
-		  redis_key = "test_key123"
-		  $redis.del(redis_key) # clear if key exists already
-		  filename = @aoi_question.export('votes', :response_type => 'redis', :redis_key => redis_key)
+    it "should notify redis after completing an export, if redis option set" do
+      redis_key = "test_key123"
+      $redis.del(redis_key) # clear if key exists already
+      filename = @aoi_question.export('votes', :response_type => 'redis', :redis_key => redis_key)
 
-		  filename.should_not be nil
-		  filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
-		  File.exists?(filename).should be_true
-		  $redis.lpop(redis_key).should == filename
-		  $redis.del(redis_key) # clean up
-		  File.delete(filename).should be_true
+      filename.should_not be nil
+      filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
+      File.exists?(filename).should be_true
+      $redis.lpop(redis_key).should == filename
+      $redis.del(redis_key) # clean up
+      File.delete(filename).should be_true
 
-	  end
-	  it "should email question owner after completing an export, if email option set" do
-		  #TODO 
-	  end
+    end
+    it "should email question owner after completing an export, if email option set" do
+      #TODO 
+    end
 
-	  it "should export non vote data to a csv file" do 
-		  filename = @aoi_question.export('non_votes')
+    it "should export non vote data to a csv file" do 
+      filename = @aoi_question.export('non_votes')
 
-		  filename.should_not be nil
-		  filename.should match /.*ideamarketplace_#{@aoi_question.id}_non_votes[.]csv$/
-		  File.exists?(filename).should be_true
+      filename.should_not be nil
+      filename.should match /.*ideamarketplace_#{@aoi_question.id}_non_votes[.]csv$/
+      File.exists?(filename).should be_true
 
-		  # Not specifying exact file syntax, it's likely to change frequently
-		  #
-		  rows = FasterCSV.read(filename)
-		  rows.first.should include("Record ID")
-		  rows.first.should include("Record Type")
-		  rows.first.should_not include("Idea ID")
-		  File.delete(filename).should_not be_nil 
+      # Not specifying exact file syntax, it's likely to change frequently
+      #
+      rows = FasterCSV.read(filename)
+      rows.first.should include("Record ID")
+      rows.first.should include("Record Type")
+      rows.first.should_not include("Idea ID")
+      File.delete(filename).should_not be_nil 
 
 
-	  end
+    end
 
-	  it "should export idea data to a csv file" do
-		  filename = @aoi_question.export('ideas')
+    it "should export idea data to a csv file" do
+      filename = @aoi_question.export('ideas')
 
-		  filename.should_not be nil
-		  filename.should match /.*ideamarketplace_#{@aoi_question.id}_ideas[.]csv$/
-		  File.exists?(filename).should be_true
-		  # Not specifying exact file syntax, it's likely to change frequently
-		  #
-		  rows = FasterCSV.read(filename)
-		  rows.first.should include("Idea ID")
-		  rows.first.should_not include("Skip ID")
-		  File.delete(filename).should_not be_nil
+      filename.should_not be nil
+      filename.should match /.*ideamarketplace_#{@aoi_question.id}_ideas[.]csv$/
+      File.exists?(filename).should be_true
+      # Not specifying exact file syntax, it's likely to change frequently
+      #
+      rows = FasterCSV.read(filename)
+      rows.first.should include("Idea ID")
+      rows.first.should_not include("Skip ID")
+      File.delete(filename).should_not be_nil
 
-	  end
+    end
 
-	  it "should raise an error when given an unsupported export type" do
-		  lambda { @aoi_question.export("blahblahblah") }.should raise_error
-	  end
+    it "should raise an error when given an unsupported export type" do
+      lambda { @aoi_question.export("blahblahblah") }.should raise_error
+    end
 
-	  it "should export data and schedule a job to delete export after X days" do
-		  Delayed::Job.delete_all
-		  filename = @aoi_question.export_and_delete('votes', :delete_at => 2.days.from_now)
+    it "should export data and schedule a job to delete export after X days" do
+      Delayed::Job.delete_all
+      filename = @aoi_question.export_and_delete('votes', :delete_at => 2.days.from_now)
 
-		  Delayed::Job.count.should == 1
-		  Delayed::Job.delete_all
-		  File.delete(filename).should_not be_nil
+      Delayed::Job.count.should == 1
+      Delayed::Job.delete_all
+      File.delete(filename).should_not be_nil
 
-	  end
+    end
 
     after(:all) { truncate_all }
   end
