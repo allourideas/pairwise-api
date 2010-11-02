@@ -547,6 +547,7 @@ class Question < ActiveRecord::Base
         when 'ideas'
           self.choices.each do |c|
             user_submitted = c.user_created ? "TRUE" : "FALSE"
+            active         = c.active ? "TRUE" : "FALSE"
             left_prompts_ids = c.prompts_on_the_left.ids_only
             right_prompts_ids = c.prompts_on_the_right.ids_only
 
@@ -555,7 +556,7 @@ class Question < ActiveRecord::Base
 
             num_skips = self.skips.count(:conditions => {:prompt_id => left_prompts_ids + right_prompts_ids})
 
-            csv << [c.question_id, c.id, "'#{c.data.strip}'", c.wins, c.losses, num_skips, c.score, user_submitted , c.creator_id, c.created_at, c.updated_at, c.active, left_appearances, right_appearances]
+            csv << [c.question_id, c.id, "'#{c.data.strip}'", c.wins, c.losses, num_skips, c.score, user_submitted , c.creator_id, c.created_at, c.updated_at, active, left_appearances, right_appearances]
 
           end
         when 'non_votes'
