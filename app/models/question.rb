@@ -510,14 +510,14 @@ class Question < ActiveRecord::Base
       when 'votes'
         outfile = "ideamarketplace_#{self.id}_votes.csv"
 
-        headers = ['Vote ID', 'Session ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text', 'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Appearance ID', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier']
+        headers = ['Vote ID', 'Session ID', 'Question ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text', 'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Appearance ID', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
     
       when 'ideas'
         outfile = "ideamarketplace_#{self.id}_ideas.csv"
         headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score', 'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active', 'Appearances on Left', 'Appearances on Right']
       when 'non_votes'
         outfile = "ideamarketplace_#{self.id}_non_votes.csv"
-        headers = ['Record Type', 'Record ID', 'Session ID', 'Question ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Appearance ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier']
+        headers = ['Record Type', 'Record ID', 'Session ID', 'Question ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Appearance ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
       else 
         raise "Unsupported export type: #{type}"
     end
@@ -530,7 +530,8 @@ class Question < ActiveRecord::Base
       case type
         when 'votes'
 
-          self.votes.find_each(:include => [:prompt, :choice, :loser_choice, :voter]) do |v|
+          Vote.find_each_without_default_scope(:conditions => {:question_id => self}, :include => [:prompt, :choice, :loser_choice, :voter]) do |v|
+            valid = v.valid_record ? "TRUE" : "FALSE"
             prompt = v.prompt
             # these may not exist
             loser_data = v.loser_choice.nil? ? "" : v.loser_choice.data.strip
@@ -541,7 +542,7 @@ class Question < ActiveRecord::Base
 
             csv << [ v.id, v.voter_id, v.question_id, v.choice_id, v.choice.data.strip, v.loser_choice_id, loser_data,
             v.prompt_id, left_id, right_id, v.created_at, v.updated_at, v.appearance_id,
-            time_viewed, v.missing_response_time_exp , v.voter.identifier] 
+            time_viewed, v.missing_response_time_exp , v.voter.identifier, valid] 
           end
 
         when 'ideas'
@@ -568,14 +569,15 @@ class Question < ActiveRecord::Base
           if a.answerable.class == Skip
             # If this appearance belongs to a skip, show information on the skip instead
             s = a.answerable
+            valid = s.valid_record ? 'TRUE' : 'FALSE'
             time_viewed = s.time_viewed.nil? ? "NA": s.time_viewed.to_f / 1000.0
             prompt = s.prompt
-            csv << [ "Skip", s.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.appearance_id, s.skip_reason, s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier] 
+            csv << [ "Skip", s.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.appearance_id, s.skip_reason, s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier,valid] 
         
           else
             # If no skip and no vote, this is an orphaned appearance
             prompt = a.prompt
-            csv << [ "Orphaned Appearance", a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'N/A', 'N/A', a.created_at, a.updated_at, 'N/A', '', a.voter.identifier] 
+            csv << [ "Orphaned Appearance", a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'N/A', 'N/A', a.created_at, a.updated_at, 'N/A', '', a.voter.identifier, 'N/A'] 
           end
         end
       end

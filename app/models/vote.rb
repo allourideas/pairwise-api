@@ -31,6 +31,12 @@ class Vote < ActiveRecord::Base
     end
   end
 
+  def self.find_each_without_default_scope(*args, &block)
+    with_exclusive_scope() do
+      find_each(*args, &block)
+    end
+  end
+
   def update_winner_choice
     choice.reload              # make sure we're using updated counter values
     choice.compute_score!
