@@ -423,4 +423,78 @@ describe Question do
     after(:all) { truncate_all }
   end
 
+  context "exporting data with odd characters" do
+    before(:all) do
+      @aoi_question = Factory.create(:question)
+      user = @aoi_question.site
+
+      @aoi_question.it_should_autoactivate_ideas = true
+      @aoi_question.save!
+
+      visitor = user.visitors.find_or_create_by_identifier('visitor identifier')
+
+      user.create_choice(visitor.identifier, @aoi_question,
+          {:data => "foo\nbar", :local_identifier => "example creator"})
+      user.create_choice(visitor.identifier, @aoi_question,
+          {:data => "foo,bar", :local_identifier => "example creator"})
+      user.create_choice(visitor.identifier, @aoi_question,
+          {:data => "foo\"bar", :local_identifier => "example creator"})
+      user.create_choice(visitor.identifier, @aoi_question,
+          {:data => "foo'bar", :local_identifier => "example creator"})
+
+      40.times.each do |num|
+        @p = @aoi_question.picked_prompt
+
+        @a = user.record_appearance(visitor, @p)
+
+        vote_options = {:visitor_identifier => visitor.identifier,
+            :appearance_lookup => @a.lookup,
+            :prompt => @p,
+            :time_viewed => rand(1000),
+            :direction => (rand(2) == 0) ? "left" : "right"
+        }
+        
+        skip_options = {:visitor_identifier => visitor.identifier,
+                        :appearance_lookup => @a.lookup,
+                        :prompt => @p,
+                        :time_viewed => rand(1000),
+                        :skip_reason => "some reason"
+        }
+
+        choice = rand(3)
+        case choice
+        when 0
+          user.record_vote(vote_options)
+        when 1
+          user.record_skip(skip_options)
+        when 2
+           #this is an orphaned appearance, so do nothing
+        end
+      end
+    end
+
+    it "should export idea data to a csv file" do
+      filename = @aoi_question.export('ideas')
+
+      filename.should_not be nil
+      filename.should match /.*ideamarketplace_#{@aoi_question.id}_ideas[.]csv$/
+      File.exists?(filename).should be_true
+      # Not specifying exact file syntax, it's likely to change frequently
+      #
+      rows = FasterCSV.read(filename)
+      rows.first.should include("Idea ID")
+      rows.first.should_not include("Skip ID")
+
+      rows.shift
+      rows.each do |row|
+        row[2].should =~ /^foo.bar$/m
+      end
+      
+      #File.delete(filename).should_not be_nil
+
+    end
+
+    after(:all) { truncate_all }
+  end
+
 end

@@ -556,7 +556,7 @@ class Question < ActiveRecord::Base
 
             num_skips = self.skips.count(:conditions => {:prompt_id => left_prompts_ids + right_prompts_ids})
 
-            csv << [c.question_id, c.id, "'#{c.data.strip}'", c.wins, c.losses, num_skips, c.score, user_submitted , c.creator_id, c.created_at, c.updated_at, active, left_appearances, right_appearances]
+            csv << [c.question_id, c.id, c.data.strip, c.wins, c.losses, num_skips, c.score, user_submitted , c.creator_id, c.created_at, c.updated_at, active, left_appearances, right_appearances]
 
           end
         when 'non_votes'
