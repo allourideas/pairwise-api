@@ -473,7 +473,7 @@ describe Question do
       end
     end
 
-    it "should export idea data to a csv file" do
+    it "should export idea data to a csv file with proper escaping" do
       filename = @aoi_question.export('ideas')
 
       filename.should_not be nil
@@ -490,7 +490,7 @@ describe Question do
         row[2].should =~ /^foo.bar$/m
       end
       
-      #File.delete(filename).should_not be_nil
+      File.delete(filename).should_not be_nil
 
     end
 
