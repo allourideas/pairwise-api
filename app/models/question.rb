@@ -533,13 +533,13 @@ class Question < ActiveRecord::Base
           self.votes.find_each(:include => [:prompt, :choice, :loser_choice, :voter]) do |v|
             prompt = v.prompt
             # these may not exist
-            loser_data = v.loser_choice.nil? ? "" : "'#{v.loser_choice.data.strip}'"
+            loser_data = v.loser_choice.nil? ? "" : v.loser_choice.data.strip
             left_id = v.prompt.nil? ? "" : v.prompt.left_choice_id
             right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
 
             time_viewed = v.time_viewed.nil? ? "NA": v.time_viewed.to_f / 1000.0
 
-            csv << [ v.id, v.voter_id, v.question_id, v.choice_id, "'#{v.choice.data.strip}'", v.loser_choice_id, loser_data,
+            csv << [ v.id, v.voter_id, v.question_id, v.choice_id, v.choice.data.strip, v.loser_choice_id, loser_data,
             v.prompt_id, left_id, right_id, v.created_at, v.updated_at, v.appearance_id,
             time_viewed, v.missing_response_time_exp , v.voter.identifier] 
           end

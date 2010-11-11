@@ -487,10 +487,34 @@ describe Question do
 
       rows.shift
       rows.each do |row|
+        # Idea Text
         row[2].should =~ /^foo.bar$/m
       end
       
       File.delete(filename).should_not be_nil
+
+    end
+
+    it "should export vote data to a csv file with proper escaping" do
+      filename = @aoi_question.export('votes')
+
+      filename.should_not be nil
+      filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
+      File.exists?(filename).should be_true
+      # Not specifying exact file syntax, it's likely to change frequently
+      #
+      rows = FasterCSV.read(filename)
+      rows.first.should include("Vote ID")
+      rows.first.should_not include("Idea ID")
+
+      rows.shift
+      rows.each do |row|
+        # Winner Text
+        row[4].should =~ /^foo.bar$/m
+        # Loser Text
+        row[6].should =~ /^foo.bar$/m
+      end
+      File.delete(filename).should be_true
 
     end
 
