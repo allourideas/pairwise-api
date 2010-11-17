@@ -402,7 +402,7 @@ namespace :test_api do
       end
   
       if (choice.losses != question.votes.count(:conditions => {:loser_choice_id => choice.id}))
-     error_message += "Error!: Cached choice wins != actual choice wins for choice #{choice.id}\n"
+     error_message += "Error!: Cached choice losses != actual choice losses for choice #{choice.id}\n"
      error_bool= true
       end
 
@@ -410,27 +410,27 @@ namespace :test_api do
   
   
   if (2*total_wins != total_votes)
-     error_message += "Error 1: 2 x Total Wins != Total votes"
+     error_message += "Error 1: 2 x Total Wins != Total votes\n"
      error_bool= true
   end
 
   if(total_votes % 2 != 0)
-    error_message += "Error 2: Total votes is not Even!"
+    error_message += "Error 2: Total votes is not Even!\n"
     error_bool= true
   end
 
   if(total_votes != 2* question.votes_count)
-    error_message += "Error 3: Total votes != 2 x # vote objects"
+    error_message += "Error 3: Total votes != 2 x # vote objects\n"
     error_bool = true
   end
 
   if(total_generated_prompts_on_right != total_generated_prompts_on_right)
-    error_message += "Error 4: Total generated prompts on left != Total generated prompts on right"
+    error_message += "Error 4: Total generated prompts on left != Total generated prompts on right\n"
     error_bool = true
   end
 
   if(total_scores_lte_fifty == question.choices.size || total_scores_gte_fifty == question.choices.size) && (total_scores_lte_fifty != total_scores_gte_fifty)
-    error_message += "Error: The scores of all choices are either all above 50, or all below 50. This is probably wrong"
+    error_message += "Error: The scores of all choices are either all above 50, or all below 50. This is probably wrong\n"
     error_bool = true
     puts "Error score fifty: #{question.id}"
   end
