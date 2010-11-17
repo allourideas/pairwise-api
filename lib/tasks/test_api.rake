@@ -401,9 +401,14 @@ namespace :test_api do
      error_bool= true
       end
   
-      if (choice.losses != question.votes.count(:conditions => {:loser_choice_id => choice.id}))
-     error_message += "Error!: Cached choice losses != actual choice losses for choice #{choice.id}\n"
-     error_bool= true
+      # votes before 2010-02-17 have null loser_choice_id
+      # therefore we want to ignore this test for any question with votes
+      # prior to 2010-02-17
+      if question.votes.count(:conditions => ["created_at < ?", '2010-02-17']) == 0
+        if (choice.losses != question.votes.count(:conditions => {:loser_choice_id => choice.id}))
+          error_message += "Error!: Cached choice losses != actual choice losses for choice #{choice.id}\n"
+          error_bool= true
+        end
       end
 
         end
