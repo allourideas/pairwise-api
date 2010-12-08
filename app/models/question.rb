@@ -227,27 +227,26 @@ class Question < ActiveRecord::Base
     return result
   end
 
- #passing precomputed sum saves us a traversal through the array
- def normalize!(weighted, sum=nil)
-   if weighted.instance_of?(Hash)
-     if sum.nil?
-       sum = weighted.inject(0) do |sum, item_and_weight|
+  #passing precomputed sum saves us a traversal through the array
+  def normalize!(weighted, sum=nil)
+    if weighted.instance_of?(Hash)
+      if sum.nil?
+        sum = weighted.inject(0) do |sum, item_and_weight|
           sum += item_and_weight[1]
-       end
-       sum = sum.to_f
-     end
-     weighted.each do |item, weight| 
-       weighted[item] = weight/sum 
-       weighted[item] = 0.0 unless weighted[item].finite?
-     end
-   elsif weighted.instance_of?(Array)
-     sum = weighted.inject(0) {|sum, item| sum += item} if sum.nil?
-     weighted.each_with_index do |item, i| 
-       weighted[i] = item/sum
-       weighted[i] = 0.0 unless weighted[i].finite?
-     end
-
-   end
+        end
+        sum = sum.to_f
+      end
+      weighted.each do |item, weight| 
+        weighted[item] = weight/sum 
+        weighted[item] = 0.0 unless weighted[item].finite?
+      end
+    elsif weighted.instance_of?(Array)
+      sum = weighted.inject(0) {|sum, item| sum += item} if sum.nil?
+      weighted.each_with_index do |item, i| 
+        weighted[i] = item/sum
+        weighted[i] = 0.0 unless weighted[i].finite?
+      end
+    end
   end
 
  def bradley_terry_probs
