@@ -109,37 +109,36 @@ class Question < ActiveRecord::Base
  end
 
 
- # TODO Add index for question id on prompts table
- def catchup_prompts_weights
-   weights = Hash.new(0)
-   throttle_min = 0.05
-   sum = 0.0
+  def catchup_prompts_weights
+    weights = Hash.new(0)
+    throttle_min = 0.05
+    sum = 0.0
 
-   prompts.find_each(:select => 'votes_count, left_choice_id, right_choice_id') do |p|
-     value = [(1.0/ (p.votes.size + 1).to_f).to_f, throttle_min].min
-           weights["#{p.left_choice_id}, #{p.right_choice_id}"] = value
-     sum += value
-   end
+    prompts.find_each(:select => 'votes_count, left_choice_id, right_choice_id') do |p|
+      value = [(1.0/ (p.votes.size + 1).to_f).to_f, throttle_min].min
+      weights["#{p.left_choice_id}, #{p.right_choice_id}"] = value
+      sum += value
+    end
 
-   # This will not run once all prompts have been generated, 
-   #  but it prevents us from having to pregenerate all possible prompts
-   if weights.size < choices.size ** 2 - choices.size
+    # This will not run once all prompts have been generated, 
+    #  but it prevents us from having to pregenerate all possible prompts
+    if weights.size < choices.size ** 2 - choices.size
       choices.each do |l|
-     choices.each do |r|
-       if l.id == r.id
-         next
-       end
-       if !weights.has_key?("#{l.id}, #{r.id}")
-                      weights["#{l.id}, #{r.id}"] = throttle_min
-          sum+=throttle_min
-       end
-     end
+        choices.each do |r|
+          if l.id == r.id
+            next
+          end
+          if !weights.has_key?("#{l.id}, #{r.id}")
+            weights["#{l.id}, #{r.id}"] = throttle_min
+            sum+=throttle_min
+          end
+        end
       end
-   end
+    end
 
-   normalize!(weights, sum)
-   weights
- end
+    normalize!(weights, sum)
+    weights
+  end
 
   def get_optional_information(params)
 
