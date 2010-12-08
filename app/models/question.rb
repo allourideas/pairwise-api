@@ -123,8 +123,8 @@ class Question < ActiveRecord::Base
     # This will not run once all prompts have been generated, 
     #  but it prevents us from having to pregenerate all possible prompts
     if weights.size < choices.size ** 2 - choices.size
-      choices.each do |l|
-        choices.each do |r|
+      choices.active.each do |l|
+        choices.active.each do |r|
           if l.id == r.id
             next
           end
