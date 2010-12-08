@@ -47,7 +47,7 @@ describe Question do
   end
 
   it "should raise runtime exception if there is no possible prompt to choose" do
-    @question.choices.first.deactivate!
+    @question.choices.active.each{|c| c.deactivate!}
     @question.reload
     lambda { @question.choose_prompt}.should raise_error(RuntimeError)
 
@@ -211,8 +211,8 @@ describe Question do
       @catchup_q.uses_catchup = true
       @catchup_q.save!
 
-      # 2 ideas already exist, so this will make an even hundred
-      98.times.each do |num|
+      # 4 ideas already exist, so this will make an even hundred
+      96.times.each do |num|
         @catchup_q.site.create_choice("visitor identifier", @catchup_q, {:data => num.to_s, :local_identifier => "exmaple"})
       end
       @catchup_q.reload
@@ -239,6 +239,17 @@ describe Question do
       weights.each{|k,v| sum+=v}
 
       (sum - 1.0).abs.should < 0.000001
+    end
+
+    it "should not have any inactive choices in the the vector of weights" do
+      weights = @catchup_q.catchup_prompts_weights
+      weights.each do |items, value|
+        left_choice_id, right_choice_id = items.split(", ")
+        cl = Choice.find(left_choice_id)
+        cr = Choice.find(right_choice_id)
+        cl.active?.should == true
+        cr.active?.should == true
+      end
     end
 
     it "should allow the prompt queue to be cleared" do

@@ -20,6 +20,12 @@ Factory.define(:aoi_question, :parent => :question) do |f|
 					:creator => question.creator,
 					:active => true)
 	      end
+	      2.times do 
+		      result << Factory.build(:choice, 
+					  :question => question.result,
+					  :creator => question.creator,
+					  :active => false)
+	      end
 	     result
 	    end
   f.prompts do |question|
