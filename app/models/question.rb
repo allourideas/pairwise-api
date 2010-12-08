@@ -85,28 +85,28 @@ class Question < ActiveRecord::Base
    return @p
  end
 
- # adapted from ruby cookbook(2006): section 5-11
- def catchup_choose_prompt
-   weighted = catchup_prompts_weights
-   # Rand returns a number from 0 - 1, so weighted needs to be normalized
-   prompt = nil
+  # adapted from ruby cookbook(2006): section 5-11
+  def catchup_choose_prompt
+    weighted = catchup_prompts_weights
+    # Rand returns a number from 0 - 1, so weighted needs to be normalized
+    prompt = nil
 
-   until prompt && prompt.active?
-     target = rand 
-     left_choice_id = right_choice_id = nil
+    until prompt && prompt.active?
+      target = rand 
+      left_choice_id = right_choice_id = nil
 
-     weighted.each do |item, weight|
-       if target <= weight
-         left_choice_id, right_choice_id = item.split(", ")
-         break
-       end
-       target -= weight
-     end
-           prompt = prompts.find_or_create_by_left_choice_id_and_right_choice_id(left_choice_id, right_choice_id, :include => [{ :left_choice => :item }, { :right_choice => :item }])
-   end
-   # check if prompt has two active choices here, maybe we can set this on the prompt level too?
-   prompt
- end
+      weighted.each do |item, weight|
+        if target <= weight
+          left_choice_id, right_choice_id = item.split(", ")
+          break
+        end
+        target -= weight
+      end
+      prompt = prompts.find_or_create_by_left_choice_id_and_right_choice_id(left_choice_id, right_choice_id, :include => [{ :left_choice => :item }, { :right_choice => :item }])
+    end
+    # check if prompt has two active choices here, maybe we can set this on the prompt level too?
+    prompt
+  end
 
 
   def catchup_prompts_weights
