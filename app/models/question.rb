@@ -114,7 +114,11 @@ class Question < ActiveRecord::Base
     throttle_min = 0.05
     sum = 0.0
 
-    prompts.find_each(:select => 'votes_count, left_choice_id, right_choice_id') do |p|
+    # get weights of all existing prompts that have two active choices
+    active_choice_ids = choices.active.map {|c| c.id}
+    prompts.find_each(:select => 'votes_count, left_choice_id, right_choice_id',
+        :conditions => {:left_choice_id  => active_choice_ids,
+                        :right_choice_id => active_choice_ids}) do |p|
       value = [(1.0/ (p.votes.size + 1).to_f).to_f, throttle_min].min
       weights["#{p.left_choice_id}, #{p.right_choice_id}"] = value
       sum += value
@@ -122,7 +126,7 @@ class Question < ActiveRecord::Base
 
     # This will not run once all prompts have been generated, 
     #  but it prevents us from having to pregenerate all possible prompts
-    if weights.size < choices.size ** 2 - choices.size
+    if weights.size < choices.active.size ** 2 - choices.active.size
       choices.active.each do |l|
         choices.active.each do |r|
           if l.id == r.id

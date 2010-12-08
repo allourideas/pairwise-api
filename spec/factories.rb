@@ -36,6 +36,11 @@ Factory.define(:aoi_question, :parent => :question) do |f|
 					:left_choice => question.choices.first,
 					:right_choice => question.choices.second)
 
+		result << Factory.build(:prompt, 
+					:question => question.result,
+					:left_choice => question.choices.third,
+					:right_choice => question.choices.fourth)
+
 	      end
 	     result
 	    end
