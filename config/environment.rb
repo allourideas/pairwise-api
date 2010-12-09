@@ -58,5 +58,6 @@ Rails::Initializer.run do |config|
     :version => '2.12.3'
 
   config.gem 'sendgrid'
+  config.gem 'json'
 end
 
