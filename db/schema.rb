@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100727203816) do
+ActiveRecord::Schema.define(:version => 20101221143936) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -220,6 +220,9 @@ ActiveRecord::Schema.define(:version => 20100727203816) do
     t.string   "validity_information"
   end
 
+  add_index "votes", ["choice_id"], :name => "choice_id_idx"
+  add_index "votes", ["loser_choice_id"], :name => "loser_choice_id_idx"
+  add_index "votes", ["question_id"], :name => "question_id_idx"
   add_index "votes", ["voter_id"], :name => "index_votes_on_voter_id"
 
 end

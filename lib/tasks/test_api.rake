@@ -1,5 +1,19 @@
 namespace :test_api do
 
+  desc "Updates cached values for losses and wins for for choices."
+  task :update_cached_losses_wins => :environment do
+    Question.all.each do |question|
+      question.choices.each do |choice|
+        choice.reload
+        true_losses = question.votes.count(:conditions => {:loser_choice_id => choice.id})
+        true_wins = choice.votes.count
+        Choice.update_counters choice.id,
+            :losses => (true_losses - choice.losses), 
+            :wins   => (true_wins - choice.wins)
+      end
+    end
+  end
+
    task :all => [:question_vote_consistency,:generate_density_information]
 
    desc "Don't run unless you know what you are doing"
