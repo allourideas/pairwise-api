@@ -10,6 +10,8 @@ namespace :test_api do
         Choice.update_counters choice.id,
             :losses => (true_losses - choice.losses), 
             :wins   => (true_wins - choice.wins)
+        choice.reload
+        choice.compute_score!
       end
     end
   end
