@@ -11,8 +11,18 @@ namespace :test_api do
             :losses => (true_losses - choice.losses), 
             :wins   => (true_wins - choice.wins)
         choice.reload
-        choice.compute_score!
+        choice.score = choice.compute_score
+        choice.save(false)
       end
+    end
+  end
+
+  desc "Recomputes scores for all choices."
+  task :recompute_scores => :environment do
+    Choice.find_each do |choice|
+      choice.reload
+      choice.score = choice.compute_score
+      choice.save(false)
     end
   end
 
