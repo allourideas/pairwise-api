@@ -579,7 +579,7 @@ class Question < ActiveRecord::Base
           else
             # If no skip and no vote, this is an orphaned appearance
             prompt = a.prompt
-            csv << [ "Orphaned Appearance", a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'N/A', a.created_at, a.updated_at, 'N/A', '', a.voter.identifier, 'TRUE'] 
+            csv << [ "Orphaned Appearance", a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'NA', a.created_at, a.updated_at, 'NA', '', a.voter.identifier, 'TRUE'] 
           end
         end
       end
