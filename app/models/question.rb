@@ -115,20 +115,20 @@ class Question < ActiveRecord::Base
     sum = 0.0
 
     # get weights of all existing prompts that have two active choices
-    active_choice_ids = choices.active.map {|c| c.id}
-    prompts.find_each(:select => 'votes_count, left_choice_id, right_choice_id',
-        :conditions => {:left_choice_id  => active_choice_ids,
-                        :right_choice_id => active_choice_ids}) do |p|
-      value = [(1.0/ (p.votes.size + 1).to_f).to_f, throttle_min].min
-      weights["#{p.left_choice_id}, #{p.right_choice_id}"] = value
+    active_choices = choices.active
+    active_choice_ids = active_choices.map {|c| c.id}
+    sql = "SELECT votes_count, left_choice_id, right_choice_id FROM prompts WHERE question_id = #{self.id} AND left_choice_id IN (#{active_choice_ids.join(',')}) AND right_choice_id IN (#{active_choice_ids.join(',')})"
+    ActiveRecord::Base.connection.select_all(sql).each do |p|
+      value = [(1.0/ (p['votes_count'].to_i + 1).to_f).to_f, throttle_min].min
+      weights[p['left_choice_id']+", "+p['right_choice_id']] = value
       sum += value
     end
 
     # This will not run once all prompts have been generated, 
     #  but it prevents us from having to pregenerate all possible prompts
-    if weights.size < choices.active.size ** 2 - choices.active.size
-      choices.active.each do |l|
-        choices.active.each do |r|
+    if weights.size < active_choices.size ** 2 - active_choices.size
+      active_choices.each do |l|
+        active_choices.each do |r|
           if l.id == r.id
             next
           end
