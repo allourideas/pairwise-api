@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20101221143936) do
+ActiveRecord::Schema.define(:version => 20110119165820) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -50,6 +50,7 @@ ActiveRecord::Schema.define(:version => 20101221143936) do
     t.integer  "creator_id"
   end
 
+  add_index "choices", ["creator_id"], :name => "index_choices_on_creator_id"
   add_index "choices", ["question_id", "score"], :name => "index_choices_on_question_id_and_score"
 
   create_table "clicks", :force => true do |t|
@@ -134,6 +135,7 @@ ActiveRecord::Schema.define(:version => 20101221143936) do
     t.integer  "votes_count",     :default => 0
   end
 
+  add_index "prompts", ["id", "question_id", "left_choice_id", "right_choice_id"], :name => "index_foo"
   add_index "prompts", ["left_choice_id", "right_choice_id", "question_id"], :name => "a_cool_index", :unique => true
   add_index "prompts", ["left_choice_id"], :name => "index_prompts_on_left_choice_id"
   add_index "prompts", ["question_id"], :name => "index_prompts_on_question_id"
