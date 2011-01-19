@@ -57,7 +57,7 @@ class Question < ActiveRecord::Base
         next_prompt = self.pop_prompt_queue
         if next_prompt.nil?
           logger.info("DEBUG Catchup prompt cache miss! Nothing in prompt_queue")
-          next_prompt = self.picked_prompt
+          next_prompt = self.simple_random_choose_prompt
           record_prompt_cache_miss
         else
           record_prompt_cache_hit
@@ -66,16 +66,16 @@ class Question < ActiveRecord::Base
         return next_prompt
     else
         #Standard choose prompt at random
-        return self.picked_prompt
+        return self.simple_random_choose_prompt
     end
           
   end
 
   #TODO: generalize for prompts of rank > 2
-  def picked_prompt(rank = 2)
-    logger.info "inside Question#picked_prompt"
+  def simple_random_choose_prompt(rank = 2)
+    logger.info "inside Question#simple_random_choose_prompt"
     raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
-    choice_id_array = distinct_array_of_choice_ids(rank, true)
+    choice_id_array = distinct_array_of_choice_ids(:rank => rank, :only_active => true)
     prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [:left_choice ,:right_choice ])
   end
 
@@ -334,13 +334,20 @@ class Question < ActiveRecord::Base
  end
 
    
-  def distinct_array_of_choice_ids(rank = 2, only_active = true)
+  def distinct_array_of_choice_ids(params={})
+    params = {
+      :rank => 2,
+      :only_active => true
+    }.merge(params)
+    rank = params[:rank]
+    only_active = params[:only_active]
     count = (only_active) ? choices.active.count : choices.count
     
     found_choices = []
+    # select only active choices?
+    conditions = (only_active) ? ['active = ?', true] : ['1=1']
+
     rank.times do 
-      # select only active choices?
-      conditions = (only_active) ? ['active = ?', true] : ['']
       # if we've already found some, make sure we don't find them again
       if found_choices.count > 0
         conditions[0] += ' AND id NOT IN (?)'
@@ -350,13 +357,14 @@ class Question < ActiveRecord::Base
       found_choices.push choices.find(:first,
           :select => 'id',
           :conditions => conditions,
+          # rand generates value >= 0 and < param
           :offset => rand(count - found_choices.count)).id
     end
     return found_choices
   end
  
    def picked_prompt_id
-     picked_prompt.id
+     simple_random_choose_prompt.id
    end
  
    def self.voted_on_by(u)

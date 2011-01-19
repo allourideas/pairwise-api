@@ -37,8 +37,21 @@ describe Question do
   #end
 
   it "should choose an active prompt randomly" do
-    prompt = @question.picked_prompt
+    prompt = @question.simple_random_choose_prompt
     prompt.active?.should == true
+  end
+
+  it "should randomly choose two active choices" do
+    50.times do
+      choice_ids = @question.distinct_array_of_choice_ids(:rank => 2, :only_active => true)
+      choice_ids.count.should == 2
+      choice_ids.uniq.count.should == 2
+      choice_ids.each do |choice_id|
+        c = Choice.find(choice_id)
+        c.active?.should == true
+      end
+    end
+    
   end
 
   it "should choose an active prompt using catchup algorithm" do 
@@ -321,7 +334,8 @@ describe Question do
       end
 
       200.times.each do |num|
-        @p = @aoi_question.picked_prompt
+        @p = @aoi_question.simple_random_choose_prompt
+        @p.active?.should == true
 
         @a = user.record_appearance(visitor, @p)
 
@@ -454,7 +468,8 @@ describe Question do
           {:data => "foo'bar", :local_identifier => "example creator"})
 
       40.times.each do |num|
-        @p = @aoi_question.picked_prompt
+        @p = @aoi_question.simple_random_choose_prompt
+        @p.active?.should == true
 
         @a = user.record_appearance(visitor, @p)
 
