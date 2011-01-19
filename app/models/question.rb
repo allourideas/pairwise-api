@@ -57,7 +57,7 @@ class Question < ActiveRecord::Base
         next_prompt = self.pop_prompt_queue
         if next_prompt.nil?
           logger.info("DEBUG Catchup prompt cache miss! Nothing in prompt_queue")
-          next_prompt = self.catchup_choose_prompt
+          next_prompt = self.picked_prompt
           record_prompt_cache_miss
         else
           record_prompt_cache_hit
@@ -66,24 +66,18 @@ class Question < ActiveRecord::Base
         return next_prompt
     else
         #Standard choose prompt at random
-              next_prompt = self.picked_prompt
-        return next_prompt
+        return self.picked_prompt
     end
           
   end
 
- #TODO: generalize for prompts of rank > 2
- #TODO: add index for rapid finding
- def picked_prompt(rank = 2)
-   logger.info "inside Question#picked_prompt"
-   raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
-   begin
-     choice_id_array = distinct_array_of_choice_ids(rank)
-     @p = prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [:left_choice ,:right_choice ])
-     logger.info "#{@p.inspect} is active? #{@p.active?}"
-   end until @p.active?
-   return @p
- end
+  #TODO: generalize for prompts of rank > 2
+  def picked_prompt(rank = 2)
+    logger.info "inside Question#picked_prompt"
+    raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
+    choice_id_array = distinct_array_of_choice_ids(rank, true)
+    prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [:left_choice ,:right_choice ])
+  end
 
   # adapted from ruby cookbook(2006): section 5-11
   def catchup_choose_prompt
@@ -118,6 +112,11 @@ class Question < ActiveRecord::Base
     active_choices = choices.active
     active_choice_ids = active_choices.map {|c| c.id}
     sql = "SELECT votes_count, left_choice_id, right_choice_id FROM prompts WHERE question_id = #{self.id} AND left_choice_id IN (#{active_choice_ids.join(',')}) AND right_choice_id IN (#{active_choice_ids.join(',')})"
+    # Warning: lots of memory possibly used here
+    # We don't want to use Rails find_each or find_in_batches because
+    # it is too slow for close to a million rows.  We don't need ActiveRecord
+    # objects here.  It may be a good idea to update this to grab these in
+    # batches.
     ActiveRecord::Base.connection.select_all(sql).each do |p|
       value = [(1.0/ (p['votes_count'].to_i + 1).to_f).to_f, throttle_min].min
       weights[p['left_choice_id']+", "+p['right_choice_id']] = value
@@ -335,19 +334,26 @@ class Question < ActiveRecord::Base
  end
 
    
-   def distinct_array_of_choice_ids(rank = 2, only_active = true)
-     @choice_ids = choice_ids
-     @s = @choice_ids.size
-     begin
-       index_list = (0...@s).sort_by{rand}
-       first_one, second_one = index_list.first, index_list.second
-       @the_choice_ids = @choice_ids.values_at(first_one, second_one)
-       # @the_choice_ids << choices.active.first(:order => 'RAND()', :select => 'id').id
-       # @the_choice_ids << choices.active.last(:order => 'RAND()', :select => 'id').id
-     end until (@the_choice_ids.size == rank) 
-     logger.info "List populated and looks like #{@the_choice_ids.inspect}"
-     return @the_choice_ids.to_a
-   end
+  def distinct_array_of_choice_ids(rank = 2, only_active = true)
+    count = (only_active) ? choices.active.count : choices.count
+    
+    found_choices = []
+    rank.times do 
+      # select only active choices?
+      conditions = (only_active) ? ['active = ?', true] : ['']
+      # if we've already found some, make sure we don't find them again
+      if found_choices.count > 0
+        conditions[0] += ' AND id NOT IN (?)'
+        conditions.push found_choices
+      end
+    
+      found_choices.push choices.find(:first,
+          :select => 'id',
+          :conditions => conditions,
+          :offset => rand(count - found_choices.count)).id
+    end
+    return found_choices
+  end
  
    def picked_prompt_id
      picked_prompt.id
