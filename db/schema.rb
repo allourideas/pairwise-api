@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20110120204933) do
+ActiveRecord::Schema.define(:version => 20110124211740) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -135,7 +135,6 @@ ActiveRecord::Schema.define(:version => 20110120204933) do
     t.integer  "votes_count",     :default => 0
   end
 
-  add_index "prompts", ["id", "question_id", "left_choice_id", "right_choice_id"], :name => "index_foo"
   add_index "prompts", ["left_choice_id", "right_choice_id", "question_id"], :name => "a_cool_index", :unique => true
   add_index "prompts", ["left_choice_id"], :name => "index_prompts_on_left_choice_id"
   add_index "prompts", ["question_id"], :name => "index_prompts_on_question_id"
@@ -157,6 +156,7 @@ ActiveRecord::Schema.define(:version => 20110120204933) do
     t.boolean  "it_should_autoactivate_ideas", :default => false
     t.integer  "inactive_choices_count",       :default => 0
     t.boolean  "uses_catchup",                 :default => true
+    t.boolean  "show_results",                 :default => true
   end
 
   create_table "skips", :force => true do |t|
