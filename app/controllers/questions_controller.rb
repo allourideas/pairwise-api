@@ -73,8 +73,8 @@ class QuestionsController < InheritedResources::Base
 
     # puts "redis key is::::: #{redis_key}"
 
-    @question.send_later :export_and_delete, type, 
-	                        :response_type => response_type, :redis_key => redis_key, :delete_at => 3.days.from_now
+    @question.send_later :export, type, 
+	                        :response_type => response_type, :redis_key => redis_key
 
 
     render :text => "Ok! Please wait for the response (as specified by your response_type)"

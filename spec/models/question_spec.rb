@@ -365,84 +365,58 @@ describe Question do
     
 
     it "should export vote data to a csv file" do
-      filename = @aoi_question.export('votes')
+      csv = @aoi_question.export('votes')
 
-      filename.should_not be nil
-      filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
-      File.exists?(filename).should be_true
       # Not specifying exact file syntax, it's likely to change frequently
       #
-      rows = FasterCSV.read(filename)
+      rows = FasterCSV.parse(csv)
       rows.first.should include("Vote ID")
       rows.first.should_not include("Idea ID")
-      File.delete(filename).should be_true
 
     end
 
-    it "should notify redis after completing an export, if redis option set" do
+    it "should export zlibed csv to redis after completing an export, if redis option set" do
       redis_key = "test_key123"
       $redis.del(redis_key) # clear if key exists already
-      filename = @aoi_question.export('votes', :response_type => 'redis', :redis_key => redis_key)
+      csv = @aoi_question.export('votes')
+      @aoi_question.export('votes', :response_type => 'redis', :redis_key => redis_key)
 
-      filename.should_not be nil
-      filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
-      File.exists?(filename).should be_true
-      $redis.lpop(redis_key).should == filename
+      zlibcsv = $redis.lpop(redis_key)
+      zstream = Zlib::Inflate.new
+      buf = zstream.inflate(zlibcsv)
+      zstream.finish
+      zstream.close
+      buf.should == csv
       $redis.del(redis_key) # clean up
-      File.delete(filename).should be_true
 
     end
     it "should email question owner after completing an export, if email option set" do
       #TODO 
     end
 
-    it "should export non vote data to a csv file" do 
-      filename = @aoi_question.export('non_votes')
+    it "should export non vote data to a string" do 
+      csv = @aoi_question.export('non_votes')
 
-      filename.should_not be nil
-      filename.should match /.*ideamarketplace_#{@aoi_question.id}_non_votes[.]csv$/
-      File.exists?(filename).should be_true
-
-      # Not specifying exact file syntax, it's likely to change frequently
-      #
-      rows = FasterCSV.read(filename)
+      rows = FasterCSV.parse(csv)
       rows.first.should include("Record ID")
       rows.first.should include("Record Type")
       rows.first.should_not include("Idea ID")
       # ensure we have more than just the header row
       rows.length.should be > 1
-      File.delete(filename).should_not be_nil 
-
-
     end
 
-    it "should export idea data to a csv file" do
-      filename = @aoi_question.export('ideas')
+    it "should export idea data to a string" do
+      csv = @aoi_question.export('ideas')
 
-      filename.should_not be nil
-      filename.should match /.*ideamarketplace_#{@aoi_question.id}_ideas[.]csv$/
-      File.exists?(filename).should be_true
       # Not specifying exact file syntax, it's likely to change frequently
       #
-      rows = FasterCSV.read(filename)
+      rows = FasterCSV.parse(csv)
       rows.first.should include("Idea ID")
       rows.first.should_not include("Skip ID")
-      File.delete(filename).should_not be_nil
-
     end
 
     it "should raise an error when given an unsupported export type" do
       lambda { @aoi_question.export("blahblahblah") }.should raise_error
-    end
-
-    it "should export data and schedule a job to delete export after X days" do
-      Delayed::Job.delete_all
-      filename = @aoi_question.export_and_delete('votes', :delete_at => 2.days.from_now)
-
-      Delayed::Job.count.should == 1
-      Delayed::Job.delete_all
-      File.delete(filename).should_not be_nil
-
     end
 
     after(:all) { truncate_all }
@@ -499,15 +473,12 @@ describe Question do
       end
     end
 
-    it "should export idea data to a csv file with proper escaping" do
-      filename = @aoi_question.export('ideas')
+    it "should export idea data to a string with proper escaping" do
+      csv = @aoi_question.export('ideas')
 
-      filename.should_not be nil
-      filename.should match /.*ideamarketplace_#{@aoi_question.id}_ideas[.]csv$/
-      File.exists?(filename).should be_true
       # Not specifying exact file syntax, it's likely to change frequently
       #
-      rows = FasterCSV.read(filename)
+      rows = FasterCSV.parse(csv)
       rows.first.should include("Idea ID")
       rows.first.should_not include("Skip ID")
 
@@ -516,20 +487,14 @@ describe Question do
         # Idea Text
         row[2].should =~ /^foo.bar$/m
       end
-      
-      File.delete(filename).should_not be_nil
-
     end
 
-    it "should export vote data to a csv file with proper escaping" do
-      filename = @aoi_question.export('votes')
+    it "should export vote data to a string with proper escaping" do
+      csv = @aoi_question.export('votes')
 
-      filename.should_not be nil
-      filename.should match /.*ideamarketplace_#{@aoi_question.id}_votes[.]csv$/
-      File.exists?(filename).should be_true
       # Not specifying exact file syntax, it's likely to change frequently
       #
-      rows = FasterCSV.read(filename)
+      rows = FasterCSV.parse(csv)
       rows.first.should include("Vote ID")
       rows.first.should_not include("Idea ID")
 
@@ -540,7 +505,6 @@ describe Question do
         # Loser Text
         row[6].should =~ /^foo.bar$/m
       end
-      File.delete(filename).should be_true
 
     end
 

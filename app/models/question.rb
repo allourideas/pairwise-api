@@ -512,36 +512,27 @@ class Question < ActiveRecord::Base
   end
 
 
-  def export_and_delete(type, options={})
-    delete_at = options.delete(:delete_at)
-    filename = export(type, options)
-
-    File.send_at(delete_at, :delete, filename)
-    filename
-  end
-
   def export(type, options = {})
 
     case type
       when 'votes'
-        outfile = "ideamarketplace_#{self.id}_votes.csv"
+        outfile = "ideamarketplace_#{self.id}_votes"
 
         headers = ['Vote ID', 'Session ID', 'Ideamarketplace ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text', 'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
     
       when 'ideas'
-        outfile = "ideamarketplace_#{self.id}_ideas.csv"
+        outfile = "ideamarketplace_#{self.id}_ideas"
         headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score', 'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active', 'Appearances on Left', 'Appearances on Right']
       when 'non_votes'
-        outfile = "ideamarketplace_#{self.id}_non_votes.csv"
+        outfile = "ideamarketplace_#{self.id}_non_votes"
         headers = ['Record Type', 'Record ID', 'Session ID', 'Ideamarketplace ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
       else 
         raise "Unsupported export type: #{type}"
     end
 
-    filename = File.join(File.expand_path(Rails.root), "public", "system", "exports", self.id.to_s, Digest::SHA1.hexdigest(outfile + rand(10000000).to_s) + "_" + outfile)
+    name = outfile + "_" + Digest::SHA1.hexdigest(outfile + rand(10000000).to_s) + ".csv"
 
-    FileUtils::mkdir_p(File.dirname(filename))
-    csv_data = FasterCSV.open(filename, "w") do |csv|
+    csv_data = FasterCSV.generate do |csv|
       csv << headers 
       case type
         when 'votes'
@@ -600,18 +591,23 @@ class Question < ActiveRecord::Base
 
     end
 
+
     if options[:response_type] == 'redis'
+      # let's compress this for redis
+      # it should get removed from redis relatively quickly
+      zlib = Zlib::Deflate.new
+      zlibcsv = zlib.deflate(csv_data, Zlib::FINISH)
+      zlib.close
 
       if options[:redis_key].nil?
         raise "No :redis_key specified"
       end
       #The client should use blpop to listen for a key
       #The client is responsible for deleting the redis key (auto expiration results failure in testing)
-      $redis.lpush(options[:redis_key], filename)
-    #TODO implement response_type == 'email' for use by customers of the API (not local)
+      $redis.lpush(options[:redis_key], zlibcsv)
+    else
+      return csv_data
     end
-
-    filename
   end
 
   def get_first_unanswered_appearance(visitor, offset=0)
