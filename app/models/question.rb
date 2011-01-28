@@ -530,8 +530,6 @@ class Question < ActiveRecord::Base
         raise "Unsupported export type: #{type}"
     end
 
-    name = outfile + "_" + Digest::SHA1.hexdigest(outfile + rand(10000000).to_s) + ".csv"
-
     csv_data = FasterCSV.generate do |csv|
       csv << headers 
       case type
