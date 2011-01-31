@@ -51,7 +51,7 @@ Rails::Initializer.run do |config|
     :lib     => 'fastercsv',
     :version => '1.5.1'
   config.gem 'delayed_job',
-    :version => '2.0.3'
+    :version => '2.0.6'
   config.gem 'redis',
     :version => '1.0.7'
   config.gem 'newrelic_rpm',
