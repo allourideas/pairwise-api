@@ -73,8 +73,9 @@ class QuestionsController < InheritedResources::Base
 
     # puts "redis key is::::: #{redis_key}"
 
-    @question.send_later :export, type, 
-	                        :response_type => response_type, :redis_key => redis_key
+    @question.delay(:priority => 15).export(type, 
+	          :response_type => response_type,
+            :redis_key => redis_key)
 
 
     render :text => "Ok! Please wait for the response (as specified by your response_type)"
