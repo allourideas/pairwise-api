@@ -167,6 +167,28 @@ class QuestionsController < InheritedResources::Base
 		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
 		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
 	    end
+    elsif scope == "all_photocracy_votes"
+
+	    votes_by_visitor_id= Vote.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
+					   :joins => :voter, 
+             :conditions => { :visitors => { :site_id => PHOTOCRACY_SITE_ID }},
+					   :group => "voter_id")
+	    visitor_id_hash = {}
+	    votes_by_visitor_id.each do |visitor|
+		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+	    end
+    elsif scope == "all_aoi_votes"
+
+	    votes_by_visitor_id= Vote.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
+					   :joins => :voter, 
+             :conditions => { :visitors => { :site_id => ALLOURIDEAS_SITE_ID }},
+					   :group => "voter_id")
+	    visitor_id_hash = {}
+	    votes_by_visitor_id.each do |visitor|
+		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+	    end
     elsif scope == "creators"
 
 	    questions_created_by_visitor_id = Question.all(:select => 'visitors.identifier as thevi, count(*) as questions_count', 

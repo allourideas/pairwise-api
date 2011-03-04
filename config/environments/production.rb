@@ -21,3 +21,6 @@ config.gem "rubaidh-google_analytics",
   :lib     => "rubaidh/google_analytics",
   :version => "1.1.4",
   :source  => "http://gems.github.com"
+
+PHOTOCRACY_SITE_ID = 8
+ALLOURIDEAS_SITE_ID = 1
