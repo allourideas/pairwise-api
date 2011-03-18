@@ -39,7 +39,7 @@ namespace :test_api do
       1000.times do |n|
         puts "#{n} votes completed" if n % 100 == 0
               question = Question.find(214) # test question change as needed
-        @prompt = question.catchup_choose_prompt
+        @prompt = question.catchup_choose_prompt(1).first
               @appearance = current_user.record_appearance(current_user.default_visitor, @prompt)
 
         direction = (rand(2) == 0) ? "left" : "right"

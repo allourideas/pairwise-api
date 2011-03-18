@@ -80,26 +80,29 @@ class Question < ActiveRecord::Base
   end
 
   # adapted from ruby cookbook(2006): section 5-11
-  def catchup_choose_prompt
+  def catchup_choose_prompt(num=1000)
     weighted = catchup_prompts_weights
     # Rand returns a number from 0 - 1, so weighted needs to be normalized
-    prompt = nil
+    generated_prompts = []
 
-    until prompt && prompt.active?
-      target = rand 
-      left_choice_id = right_choice_id = nil
+    num.times do
+      prompt = nil
+      until prompt && prompt.active?
+        target = rand 
+        left_choice_id = right_choice_id = nil
 
-      weighted.each do |item, weight|
-        if target <= weight
-          left_choice_id, right_choice_id = item.split(", ")
-          break
+        weighted.each do |item, weight|
+          if target <= weight
+            left_choice_id, right_choice_id = item.split(", ")
+            break
+          end
+          target -= weight
         end
-        target -= weight
+        prompt = prompts.find_or_create_by_left_choice_id_and_right_choice_id(left_choice_id, right_choice_id, :include => [{ :left_choice => :item }, { :right_choice => :item }])
       end
-      prompt = prompts.find_or_create_by_left_choice_id_and_right_choice_id(left_choice_id, right_choice_id, :include => [{ :left_choice => :item }, { :right_choice => :item }])
+      generated_prompts.push prompt
     end
-    # check if prompt has two active choices here, maybe we can set this on the prompt level too?
-    prompt
+    generated_prompts
   end
 
 
@@ -472,9 +475,18 @@ class Question < ActiveRecord::Base
   end
 
   def add_prompt_to_queue
-    prompt = self.catchup_choose_prompt
-    $redis.rpush(self.pq_key, prompt.id)
-    prompt
+    num_prompts = 1000
+    # if less than 90% full, regenerate prompts
+    if $redis.llen(self.pq_key) < num_prompts * 0.9
+      prompts = self.catchup_choose_prompt(num_prompts)
+      # clear list
+      $redis.ltrim(self.pq_key, 0, 0)
+      $redis.lpop(self.pq_key)
+      prompts.each do |prompt|
+        $redis.rpush(self.pq_key, prompt.id)
+      end
+      return prompts
+    end
   end
 
   def pop_prompt_queue

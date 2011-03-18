@@ -55,7 +55,7 @@ describe Question do
   end
 
   it "should choose an active prompt using catchup algorithm" do 
-    prompt = @question.catchup_choose_prompt
+    prompt = @question.catchup_choose_prompt(1).first
     prompt.active?.should == true
   end
 
@@ -242,7 +242,7 @@ describe Question do
       # Sanity check
       @catchup_q.choices.size.should == 100
 
-      prompt = @catchup_q.catchup_choose_prompt
+      prompt = @catchup_q.catchup_choose_prompt(1).first
       prompt.active?.should == true
     end
 
@@ -282,36 +282,10 @@ describe Question do
       prompt.should_not == nil
       prompt.active?.should == true
     end
-    it "should return prompts from the queue in FIFO order" do
-      @catchup_q.clear_prompt_queue
-      @catchup_q.pop_prompt_queue.should == nil
-      
-      prompt1 = @catchup_q.add_prompt_to_queue
-      prompt2 = @catchup_q.add_prompt_to_queue
-      prompt3 = @catchup_q.add_prompt_to_queue
-
-      prompt_1 = @catchup_q.pop_prompt_queue
-      prompt_2 = @catchup_q.pop_prompt_queue
-      prompt_3 = @catchup_q.pop_prompt_queue
-
-
-      prompt_1.should == prompt1
-      prompt_2.should == prompt2
-      prompt_3.should == prompt3
-
-      # there is a small probability that the catchup algorithm
-      # choose two prompts that are indeed equal
-      prompt_1.should_not == prompt_2
-      prompt_1.should_not == prompt_3
-      prompt_2.should_not == prompt_3
-
-
-      @catchup_q.pop_prompt_queue.should == nil
-    end
     it "should not return prompts from queue that are deactivated" do
       @catchup_q.clear_prompt_queue
       @catchup_q.pop_prompt_queue.should == nil
-      prompt1 = @catchup_q.add_prompt_to_queue
+      prompt1 = @catchup_q.add_prompt_to_queue.first
             
       prompt = Prompt.find(prompt1)
       prompt.left_choice.deactivate!
