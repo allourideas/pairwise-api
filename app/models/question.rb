@@ -579,11 +579,9 @@ class Question < ActiveRecord::Base
           end
         when 'non_votes'
          
-          self.appearances.find_each(:include => [:answerable, :voter]) do |a|
-          # we only display skips and orphaned appearances in this csv file
-          next if a.answerable.class == Vote
+          self.appearances.find_each(:include => [:voter], :conditions => ['answerable_type <> ? OR answerable_type IS NULL', 'Vote']) do |a|
       
-          if a.answerable.class == Skip
+          if a.answerable_type == 'Skip'
             # If this appearance belongs to a skip, show information on the skip instead
             s = a.answerable
             valid = s.valid_record ? 'TRUE' : 'FALSE'
@@ -594,7 +592,11 @@ class Question < ActiveRecord::Base
           else
             # If no skip and no vote, this is an orphaned appearance
             prompt = a.prompt
-            csv << [ "Orphaned Appearance", a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'NA', a.created_at, a.updated_at, 'NA', '', a.voter.identifier, 'TRUE'] 
+            action_appearances = Appearance.count(:conditions =>
+              ["voter_id = ? AND question_id = ? AND answerable_type IS NOT ?",
+                a.voter_id, a.question_id, nil])
+            appearance_type = (action_appearances > 0) ? 'Stopped_Voting' : 'Bounce'
+            csv << [ appearance_type, a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'NA', a.created_at, a.updated_at, 'NA', '', a.voter.identifier, 'TRUE'] 
           end
         end
       end
