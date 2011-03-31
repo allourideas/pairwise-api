@@ -597,7 +597,7 @@ class Question < ActiveRecord::Base
             action_appearances = Appearance.count(:conditions =>
               ["voter_id = ? AND question_id = ? AND answerable_type IS NOT ?",
                 a.voter_id, a.question_id, nil])
-            appearance_type = (action_appearances > 0) ? 'Stopped_Voting_Or_Clicking' : 'Bounce'
+            appearance_type = (action_appearances > 0) ? 'Stopped_Voting_Or_Skipping' : 'Bounce'
             csv << [ appearance_type, a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'NA', a.created_at, a.updated_at, 'NA', '', a.voter.identifier, 'TRUE'] 
           end
         end
