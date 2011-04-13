@@ -6,6 +6,7 @@ namespace :prune_db do
      badvotes = [] 
      #might want to optimize later to not start from the beginning each time
      Vote.find_each(:batch_size => 1000, :include => :appearance) do |v|
+        next if v.nil? || v.appearance.nil?
          server_response_time = v.created_at.to_f - v.appearance.created_at.to_f
 	 if v.time_viewed && v.time_viewed/1000 > server_response_time 
             badvotes << v
