@@ -349,7 +349,7 @@ namespace :test_api do
 
     email_text = "Conducted the following tests on API data and found the following results\n" + "For each of the #{questions.length} questions in the database: \n"
     errors.each do |e|
-      email_text += "     Test FAILED: " + e + "\n"
+      email_text += "     Test FAILED:\n" + e + "\n"
     end
 
     successes.uniq.each do |s|
@@ -381,6 +381,9 @@ namespace :test_api do
   total_scores_gte_fifty= 0
   total_scores_lte_fifty= 0
   error_bool = false
+  # votes before 2010-02-17 have null loser_choice_id therefore we
+  # want to ignore some tests for any question with votes before 2010-02-17
+  question_has_votes_before_2010_02_17 = question.votes.count(:conditions => ["created_at < ?", '2010-02-17']) > 0
 
   question.choices.each do |choice|
       
@@ -430,7 +433,7 @@ namespace :test_api do
       # votes before 2010-02-17 have null loser_choice_id
       # therefore we want to ignore this test for any question with votes
       # prior to 2010-02-17
-      if question.votes.count(:conditions => ["created_at < ?", '2010-02-17']) == 0
+      unless question_has_votes_before_2010_02_17
         if (choice.losses != question.votes.count(:conditions => {:loser_choice_id => choice.id}))
           error_message += "Error!: Cached choice losses != actual choice losses for choice #{choice.id}\n"
           error_bool= true
@@ -440,19 +443,21 @@ namespace :test_api do
         end
   
   
-  if (2*total_wins != total_votes)
-     error_message += "Error 1: 2 x Total Wins != Total votes\n"
-     error_bool= true
-  end
+  unless question_has_votes_before_2010_02_17
+    if (2*total_wins != total_votes)
+       error_message += "Error 1: 2 x Total Wins != Total votes\n"
+       error_bool= true
+    end
 
-  if(total_votes % 2 != 0)
-    error_message += "Error 2: Total votes is not Even!\n"
-    error_bool= true
-  end
+    if(total_votes % 2 != 0)
+      error_message += "Error 2: Total votes is not Even!\n"
+      error_bool= true
+    end
 
-  if(total_votes != 2* question.votes_count)
-    error_message += "Error 3: Total votes != 2 x # vote objects\n"
-    error_bool = true
+    if(total_votes != 2* question.votes_count)
+      error_message += "Error 3: Total votes != 2 x # vote objects\n"
+      error_bool = true
+    end
   end
 
   if(total_generated_prompts_on_right != total_generated_prompts_on_right)
