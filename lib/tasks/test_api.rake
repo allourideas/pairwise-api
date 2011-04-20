@@ -505,7 +505,7 @@ namespace :test_api do
 
            appearances_by_choice_id.each do |choice_id, n_i| 
     if (n_i < (mean - 6*stddev)) || (n_i > mean + 6 *stddev)
-      error_message += "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question"
+      error_message += "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question\n"
     end
      end
   end
