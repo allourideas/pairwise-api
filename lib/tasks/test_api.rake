@@ -465,10 +465,12 @@ namespace :test_api do
     error_bool = true
   end
 
-  if(total_scores_lte_fifty == question.choices.size || total_scores_gte_fifty == question.choices.size) && (total_scores_lte_fifty != total_scores_gte_fifty)
-    error_message += "Error: The scores of all choices are either all above 50, or all below 50. This is probably wrong\n"
-    error_bool = true
-    puts "Error score fifty: #{question.id}"
+  unless question_has_votes_before_2010_02_17
+    if(total_scores_lte_fifty == question.choices.size || total_scores_gte_fifty == question.choices.size) && (total_scores_lte_fifty != total_scores_gte_fifty)
+      error_message += "Error: The scores of all choices are either all above 50, or all below 50. This is probably wrong\n"
+      error_bool = true
+      puts "Error score fifty: #{question.id}"
+    end
   end
   
   if error_bool
