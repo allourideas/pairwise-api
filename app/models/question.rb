@@ -29,6 +29,12 @@ class Question < ActiveRecord::Base
 
   attr_readonly :site_id
 
+  # regenerate prompts if cache is less than this full
+  # ideally this prevents active marketplaces from
+  # regenerating prompts too frequently
+  @@percent_full = 0.9
+  @@num_prompts = 1000
+
   named_scope :created_by, lambda { |id|
     {:conditions => { :local_identifier => id } }
   }
@@ -474,13 +480,20 @@ class Question < ActiveRecord::Base
     $redis.del(self.pq_key)
   end
 
+  
+  # make prompt queue less than @@precent_full
+  def mark_prompt_queue_for_refill
+    # 2 because redis starts indexes at 0
+    new_size = (@@num_prompts * @@percent_full - 2).floor
+    $redis.ltrim(self.pq_key, 0, new_size)
+  end
+
   def add_prompt_to_queue
-    num_prompts = 1000
     # if less than 90% full, regenerate prompts
     # we skip generating prompts if more than 90% full to
     # prevent one busy marketplace for ruling the queue
-    if $redis.llen(self.pq_key) < num_prompts * 0.9
-      prompts = self.catchup_choose_prompt(num_prompts)
+    if $redis.llen(self.pq_key) < @@num_prompts * @@percent_full
+      prompts = self.catchup_choose_prompt(@@num_prompts)
       # clear list
       $redis.ltrim(self.pq_key, 0, 0)
       $redis.lpop(self.pq_key)

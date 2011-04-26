@@ -86,6 +86,11 @@ describe Choice do
 	  choice1.should be_active
   end
 
+  it "should create a delayed job on activation" do
+    choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))
+    proc { choice1.deactivate! }.should change(Delayed::Job, :count).by(1)
+  end
+
   it "should update a question's counter cache on deactivation" do 
 	  prev_inactive = @question.inactive_choices_count
           choice1 = Choice.create!(@valid_attributes.merge(:data => '1234'))

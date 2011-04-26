@@ -16,6 +16,7 @@ class Choice < ActiveRecord::Base
   named_scope :inactive, :conditions => { :active => false}
  
   after_save :update_questions_counter
+  after_save :update_prompt_queue
 
   attr_protected :prompts_count, :wins, :losses, :score, :prompts_on_the_right_count, :prompts_on_the_left_count
   attr_readonly :question_id
@@ -23,6 +24,14 @@ class Choice < ActiveRecord::Base
   def update_questions_counter
     self.question.update_attribute(:inactive_choices_count, self.question.choices.inactive.length)
   end 
+
+  # if changing a choice to active, we want to regenerate prompts
+  def update_prompt_queue
+    if self.changed.include?('active') && self.active?
+      self.question.mark_prompt_queue_for_refill
+      self.question.choose_prompt
+    end
+  end
   
   def before_create
     unless self.score
