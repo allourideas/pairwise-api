@@ -29,7 +29,9 @@ class Choice < ActiveRecord::Base
   def update_prompt_queue
     if self.changed.include?('active') && self.active?
       self.question.mark_prompt_queue_for_refill
-      self.question.choose_prompt
+      if self.question.choices.size - self.question.inactive_choices_count > 1
+        self.question.choose_prompt
+      end
     end
   end
   
