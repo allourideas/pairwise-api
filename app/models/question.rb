@@ -1,5 +1,6 @@
 class Question < ActiveRecord::Base
   require 'set'
+  include Utility
   extend ActiveSupport::Memoizable
   
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
@@ -50,7 +51,17 @@ class Question < ActiveRecord::Base
   def item_count
     choices.size
   end
-   
+
+  # returns array of hashes where each has has voter_id and total keys
+  def votes_per_session
+    self.votes.find(:all, :select => 'voter_id, count(*) as total', :group => :voter_id).map { |v| {:voter_id => v.voter_id, :total => v.total.to_i} }
+  end
+
+  def median_votes_per_session
+    totals = self.votes_per_session.map { |v| v[:total] }
+    return median(totals)
+  end
+
   def choose_prompt(options = {})
 
           # if there is one or fewer active choices, we won't be able to find a prompt

@@ -10,6 +10,15 @@ describe "Questions" do
     end
   end
 
+  describe "GET 'median_votes_per_session'" do
+    it "should return the median" do
+      Factory.create(:vote, :question => @questions.first)
+      get_auth median_votes_per_session_question_path(@questions.first, :format => 'xml')
+      response.should be_success
+      response.body.should have_tag("median", :text => "1")
+    end
+  end
+
   describe "GET 'index'" do
     it "should return an array of questions" do
       get_auth questions_path(:format => 'xml')

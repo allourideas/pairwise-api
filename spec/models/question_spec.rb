@@ -22,6 +22,15 @@ describe Question do
     @question.choices.active.reload.size.should == 2
   end
 
+  it "should report median votes per session" do
+    aoiquestion = Factory.create(:aoi_question)
+    prompt = aoiquestion.prompts.first
+    Factory.create(:vote, :question => aoiquestion, :prompt => prompt)
+    Factory.create(:vote, :question => aoiquestion, :prompt => prompt)
+    aoiquestion.votes_per_session.should == [{:voter_id => aoiquestion.creator.id, :total => 2}]
+    aoiquestion.median_votes_per_session.should == 2
+  end
+
   it "should create a new instance given valid attributes" do
     # Factory.attributes_for does not return associations, this is a good enough substitute
     Question.create!(Factory.build(:question).attributes.symbolize_keys)

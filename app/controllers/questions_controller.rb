@@ -84,6 +84,13 @@ class QuestionsController < InheritedResources::Base
 #    export_format = params[:export_format] #CSV always now, could expand to xml later
   end
 
+  def median_votes_per_session
+    @question = current_user.questions.find(params[:id])
+    respond_to do |format|
+    	format.xml{ render :xml => {:median => @question.median_votes_per_session}.to_xml and return}
+    end
+  end
+
   def object_info_by_visitor_id
     
     object_type = params[:object_type]
