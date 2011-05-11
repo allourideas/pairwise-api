@@ -548,7 +548,7 @@ namespace :test_api do
   yesterday_appearances = question.appearances.count(:conditions => ['date(created_at) = ?', Date.yesterday])
 
   if misses + hits != yesterday_appearances
-       error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}\n"
+       error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}, Hits: #{hits}, Misses: #{misses}\n"
   end
   
   if yesterday_appearances > 5 # this test isn't worthwhile for small numbers of appearances
