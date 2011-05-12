@@ -28,6 +28,20 @@ namespace :test_api do
 
    task :all => [:question_vote_consistency,:generate_density_information]
 
+  desc "Ensure that all choices have 0 <= score <= 100"
+  task :verify_range_of_choices_scores => :environment do
+    puts verify_range_of_choices_scores().inspect
+  end
+
+  def verify_range_of_choices_scores
+    bad_choices_count = Choice.count(:conditions => 'score < 0 OR score > 100')
+    success_message = "All choices have a score within 0-100"
+    if bad_choices_count > 0
+      error_message = "Some choices have a score less than 0 or greater than 100"
+    end
+    return error_message.blank? ? [success_message, false] : [error_message, true]
+  end
+
    desc "Don't run unless you know what you are doing"
    task(:generate_lots_of_votes => :environment) do
       if Rails.env.production?
@@ -341,6 +355,12 @@ namespace :test_api do
 
     message, error_occurred = response_time_tests  
 
+    if error_occurred
+      errors << message
+    else
+      successes << message
+    end
+    message, error_occurred = verify_range_of_choices_scores
     if error_occurred
       errors << message
     else
