@@ -405,6 +405,8 @@ namespace :test_api do
   # want to ignore some tests for any question with votes before 2010-02-17
   question_has_votes_before_2010_02_17 = question.votes.count(:conditions => ["created_at < ?", '2010-02-17']) > 0
 
+  # reload question to make sure we have most recent data
+  question.reload
   question.choices.each do |choice|
       
       if choice.wins
