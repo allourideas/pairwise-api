@@ -42,6 +42,26 @@ namespace :test_api do
     return error_message.blank? ? [success_message, false] : [error_message, true]
   end
 
+  desc "Ensure that an idea: appearances on left + appearances on right >= (wins + losses + skips)"
+  task :verify_choice_appearances_and_votes => :environment do
+    choice = Choice.find(ENV["choice_id"])
+    puts verify_choice_appearances_and_votes(choice).inspect
+  end
+
+  def verify_choice_appearances_and_votes(choice)
+    success_message = "Choice has more appearances than votes and skips"
+    prompts_on_left  = choice.prompts_on_the_left  { |p| p.id }
+    prompts_on_right = choice.prompts_on_the_right { |p| p.id }
+    all_prompt_ids   = prompts_on_left + prompts_on_right
+    all_appearances  = Appearance.count(:conditions => { :prompt_id => all_prompt_ids})
+    skips = Skip.count(:conditions => {:prompt_id => all_prompt_ids})
+
+    if all_appearances < choice.wins + choice.losses + skips
+      error_message = "Choice #{choice.id} in Question ##{choice.question_id} has fewer appearances than wins + losses + skips"
+    end
+    return error_message.blank? ? [success_message, false] : [error_message, true]
+  end
+
    desc "Don't run unless you know what you are doing"
    task(:generate_lots_of_votes => :environment) do
       if Rails.env.production?
@@ -437,6 +457,11 @@ namespace :test_api do
       if cached_score == 0.0 || cached_score == 100.0 || cached_score.nil?
      error_message += "Error! The cached_score for choice #{choice.id} is exactly 0 or 100, the value: #{cached_score}"
      print "Either 0 or 100 This score is wrong! #{choice.id} , Question ID: #{question.id}, #{cached_score}, #{generated_score}, updated: #{choice.updated_at}\n"
+      end
+
+      message, error_occurred = verify_choice_appearances_and_votes(choice)
+      if error_occurred
+        error_message += message
       end
 
 
