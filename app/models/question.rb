@@ -1,8 +1,10 @@
 class Question < ActiveRecord::Base
+  acts_as_versioned
+  
   require 'set'
   include Utility
   extend ActiveSupport::Memoizable
-  
+
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
   belongs_to :site, :class_name => "User", :foreign_key => "site_id"
   

@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20110131154228) do
+ActiveRecord::Schema.define(:version => 20110524171217) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -142,6 +142,29 @@ ActiveRecord::Schema.define(:version => 20110131154228) do
   add_index "prompts", ["question_id"], :name => "index_prompts_on_question_id"
   add_index "prompts", ["right_choice_id"], :name => "index_prompts_on_right_choice_id"
 
+  create_table "question_versions", :force => true do |t|
+    t.integer  "question_id"
+    t.integer  "version"
+    t.integer  "creator_id"
+    t.string   "name",                         :default => ""
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "choices_count",                :default => 0
+    t.integer  "prompts_count",                :default => 0
+    t.boolean  "active",                       :default => false
+    t.text     "tracking"
+    t.text     "information"
+    t.integer  "site_id"
+    t.string   "local_identifier"
+    t.integer  "votes_count",                  :default => 0
+    t.boolean  "it_should_autoactivate_ideas", :default => false
+    t.integer  "inactive_choices_count",       :default => 0
+    t.boolean  "uses_catchup",                 :default => true
+    t.boolean  "show_results",                 :default => true
+  end
+
+  add_index "question_versions", ["question_id"], :name => "index_question_versions_on_question_id"
+
   create_table "questions", :force => true do |t|
     t.integer  "creator_id"
     t.string   "name",                         :default => ""
@@ -159,6 +182,7 @@ ActiveRecord::Schema.define(:version => 20110131154228) do
     t.integer  "inactive_choices_count",       :default => 0
     t.boolean  "uses_catchup",                 :default => true
     t.boolean  "show_results",                 :default => true
+    t.integer  "version"
   end
 
   create_table "skips", :force => true do |t|
