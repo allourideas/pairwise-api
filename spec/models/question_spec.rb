@@ -31,6 +31,13 @@ describe Question do
     aoiquestion.median_votes_per_session.should == 2
   end
 
+  it "should create a new revision if modified" do
+    oldVer = @question.version
+    @question.name = "some new name"
+    @question.save
+    @question.version.should == oldVer + 1
+  end
+
   it "should create a new instance given valid attributes" do
     # Factory.attributes_for does not return associations, this is a good enough substitute
     Question.create!(Factory.build(:question).attributes.symbolize_keys)
