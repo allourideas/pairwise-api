@@ -50,8 +50,8 @@ namespace :test_api do
 
   def verify_choice_appearances_and_votes(choice)
     success_message = "Choice has more appearances than votes and skips"
-    prompts_on_left  = choice.prompts_on_the_left  { |p| p.id }
-    prompts_on_right = choice.prompts_on_the_right { |p| p.id }
+    prompts_on_left  = choice.prompts_on_the_left.map  { |p| p.id }
+    prompts_on_right = choice.prompts_on_the_right.map { |p| p.id }
     all_prompt_ids   = prompts_on_left + prompts_on_right
     all_appearances  = Appearance.count(:conditions => { :prompt_id => all_prompt_ids})
     skips = Skip.count(:conditions => {:prompt_id => all_prompt_ids})
@@ -462,7 +462,7 @@ namespace :test_api do
       unless question_has_votes_before_2010_02_17
         message, error_occurred = verify_choice_appearances_and_votes(choice)
         if error_occurred
-          error_message += message
+          error_message += message + "\n"
         end
       end
 
