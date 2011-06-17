@@ -459,9 +459,11 @@ namespace :test_api do
      print "Either 0 or 100 This score is wrong! #{choice.id} , Question ID: #{question.id}, #{cached_score}, #{generated_score}, updated: #{choice.updated_at}\n"
       end
 
-      message, error_occurred = verify_choice_appearances_and_votes(choice)
-      if error_occurred
-        error_message += message
+      unless question_has_votes_before_2010_02_17
+        message, error_occurred = verify_choice_appearances_and_votes(choice)
+        if error_occurred
+          error_message += message
+        end
       end
 
 
