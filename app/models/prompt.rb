@@ -7,8 +7,8 @@ class Prompt < ActiveRecord::Base
   
   
   belongs_to :question, :counter_cache => true
-  belongs_to :left_choice, :class_name => "Choice", :foreign_key => "left_choice_id", :counter_cache => true
-  belongs_to :right_choice, :class_name => "Choice", :foreign_key => "right_choice_id", :counter_cache => true
+  belongs_to :left_choice, :class_name => "Choice", :foreign_key => "left_choice_id", :counter_cache => :prompts_on_the_left_count
+  belongs_to :right_choice, :class_name => "Choice", :foreign_key => "right_choice_id", :counter_cache => :prompts_on_the_right_count
   
   validates_presence_of :left_choice, :on => :create, :message => "can't be blank"
   validates_presence_of :right_choice, :on => :create, :message => "can't be blank"

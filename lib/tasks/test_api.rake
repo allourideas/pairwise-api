@@ -1,6 +1,6 @@
 namespace :test_api do
 
-  desc "Updates cached values for losses and wins for for choices."
+  desc "Updates cached values for losses and wins for choices."
   task :update_cached_losses_wins => :environment do
     Question.all.each do |question|
       question.choices.each do |choice|
@@ -13,6 +13,20 @@ namespace :test_api do
         choice.reload
         choice.score = choice.compute_score
         choice.save(false)
+      end
+    end
+  end
+
+  desc "Update cached values for prompts on left and right for choices."
+  task :update_cahced_prompts_on_left_right => :environment do
+    Question.all.each do |question|
+      question.choices.each do |choice|
+        choice.reload
+        choice.prompts_on_the_left
+        choice.prompts_on_the_right
+        Choice.update_counters choice.id,
+          :prompts_on_the_left_count => choice.prompts_on_the_left.count,
+          :prompts_on_the_right_count => choice.prompts_on_the_right.count
       end
     end
   end
