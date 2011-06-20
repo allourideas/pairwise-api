@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20110524171217) do
+ActiveRecord::Schema.define(:version => 20110620185325) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -26,6 +26,7 @@ ActiveRecord::Schema.define(:version => 20110524171217) do
   end
 
   add_index "appearances", ["lookup"], :name => "index_appearances_on_lookup"
+  add_index "appearances", ["prompt_id"], :name => "index_appearances_on_prompt_id"
   add_index "appearances", ["question_id", "voter_id"], :name => "index_appearances_on_question_id_voter_id"
 
   create_table "choices", :force => true do |t|
@@ -250,6 +251,7 @@ ActiveRecord::Schema.define(:version => 20110524171217) do
 
   add_index "votes", ["choice_id"], :name => "choice_id_idx"
   add_index "votes", ["loser_choice_id"], :name => "loser_choice_id_idx"
+  add_index "votes", ["question_id", "created_at"], :name => "question_id_created_at_idx"
   add_index "votes", ["question_id"], :name => "question_id_idx"
   add_index "votes", ["voter_id"], :name => "index_votes_on_voter_id"
 
