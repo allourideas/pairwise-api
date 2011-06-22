@@ -12,6 +12,12 @@ class Choice < ActiveRecord::Base
   has_many :flags
   has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id"
   has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
+
+
+  has_many :appearances_on_the_left, :through => :prompts_on_the_left, :source => :appearances
+  has_many :appearances_on_the_right, :through => :prompts_on_the_right, :source => :appearances
+  has_many :skips_on_the_left, :through => :prompts_on_the_left, :source => :skips
+  has_many :skips_on_the_right, :through => :prompts_on_the_right, :source => :skips
   named_scope :active, :conditions => { :active => true }
   named_scope :inactive, :conditions => { :active => false}
  

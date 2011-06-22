@@ -64,11 +64,8 @@ namespace :test_api do
 
   def verify_choice_appearances_and_votes(choice)
     success_message = "Choice has more appearances than votes and skips"
-    prompts_on_left  = choice.prompts_on_the_left.map  { |p| p.id }
-    prompts_on_right = choice.prompts_on_the_right.map { |p| p.id }
-    all_prompt_ids   = prompts_on_left + prompts_on_right
-    all_appearances  = Appearance.count(:conditions => { :prompt_id => all_prompt_ids})
-    skips = Skip.count(:conditions => {:prompt_id => all_prompt_ids})
+    all_appearances  = choice.appearances_on_the_left.count + choice.appearances_on_the_right.count
+    skips = choice.skips_on_the_left.count + choice.skips_on_the_right.count
 
     if all_appearances < choice.wins + choice.losses + skips
       error_message = "Choice #{choice.id} in Question ##{choice.question_id} has fewer appearances than wins + losses + skips"
