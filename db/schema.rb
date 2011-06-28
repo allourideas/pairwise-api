@@ -251,7 +251,6 @@ ActiveRecord::Schema.define(:version => 20110620185325) do
 
   add_index "votes", ["choice_id"], :name => "choice_id_idx"
   add_index "votes", ["loser_choice_id"], :name => "loser_choice_id_idx"
-  add_index "votes", ["question_id", "created_at"], :name => "question_id_created_at_idx"
   add_index "votes", ["question_id"], :name => "question_id_idx"
   add_index "votes", ["voter_id"], :name => "index_votes_on_voter_id"
 
