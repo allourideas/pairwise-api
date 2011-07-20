@@ -562,7 +562,7 @@ class Question < ActiveRecord::Base
     
       when 'ideas'
         outfile = "ideamarketplace_#{self.id}_ideas"
-        headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score', 'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active', 'Appearances on Left', 'Appearances on Right']
+        headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score', 'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active', 'Appearances on Left', 'Appearances on Right', 'Session Identifier']
       when 'non_votes'
         outfile = "ideamarketplace_#{self.id}_non_votes"
         headers = ['Record Type', 'Record ID', 'Session ID', 'Ideamarketplace ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
@@ -602,7 +602,7 @@ class Question < ActiveRecord::Base
 
             num_skips = self.skips.count(:conditions => {:prompt_id => left_prompts_ids + right_prompts_ids})
 
-            csv << [c.question_id, c.id, c.data.strip, c.wins, c.losses, num_skips, c.score, user_submitted , c.creator_id, c.created_at, c.updated_at, active, left_appearances, right_appearances]
+            csv << [c.question_id, c.id, c.data.strip, c.wins, c.losses, num_skips, c.score, user_submitted , c.creator_id, c.created_at, c.updated_at, active, left_appearances, right_appearances, c.creator.identifier]
 
           end
         when 'non_votes'
