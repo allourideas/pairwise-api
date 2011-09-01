@@ -218,44 +218,53 @@ class QuestionsController < InheritedResources::Base
     @question = current_user.questions.find(params[:id])
 
     if object_type == 'votes'
-      hash = Vote.count(:conditions => "question_id = #{@question.id}", :group => "date(created_at)")
+      data = Vote.count(:conditions => "question_id = #{@question.id}", :group => "date(created_at)")
     elsif object_type == 'skips'
-      hash = Skip.count(:conditions => {:question_id => @question.id}, :group => "date(created_at)")
+      data = Skip.count(:conditions => {:question_id => @question.id}, :group => "date(created_at)")
     elsif object_type == 'user_submitted_ideas'
-      hash = Choice.count(:conditions => "choices.question_id = #{@question.id} AND choices.creator_id <> #{@question.creator_id}", 
+      data = Choice.count(:conditions => "choices.question_id = #{@question.id} AND choices.creator_id <> #{@question.creator_id}", 
 			  :group => "date(choices.created_at)")
       # we want graphs to go from date of first vote -> date of last vote, so adding those two boundries here.
       mindate = Vote.minimum('date(created_at)', :conditions => {:question_id => @question.id})
       maxdate = Vote.maximum('date(created_at)', :conditions => {:question_id => @question.id})
 
-      hash[mindate] = 0 if !hash.include?(mindate)
-      hash[maxdate] = 0 if !hash.include?(maxdate)
+      data[mindate] = 0 if !data.include?(mindate)
+      data[maxdate] = 0 if !data.include?(maxdate)
     elsif object_type == 'user_sessions'
 	    # little more work to do here:
       result = Vote.find(:all, :select => 'date(created_at) as date, voter_id, count(*) as vote_count', 
 			 :conditions => "question_id = #{@question.id}", :group => 'date(created_at), voter_id')
-      hash = Hash.new(0)
+      data = Hash.new(0)
       result.each do |r|
-	      hash[r.date]+=1
+	      data[r.date]+=1
       end
 
     elsif object_type == 'appearances_by_creation_date'
 
-            hash = Hash.new()
+            array = []
 	    @question.choices.active.find(:all, :order => :created_at).each do |c|
 	             relevant_prompts = c.prompts_on_the_left.find(:all, :select => 'id') + c.prompts_on_the_right.find(:all, :select => 'id')
 
 		     appearances = Appearance.count(:conditions => {:prompt_id => relevant_prompts, :question_id => @question.id})
 
 		     #initialize key to list if it doesn't exist
-		     (hash[c.created_at.to_date] ||= []) << { :data => c.data, :appearances => appearances}
+		     array << {:date => c.created_at.to_date, :data => c.data, :appearances => appearances}
 	    end
 
 			     
     end
 
+    # all but appearances_by_creation_date create data hash that needs
+    # to be converted to array
+    if data && !array
+      array = []
+      data.each do |key, value|
+        array << {:date => key, :count => value}
+      end
+    end
+
     respond_to do |format|
-	    format.xml { render :xml => hash.to_xml and return}
+	    format.xml { render :xml => array.to_xml and return}
     end
   end
   
