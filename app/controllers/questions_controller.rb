@@ -314,7 +314,7 @@ class QuestionsController < InheritedResources::Base
 
     # only return questions with these recent votes
     if counts['recent-votes'] && params[:all] != 'true'
-      @questions = current_user.questions.scoped({}).find(counts['recent-votes'].keys)
+      @questions = current_user.questions.scoped({}).find_all_by_id(counts['recent-votes'].keys)
     else
       @questions = current_user.questions.scoped({})
       @questions = @questions.created_by(params[:creator]) if params[:creator]
