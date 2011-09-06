@@ -96,7 +96,7 @@ class QuestionsController < InheritedResources::Base
     object_type = params[:object_type]
     @question = current_user.questions.find(params[:id])
 
-    visitor_id_hash = {}
+    visitors = []
     if object_type == "votes"
 	    votes_by_visitor_id= Vote.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
 					  :joins => :voter, 
@@ -105,7 +105,7 @@ class QuestionsController < InheritedResources::Base
 
 
 	    votes_by_visitor_id.each do |visitor|
-		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+		    visitors.push({:visitor_id => visitor.thevi, :count => visitor.the_votes_count})
 	    end
     elsif object_type == "skips"
 	    skips_by_visitor_id= Skip.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
@@ -115,7 +115,7 @@ class QuestionsController < InheritedResources::Base
 
 
 	    skips_by_visitor_id.each do |visitor|
-		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+		    visitors.push({:visitor_id => visitor.thevi, :count => visitor.the_votes_count})
 	    end
     elsif object_type == "uploaded_ideas"
 
@@ -135,7 +135,7 @@ class QuestionsController < InheritedResources::Base
 		    end
 		    logger.info(v.identifier)
 
-		    visitor_id_hash[v.identifier] = visitor.ideas_count
+		    visitors.push({:visitor_id => v.identifier, :count => visitor.ideas_count})
 	    end
 
     elsif object_type == "bounces"
@@ -152,27 +152,26 @@ class QuestionsController < InheritedResources::Base
 		    v = Visitor.find(visitor_id, :select => 'identifier') 
 
 		    if v.identifier
-		       visitor_id_hash[v.identifier] = 1
+		       visitors.push({:visitor_id => v.identifier, :count => 1})
 		    end
 	    end
     end
     respond_to do |format|
-    	format.xml{ render :xml => visitor_id_hash.to_xml and return}
+    	format.xml{ render :xml => visitors.to_xml and return}
     end
   end
 
   def all_num_votes_by_visitor_id
     scope = params[:scope]
 
+	  visitors = []
     if scope == "all_votes"
 
 	    votes_by_visitor_id= Vote.all(:select => 'visitors.identifier as thevi, count(*) as the_votes_count', 
 					   :joins => :voter, 
 					   :group => "voter_id")
-	    visitor_id_hash = {}
 	    votes_by_visitor_id.each do |visitor|
-		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
-		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+		    visitors.push({:visitor_id => visitor.thevi, :count => visitor.the_votes_count})
 	    end
     elsif scope == "all_photocracy_votes"
 
@@ -180,10 +179,8 @@ class QuestionsController < InheritedResources::Base
 					   :joins => :voter, 
              :conditions => { :visitors => { :site_id => PHOTOCRACY_SITE_ID }},
 					   :group => "voter_id")
-	    visitor_id_hash = {}
 	    votes_by_visitor_id.each do |visitor|
-		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
-		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+		    visitors.push({:visitor_id => visitor.thevi, :count => visitor.the_votes_count})
 	    end
     elsif scope == "all_aoi_votes"
 
@@ -191,24 +188,21 @@ class QuestionsController < InheritedResources::Base
 					   :joins => :voter, 
              :conditions => { :visitors => { :site_id => ALLOURIDEAS_SITE_ID }},
 					   :group => "voter_id")
-	    visitor_id_hash = {}
 	    votes_by_visitor_id.each do |visitor|
-		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
-		    visitor_id_hash[visitor.thevi] = visitor.the_votes_count
+		    visitors.push({:visitor_id => visitor.thevi, :count => visitor.the_votes_count})
 	    end
     elsif scope == "creators"
 
 	    questions_created_by_visitor_id = Question.all(:select => 'visitors.identifier as thevi, count(*) as questions_count', 
 							   :joins => :creator, 
 							   :group => 'creator_id')
-	    visitor_id_hash = {}
 	    questions_created_by_visitor_id.each do |visitor|
-		    visitor_id_hash[visitor.thevi] = visitor.questions_count
+		    visitors.push({:visitor_id => visitor.thevi, :count => visitor.questions_count})
 	    end
 
     end
     respond_to do |format|
-    	format.xml{ render :xml => visitor_id_hash.to_xml and return}
+    	format.xml{ render :xml => visitors.to_xml and return}
     end
   end
 
