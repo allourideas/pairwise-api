@@ -294,8 +294,6 @@ class QuestionsController < InheritedResources::Base
   end
 
   def index
-    @questions = current_user.questions.scoped({})
-    @questions = @questions.created_by(params[:creator]) if params[:creator]
 
     counts = {}
     if params[:user_ideas]
@@ -312,6 +310,14 @@ class QuestionsController < InheritedResources::Base
       counts['recent-votes'] = Vote.count(:joins => :question,
                                          :conditions => ["votes.created_at > ?", params[:votes_since]],
                                          :group => "votes.question_id")
+    end
+
+    # only return questions with these recent votes
+    if counts['recent-votes'] && params[:all] != 'true'
+      @questions = current_user.questions.scoped({}).find(counts['recent-votes'].keys)
+    else
+      @questions = current_user.questions.scoped({})
+      @questions = @questions.created_by(params[:creator]) if params[:creator]
     end
 
     # There doesn't seem to be a good way to add procs to an array of
