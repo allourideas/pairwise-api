@@ -222,8 +222,8 @@ class QuestionsController < InheritedResources::Base
       mindate = Vote.minimum('date(created_at)', :conditions => {:question_id => @question.id})
       maxdate = Vote.maximum('date(created_at)', :conditions => {:question_id => @question.id})
 
-      data[mindate] = 0 if !data.include?(mindate)
-      data[maxdate] = 0 if !data.include?(maxdate)
+      data[mindate] = 0 if !data.include?(mindate) && !mindate.nil?
+      data[maxdate] = 0 if !data.include?(maxdate) && !maxdate.nil?
     elsif object_type == 'user_sessions'
 	    # little more work to do here:
       result = Vote.find(:all, :select => 'date(created_at) as date, voter_id, count(*) as vote_count', 
