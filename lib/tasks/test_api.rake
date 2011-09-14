@@ -659,7 +659,7 @@ namespace :test_api do
      total_votes = Vote.count
      total_skips = Skip.count
 
-     if (total_answered_appearances < total_votes+ total_skips)
+     if (total_answered_appearances != total_votes+ total_skips)
              difference = (total_votes+ total_skips) - total_answered_appearances 
        error_message += "Error! There are #{difference} votes or skips without associated appearance objects."
      end
