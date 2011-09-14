@@ -45,7 +45,9 @@ class Question < ActiveRecord::Base
   def create_choices_from_ideas
     if ideas && ideas.any?
       ideas.each do |idea|
-  choices.create!(:creator => self.creator, :active => true, :data => idea.squish.strip)
+        # all but last is considered part of batch create, so the
+        # last one will fire things that only need to be run at the end
+        choices.create!(:creator => self.creator, :active => true, :data => idea.squish.strip, :part_of_batch_create => idea != ideas.last, :question => self)
       end
     end
   end

@@ -26,17 +26,22 @@ class Choice < ActiveRecord::Base
 
   attr_protected :prompts_count, :wins, :losses, :score, :prompts_on_the_right_count, :prompts_on_the_left_count
   attr_readonly :question_id
+  attr_accessor :part_of_batch_create
 
   def update_questions_counter
-    self.question.update_attribute(:inactive_choices_count, self.question.choices.inactive.length)
+    unless part_of_batch_create
+      self.question.update_attribute(:inactive_choices_count, self.question.choices.inactive.length)
+    end
   end 
 
   # if changing a choice to active, we want to regenerate prompts
   def update_prompt_queue
-    if self.changed.include?('active') && self.active?
-      self.question.mark_prompt_queue_for_refill
-      if self.question.choices.size - self.question.inactive_choices_count > 1 && self.question.uses_catchup?
-        self.question.send_later :add_prompt_to_queue
+    unless part_of_batch_create
+      if self.changed.include?('active') && self.active?
+        self.question.mark_prompt_queue_for_refill
+        if self.question.choices.size - self.question.inactive_choices_count > 1 && self.question.uses_catchup?
+          self.question.send_later :add_prompt_to_queue
+        end
       end
     end
   end
