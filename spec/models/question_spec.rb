@@ -232,6 +232,22 @@ describe Question do
       @question.save
       @question.choices.count.should == 3
   end
+
+  it "should create 2000 ideas question in less than 20 seconds" do
+      start = Time.now
+      @question = Factory.build(:question)
+      @question.ideas = []
+      o = [('a'..'z'),('A'..'Z')].map{|i| i.to_a}.flatten
+      2000.times do
+        @question.ideas << (0..10).map{ o[rand(o.length)]  }.join
+      end
+
+      @question.save
+      @question.choices.count.should == 2000
+
+      endTime = Time.now
+      (endTime - start).should < 20
+  end
   context "catchup algorithm" do 
     before(:all) do
       @catchup_q = Factory.create(:aoi_question)
