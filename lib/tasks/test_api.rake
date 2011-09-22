@@ -339,6 +339,13 @@ namespace :test_api do
         successes << message
       end
 
+      message, error_occurred = answered_appearances_equals_votes_and_skips(question)
+      if error_occurred
+        errors << message
+      else
+        successes << message
+      end
+
 
       message, error_occurred = check_each_choice_appears_within_n_stddevs(question)
       if error_occurred
@@ -650,6 +657,26 @@ namespace :test_api do
   #end
         return error_message.blank? ? [success_message, false] : [error_message, true] 
    end
+
+  desc "Ensure that a question has: answered_appearances == votes + skips"
+  task :answered_appearances_equals_votes_and_skips => :environment do
+    question = Question.find(ENV["question_id"])
+    puts answered_appearances_equals_votes_and_skips(question).inspect
+  end
+
+  def answered_appearances_equals_votes_and_skips(question)
+    error_message = ""
+    success_message = "All vote and skip objects have an associated appearance object"
+    total_answered_appearances = Appearance.count(:conditions => ['answerable_id IS NOT NULL AND question_id = ?', question.id])
+    total_votes = question.votes.count
+    total_skips = question.skips.count
+    if (total_answered_appearances != total_votes + total_skips)
+      error_message += "Question #{question.id}: answered_appearances = #{total_answered_appearances}, votes = #{total_votes}, skips = #{total_skips}"
+    end
+      
+
+    return error_message.blank? ? [success_message, false] : [error_message, true] 
+  end
    
    def ensure_all_votes_and_skips_have_unique_appearance
      error_message = ""
