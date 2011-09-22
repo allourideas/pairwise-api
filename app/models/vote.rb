@@ -17,6 +17,7 @@ class Vote < ActiveRecord::Base
   named_scope :with_question, lambda { |*args| {:conditions => {:question_id => args.first }} }
   named_scope :with_voter_ids, lambda { |*args| {:conditions => {:voter_id=> args.first }} }
   named_scope :active, :include => :choice, :conditions => { 'choices.active' => true }
+  named_scope :active_loser, :include => :loser_choice, :conditions => { 'choices.active' => true }
 
   default_scope :conditions => "#{table_name}.valid_record = 1"
 

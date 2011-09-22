@@ -545,13 +545,14 @@ namespace :test_api do
     end
     return error_message.blank? ? [success_message, false] : [error_message, true] 
   end
+
   def check_each_choice_appears_within_n_stddevs(question)
     error_message =""
     success_message = "Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question " +
       "(Note: this applies only to seed choices (not user submitted) and choices currently marked active)"
 
     wins_by_choice_id = question.votes.active.count(:group => :choice_id)
-    losses_by_choice_id= question.votes.active.count(:conditions => "loser_choice_id IS NOT NULL", :group => :loser_choice_id)
+    losses_by_choice_id= question.votes.active_loser.count(:group => :loser_choice_id)
 
     #Rails returns an ordered hash, which doesn't allow for blocks to change merging logic.
     #A little hack to create a normal hash
@@ -579,6 +580,7 @@ namespace :test_api do
 
     return error_message.blank? ? [success_message, false] : [error_message, true] 
   end
+
   def check_each_choice_equally_likely_to_appear_left_or_right(question)
     error_message = ""
     success_message = "All choices have equal probability of appearing on left or right (within error params)"
