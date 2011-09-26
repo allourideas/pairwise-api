@@ -551,8 +551,8 @@ namespace :test_api do
     success_message = "Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question " +
       "(Note: this applies only to seed choices (not user submitted) and choices currently marked active)"
 
-    wins_by_choice_id = question.votes.active.count(:group => :choice_id)
-    losses_by_choice_id= question.votes.active_loser.count(:group => :loser_choice_id)
+    wins_by_choice_id = question.votes.active.count(:group => :choice_id, :conditions => ["creator_id = ?", question.creator_id])
+    losses_by_choice_id= question.votes.active_loser.count(:group => :loser_choice_id, :conditions => ["creator_id = ?", question.creator_id])
 
     #Rails returns an ordered hash, which doesn't allow for blocks to change merging logic.
     #A little hack to create a normal hash
