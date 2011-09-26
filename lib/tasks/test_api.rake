@@ -669,7 +669,13 @@ namespace :test_api do
   def answered_appearances_equals_votes_and_skips(question)
     error_message = ""
     success_message = "All vote and skip objects have an associated appearance object"
-    total_answered_appearances = Appearance.count(:conditions => ['answerable_id IS NOT NULL AND question_id = ?', question.id])
+    skip_appearances_count = Appearance.count(
+      :conditions => ["skips.valid_record = 1 and appearances.question_id = ? AND answerable_id IS NOT NULL AND answerable_type = 'Skip'", question.id],
+      :joins => "LEFT JOIN skips ON (skips.id = appearances.answerable_id)")
+    vote_appearances_count = Appearance.count(
+      :conditions => ["votes.valid_record = 1 and appearances.question_id = ? AND answerable_id IS NOT NULL and answerable_type = 'Vote'", question.id],
+      :joins => "LEFT JOIN votes ON (votes.id = appearances.answerable_id)")
+    total_answered_appearances = skip_appearances_count + vote_appearances_count
     total_votes = question.votes.count
     total_skips = question.skips.count
     if (total_answered_appearances != total_votes + total_skips)
