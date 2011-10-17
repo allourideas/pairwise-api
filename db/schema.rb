@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20110628160608) do
+ActiveRecord::Schema.define(:version => 20111017171903) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -25,6 +25,7 @@ ActiveRecord::Schema.define(:version => 20110628160608) do
     t.string   "validity_information"
   end
 
+  add_index "appearances", ["answerable_id", "answerable_type"], :name => "index_appearances_on_answerable_id_and_answerable_type"
   add_index "appearances", ["lookup"], :name => "index_appearances_on_lookup"
   add_index "appearances", ["prompt_id"], :name => "index_appearances_on_prompt_id"
   add_index "appearances", ["question_id", "voter_id"], :name => "index_appearances_on_question_id_voter_id"
