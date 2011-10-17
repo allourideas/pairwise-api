@@ -83,7 +83,7 @@ class Question < ActiveRecord::Base
         else
           record_prompt_cache_hit
         end
-        self.send_later :add_prompt_to_queue
+        self.delay.add_prompt_to_queue
         return next_prompt
     else
         #Standard choose prompt at random

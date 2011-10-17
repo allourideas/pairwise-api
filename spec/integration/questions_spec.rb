@@ -83,7 +83,7 @@ describe "Questions" do
       response.body.should have_tag("question", @questions.size)
       votes.each_value do |vs|
         count = vs.select{|v| v.created_at > date}.size
-        response.body.should have_tag"recent-votes", :text => count
+        response.body.should have_tag("recent-votes", :text => count)
       end
     end
 

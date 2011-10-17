@@ -1,5 +1,5 @@
 Factory.define :density do |density|
   density.question_id 
   density.value 
-  density.type { 'string' }
+  density.class { 'string' }
 end
