@@ -40,7 +40,7 @@ class Choice < ActiveRecord::Base
       if self.changed.include?('active') && self.active?
         self.question.mark_prompt_queue_for_refill
         if self.question.choices.size - self.question.inactive_choices_count > 1 && self.question.uses_catchup?
-          self.question.send_later :add_prompt_to_queue
+          self.question.delay.add_prompt_to_queue
         end
       end
     end
