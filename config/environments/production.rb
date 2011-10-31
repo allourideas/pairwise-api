@@ -24,3 +24,10 @@ config.gem "rubaidh-google_analytics",
 
 PHOTOCRACY_SITE_ID = 8
 ALLOURIDEAS_SITE_ID = 1
+
+# set constants containing sensitive information
+# such as passwords for sendgrid, etc.
+extra_conf = "/data/extra-conf/environment-variables.rb"
+if File.exists?(extra_conf)
+  require extra_conf
+end

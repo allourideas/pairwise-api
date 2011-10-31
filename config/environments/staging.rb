@@ -15,3 +15,10 @@ config.gem "rubaidh-google_analytics",
   :lib     => "rubaidh/google_analytics",
   :version => "1.1.4",
   :source  => "http://gems.github.com"
+
+# set constants containing sensitive information
+# such as passwords for sendgrid, etc.
+extra_conf = "/data/extra-conf/environment-variables.rb"
+if File.exists?(extra_conf)
+  require extra_conf
+end
