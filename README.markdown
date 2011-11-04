@@ -1,7 +1,7 @@
 Pairwise 2.0
 -------------------
 
-Pairwise web service 2.0.  This provides the API utilized by sites such as <http://www.allourideas.org/> and <http://www.photocracy.org/>.
+Pairwise web service 2.0.  This provides the API utilized by [photocracy.org](http://www.photocracy.org/) and [allourideas.org](http://www.allourideas.org/)
 
 Installing
 -------------------
