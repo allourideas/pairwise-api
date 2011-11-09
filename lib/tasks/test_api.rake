@@ -1,5 +1,41 @@
 namespace :test_api do
 
+  desc "Searches questions for orphaned votes (votes with no appearance) and marks them as invalid"
+  task :invalidate_orphaned_votes => :environment do
+    question_ids = ENV["question_ids"].split(/[\s,]+/)
+    question_ids.each do |question_id|
+      question = Question.find(question_id)
+
+      orphaned_votes = Vote.find(:all,
+          :select => "votes.id",
+          :joins  => "LEFT JOIN appearances ON (votes.id = appearances.answerable_id AND answerable_type <> 'Skip')",
+          :conditions => ["answerable_id IS NULL AND votes.valid_record = 1 AND votes.question_id = ?", question.id])
+      puts "Question ##{question.id} has #{orphaned_votes.count} orphaned votes"
+      orphaned_votes.each do |orphaned_vote_id|
+      	orphaned_vote = Vote.find(orphaned_vote_id.id)
+
+        # attempt to find sibling vote
+        # sibling vote is one that is valid has the same voter and prompt,
+        # is associated with an appearance, and created within 10 seconds
+        sibling_vote = nil
+        votes = Vote.find(:all, :conditions => {:voter_id => orphaned_vote.voter_id, :prompt_id => orphaned_vote.prompt_id})
+        votes.each do |vote|
+          next if vote.id == orphaned_vote.id
+          next if vote.created_at > orphaned_vote.created_at + 5.seconds
+          next if vote.created_at < orphaned_vote.created_at - 5.seconds
+          next if vote.appearance == nil
+          sibling_vote = vote
+          break
+        end
+        info = "Appearance XXXX already answered"
+        if sibling_vote
+          info = "Appearance #{sibling_vote.appearance.id} already answered"
+        end
+        orphaned_vote.update_attributes!(:valid_record => false, :validity_information => info)
+      end
+    end
+  end
+
   desc "Updates cached values for losses and wins for choices."
   task :update_cached_losses_wins => :environment do
     Question.all.each do |question|
