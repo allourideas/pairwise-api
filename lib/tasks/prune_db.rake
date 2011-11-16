@@ -2,7 +2,23 @@ namespace :prune_db do
 
   task :all => [:invalidate_votes_with_bad_response_times]
 
-  task(:invalidate_votes_with_bad_response_times => :environment) do
+  desc "Fixes a mis-match between a vote's prompt_id and its appearance's prompt_id. Sets the appearance prompt_id to match the vote's prompt_id"
+  task :fix_promptid_mismatch => :environment do
+    bad_records = Vote.connection.select_all "
+      SELECT
+        votes.prompt_id, appearances.id appearance_id,
+        appearances.prompt_id appearance_prompt_id
+      FROM votes LEFT JOIN appearances
+        ON (votes.id = appearances.answerable_id
+            AND appearances.answerable_type = 'Vote')
+      WHERE votes.prompt_id <> appearances.prompt_id"
+    bad_records.each do |record|
+      Appearance.update_all("prompt_id = #{record["prompt_id"]}", "id = #{record["appearance_id"]} AND prompt_id = #{record["appearance_prompt_id"]}")
+    end
+  end
+
+  desc "Invalidates votes with bad response times"
+  task :invalidate_votes_with_bad_response_times => :environment do
     badvotes = [] 
     #might want to optimize later to not start from the beginning each time
     STDOUT.sync = true
@@ -28,7 +44,7 @@ namespace :prune_db do
     end
   end
 
-  task(:associate_skips_with_appearances => :environment) do
+  task :associate_skips_with_appearances => :environment do
     skips_to_fix = Skip.find(:all, :conditions => {:appearance_id => nil})
     skips_to_fix.each do |skip|
       puts "Skip #{skip.id} : "
