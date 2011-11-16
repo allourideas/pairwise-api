@@ -18,7 +18,7 @@ namespace :test_api do
     error_message = bad_records.map do |record|
       "Vote ##{record["id"]} has a different prompt_id than its appearance."
     end
-    error_message.join "\n"
+    error_message = error_message.join "\n"
     return error_message.blank? ? [success_message, false] : [error_message, true]
   end
 
