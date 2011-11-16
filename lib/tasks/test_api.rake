@@ -3,6 +3,25 @@ namespace :test_api do
   desc "Run all API tests"
   task :all => [:question_vote_consistency,:generate_density_information]
 
+  desc "Ensure all appearance and votes have matching prompt_ids"
+  task :verify_appearance_vote_prompt_ids => :environment do
+    puts verify_appearance_vote_prompt_ids().inspect
+  end
+  def verify_appearance_vote_prompt_ids
+    bad_records = Vote.connection.select_all "
+      SELECT votes.id
+      FROM votes LEFT JOIN appearances
+        ON (votes.id = appearances.answerable_id
+            AND appearances.answerable_type = 'Vote')
+      WHERE votes.prompt_id <> appearances.prompt_id"
+    success_message = "Appearance and vote prompt_ids match"
+    error_message = bad_records.map do |record|
+      "Vote ##{record["id"]} has a different prompt_id than its appearance."
+    end
+    error_message.join "\n"
+    return error_message.blank? ? [success_message, false] : [error_message, true]
+  end
+
   desc "Ensure that all choices have 0 <= score <= 100"
   task :verify_range_of_choices_scores => :environment do
     puts verify_range_of_choices_scores().inspect
@@ -360,6 +379,12 @@ namespace :test_api do
       successes << message
     end
     message, error_occurred = verify_range_of_choices_scores
+    if error_occurred
+      errors << message
+    else
+      successes << message
+    end
+    message, error_occurred = verify_appearance_vote_prompt_ids
     if error_occurred
       errors << message
     else
