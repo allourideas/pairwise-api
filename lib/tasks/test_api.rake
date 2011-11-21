@@ -363,14 +363,6 @@ namespace :test_api do
 
     end
 
-    message, error_occurred = ensure_all_votes_and_skips_have_unique_appearance
-
-    if error_occurred
-      errors << message
-    else
-      successes << message
-    end
-
     message, error_occurred = response_time_tests  
 
     if error_occurred
@@ -669,22 +661,6 @@ namespace :test_api do
       error_message += "Question #{question.id}: answered_appearances = #{total_answered_appearances}, votes = #{total_votes}, skips = #{total_skips}"
     end
 
-
-    return error_message.blank? ? [success_message, false] : [error_message, true] 
-  end
-
-  def ensure_all_votes_and_skips_have_unique_appearance
-    error_message = ""
-    success_message = "All vote and skip objects have an associated appearance object"
-
-    total_answered_appearances = Appearance.count(:conditions => 'answerable_id IS NOT NULL')
-    total_votes = Vote.count
-    total_skips = Skip.count
-
-    if (total_answered_appearances != total_votes+ total_skips)
-      difference = (total_votes+ total_skips) - total_answered_appearances 
-      error_message += "Error! There are #{difference} votes or skips without associated appearance objects."
-    end
 
     return error_message.blank? ? [success_message, false] : [error_message, true] 
   end
