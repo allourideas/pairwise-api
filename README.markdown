@@ -7,6 +7,10 @@ Installing
 -------------------
 <https://github.com/allourideas/pairwise-api/wiki/Installing>
 
+API Documentation
+-------------------
+<https://github.com/allourideas/pairwise-api/wiki/API-Documentation>
+
 
 Ownership
 -------------------
