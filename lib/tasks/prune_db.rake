@@ -214,11 +214,9 @@ namespace :prune_db do
     Question.all.each do |question|
       question.choices.each do |choice|
         choice.reload
-        choice.prompts_on_the_left
-        choice.prompts_on_the_right
         Choice.update_counters choice.id,
-          :prompts_on_the_left_count => choice.prompts_on_the_left.count,
-          :prompts_on_the_right_count => choice.prompts_on_the_right.count
+          :prompts_on_the_left_count => choice.prompts_on_the_left.count - choice.prompts_on_the_left_count,
+          :prompts_on_the_right_count => choice.prompts_on_the_right.count - choice.prompts_on_the_right_count
       end
     end
   end
