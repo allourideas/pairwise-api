@@ -7,6 +7,7 @@ namespace :test_api do
   task :verify_appearance_vote_prompt_ids => :environment do
     puts verify_appearance_vote_prompt_ids().inspect
   end
+
   def verify_appearance_vote_prompt_ids
     bad_records = Vote.connection.select_all "
       SELECT votes.id
@@ -36,9 +37,23 @@ namespace :test_api do
     return error_message.blank? ? [success_message, false] : [error_message, true]
   end
 
+  desc "Ensure that cached prompt counts are valid for a choice"
+  task :verify_cached_prompt_counts, [:choice_id] => :environment do |t, args|
+    choice = Choice.find(args[:choice_id])
+    puts verify_cached_prompt_counts(choice).inspect
+  end
+
+  def verify_cached_prompt_counts(choice)
+    success_message = "Choice has accurate prompt cache count"
+    if choice.prompts_on_the_left.count != choice.prompts_on_the_left_count || choice.prompts_on_the_right.count != choice.prompts_on_the_right_count
+      error_message = "Choice #{choice.id} in Question ##{choice.question_id} has inaccurate prompt count cache"
+    end
+    return error_message.blank? ? [success_message, false] : [error_message, true]
+  end
+
   desc "Ensure that an idea: appearances on left + appearances on right >= (wins + losses + skips)"
-  task :verify_choice_appearances_and_votes => :environment do
-    choice = Choice.find(ENV["choice_id"])
+  task :verify_choice_appearances_and_votes, [:choice_id] => :environment do |t, args|
+    choice = Choice.find(args[:choice_id])
     puts verify_choice_appearances_and_votes(choice).inspect
   end
 
@@ -462,6 +477,11 @@ namespace :test_api do
         end
       end
 
+      message, error_occurred = verify_cached_prompt_counts(choice)
+      if error_occurred
+        error_message += message + "\n"
+      end
+
 
       if cached_score >= 50
         total_scores_gte_fifty +=1
@@ -642,8 +662,8 @@ namespace :test_api do
   end
 
   desc "Ensure that a question has: answered_appearances == votes + skips"
-  task :answered_appearances_equals_votes_and_skips => :environment do
-    question = Question.find(ENV["question_id"])
+  task :answered_appearances_equals_votes_and_skips, [:question_id] => :environment do |t, args|
+    question = Question.find(args[:question_id])
     puts answered_appearances_equals_votes_and_skips(question).inspect
   end
 
