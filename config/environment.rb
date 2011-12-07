@@ -55,7 +55,7 @@ Rails::Initializer.run do |config|
   config.gem 'redis',
     :version => '1.0.7'
   config.gem 'newrelic_rpm',
-    :version => '3.0.0'
+    :version => '3.3.0'
 
   config.gem 'sendgrid'
   config.gem 'json'
