@@ -11,6 +11,10 @@ API Documentation
 -------------------
 <https://github.com/allourideas/pairwise-api/wiki/API-Documentation>
 
+Getting Started Using the API
+-------------------
+
+<https://github.com/allourideas/pairwise-api/wiki/Getting-Started>
 
 Ownership
 -------------------
