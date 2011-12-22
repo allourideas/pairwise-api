@@ -32,6 +32,11 @@ class Visitor < ActiveRecord::Base
        end
     end
 
+    if options.delete(:force_invalid_vote)
+      options.merge!(:valid_record => false)
+      options.merge!(:validity_information => "API call forced invalid vote")
+    end
+
     associate_appearance = false
     if options[:appearance_lookup] 
        @appearance = prompt.appearances.find_by_lookup(options.delete(:appearance_lookup))
