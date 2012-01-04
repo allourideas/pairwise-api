@@ -211,7 +211,13 @@ namespace :prune_db do
 
   desc "Update cached values for prompts on left and right for choices."
   task :update_cached_prompts_on_left_right => :environment do
-    Question.all.each do |question|
+    question_ids = ENV["question_ids"].split(/[\s,]+/) if ENV["question_ids"]
+    if !question_ids.blank?
+      questions = Question.find(question_ids)
+    else
+      questions = Question.all
+    end
+    questions.each do |question|
       question.choices.each do |choice|
         choice.reload
         Choice.update_counters choice.id,
