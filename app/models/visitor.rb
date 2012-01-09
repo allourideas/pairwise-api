@@ -67,6 +67,11 @@ class Visitor < ActiveRecord::Base
       associate_appearance = true
     end
 
+    if options.delete(:force_invalid_vote)
+      options.merge!(:valid_record => false)
+      options.merge!(:validity_information => "API call forced invalid vote")
+    end
+
     options.merge!(:question_id => prompt.question_id, :prompt_id => prompt.id, :skipper_id => self.id)
     prompt_skip = skips.create!(options)
     if associate_appearance
