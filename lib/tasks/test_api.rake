@@ -40,8 +40,11 @@ namespace :test_api do
   namespace :choice do
     desc "Ensure that cached prompt counts are valid for a choice"
     task :verify_cached_prompt_counts, [:choice_id] => :environment do |t, args|
-      choice = Choice.find(args[:choice_id])
-      puts verify_cached_prompt_counts(choice).inspect
+      a = clean_up_args(args)
+      choices = Choice.find(a[:choice_id])
+      choices.each do |choice|
+        puts verify_cached_prompt_counts(choice).inspect
+      end
     end
 
     def verify_cached_prompt_counts(choice)
@@ -54,8 +57,11 @@ namespace :test_api do
 
     desc "Ensure that an idea: appearances on left + appearances on right >= (wins + losses + skips)"
     task :verify_choice_appearances_and_votes, [:choice_id] => :environment do |t, args|
-      choice = Choice.find(args[:choice_id])
-      puts verify_choice_appearances_and_votes(choice).inspect
+      a = clean_up_args(args)
+      choices = Choice.find(a[:choice_id])
+      choices.each do |choice|
+        puts verify_choice_appearances_and_votes(choice).inspect
+      end
     end
 
     def verify_choice_appearances_and_votes(choice)
