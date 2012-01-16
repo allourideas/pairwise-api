@@ -17,6 +17,223 @@ namespace :prune_db do
     end
   end
 
+  desc "Generate appearances for any votes that have no current appearance, should only need to be run once"
+  task(:generate_appearances_for_existing_votes => :environment) do 
+    votes = Vote.all
+
+    count = 0 
+    votes.each do |v|
+      if v.appearance.nil?
+        print "."
+        a = Appearance.create(:voter_id => v.voter_id, :site_id => v.site_id, :prompt_id => v.prompt_id, :question_id => v.question_id, :created_at => v.created_at, :updated_at => v.updated_at)
+        v.appearance = a
+        v.save
+
+        count += 1
+      end
+    end
+
+    print count
+  end
+
+  desc "Don't run unless you know what you are doing"
+  task(:generate_lots_of_votes => :environment) do
+    if Rails.env.production?
+      print "You probably don't want to run this in production as it will falsify a bunch of random votes"
+    end
+
+
+    current_user = User.first
+    1000.times do |n|
+      puts "#{n} votes completed" if n % 100 == 0
+      question = Question.find(214) # test question change as needed
+      @prompt = question.catchup_choose_prompt(1).first
+      @appearance = current_user.record_appearance(current_user.default_visitor, @prompt)
+
+      direction = (rand(2) == 0) ? "left" : "right"
+      current_user.record_vote(:prompt => @prompt, :direction => direction, :appearance_lookup => @appearance.lookup)
+    end
+
+  end
+
+  desc "Dump votes of a question by left vs right id"
+  task(:make_csv => :environment) do
+
+    q = Question.find(214)
+
+
+    the_prompts = q.prompts_hash_by_choice_ids
+
+    #hash_of_choice_ids_from_left_to_right_to_votes
+    the_hash = {}
+    q.choices.each do |l|
+      q.choices.each do |r|
+        next if l.id == r.id
+
+        if not the_hash.has_key?(l.id)
+          the_hash[l.id] = {}
+          the_hash[l.id][l.id] = 0
+        end
+
+        p = the_prompts["#{l.id}, #{r.id}"]
+        if p.nil?
+          the_hash[l.id][r.id] = 0
+        else
+          the_hash[l.id][r.id] = p.appearances.size
+        end
+      end
+    end
+
+    the_hash.sort.each do |xval, row|
+      rowarray = []
+      row.sort.each do |yval, cell|
+        rowarray << cell
+      end
+      puts rowarray.join(", ")
+    end
+  end
+
+  desc "Should only need to be run once"
+  task(:generate_all_possible_prompts => :environment) do
+    Question.find(:all).each do |q|
+      choices = q.choices
+      if q.prompts.size > choices.size**2 - choices.size
+        print "ERROR: #{q.id}\n"
+        next
+      elsif q.prompts.size == choices.size**2 - choices.size
+        print "#{q.id} has enough prompts, skipping...\n"
+        next
+      else
+        print "#{q.id} should add #{(choices.size ** 2 - choices.size) - q.prompts.size}\n"
+
+      end
+      created_timestring = q.created_at.to_s(:db)
+      updated_timestring = Time.now.to_s(:db) #isn't rails awesome?
+      promptscount=0
+      inserts = []
+      the_prompts = Prompt.find(:all, :select => 'id, left_choice_id, right_choice_id', :conditions => {:question_id => q.id})
+
+      the_prompts_hash = {}
+      the_prompts.each do |p|
+        the_prompts_hash["#{p.left_choice_id},#{p.right_choice_id}"] = 1
+      end
+
+      choices.each do |l|
+        choices.each do |r|
+          if l.id == r.id
+            next
+          else
+            #p = the_prompts.find{|o| o.left_choice_id == l.id && o.right_choice_id == r.id}
+            keystring = "#{l.id},#{r.id}"
+            p = the_prompts_hash[keystring]
+            if p.nil?
+              inserts.push("(NULL, #{q.id}, NULL, #{l.id}, '#{created_timestring}', '#{updated_timestring}', NULL, 0, #{r.id}, NULL, NULL)")
+              promptscount+=1
+            end
+
+          end
+
+        end
+      end
+
+      print "Added #{promptscount} to #{q.id}\n"
+      sql = "INSERT INTO `prompts` (`algorithm_id`, `question_id`, `voter_id`, `left_choice_id`, `created_at`, `updated_at`, `tracking`, `votes_count`, `right_choice_id`, `active`, `randomkey`) VALUES #{inserts.join(', ')}"
+      unless inserts.empty?
+        ActiveRecord::Base.connection.execute(sql)
+      end
+
+      Question.update_counters(q.id, :prompts_count => promptscount)
+
+
+    end
+
+
+
+  end
+
+
+
+  desc "Generate past density information"
+  task(:generate_past_densities => :environment) do 
+    #this is not elegant, but should only be run once, so quick and dirty wins
+
+    start_date = Vote.find(:all, :conditions => 'loser_choice_id IS NOT NULL', :order => :created_at, :limit =>  1).first.created_at.to_date
+    start_date.upto(Date.today) do |the_date|
+      questions = Question.find(:all, :conditions => ['created_at < ?', the_date])
+
+      print the_date.to_s
+      questions.each do |q|
+        puts q.id
+        relevant_choices = q.choices.find(:all, :conditions => ['created_at < ?', the_date])
+
+        seed_choices = 0
+
+        if relevant_choices == 0
+          next
+          #this question had not been created yet
+        end
+
+        relevant_choices.each do |c|
+          if !c.user_created
+            seed_choices+=1
+          end
+
+        end
+
+        nonseed_choices = relevant_choices.size - seed_choices
+
+        seed_seed_total = seed_choices **2 - seed_choices
+        nonseed_nonseed_total = nonseed_choices **2 - nonseed_choices
+        seed_nonseed_total = seed_choices * nonseed_choices
+        nonseed_seed_total = seed_choices * nonseed_choices
+
+        seed_seed_sum = 0
+        seed_nonseed_sum= 0
+        nonseed_seed_sum= 0
+        nonseed_nonseed_sum= 0
+
+        q.appearances.find_each(:conditions => ['prompt_id IS NOT NULL AND created_at < ?', the_date]) do |a|
+
+          p = a.prompt
+          if p.left_choice.user_created == false && p.right_choice.user_created == false
+            seed_seed_sum += 1
+          elsif p.left_choice.user_created == false && p.right_choice.user_created == true
+            seed_nonseed_sum += 1
+          elsif p.left_choice.user_created == true && p.right_choice.user_created == false
+            nonseed_seed_sum += 1
+          elsif p.left_choice.user_created == true && p.right_choice.user_created == true
+            nonseed_nonseed_sum += 1
+          end
+        end
+
+        densities = {}
+        densities[:seed_seed] = seed_seed_sum.to_f / seed_seed_total.to_f
+        densities[:seed_nonseed] = seed_nonseed_sum.to_f / seed_nonseed_total.to_f
+        densities[:nonseed_seed] = nonseed_seed_sum.to_f / nonseed_seed_total.to_f
+        densities[:nonseed_nonseed] = nonseed_nonseed_sum.to_f / nonseed_nonseed_total.to_f
+
+        densities.each do |type, average|
+          d = Density.new
+          d.created_at = the_date
+          d.question_id = q.id
+          d.prompt_type = type.to_s
+          d.value = average.nan? ? nil : average
+          d.save!
+        end
+
+        puts "Seed_seed sum: #{seed_seed_sum}, seed_seed total num: #{seed_seed_total}"
+        puts "Seed_nonseed sum: #{seed_nonseed_sum}, seed_nonseed total num: #{seed_nonseed_total}"
+        puts "Nonseed_seed sum: #{nonseed_seed_sum}, nonseed_seed total num: #{nonseed_seed_total}"
+        puts "Nonseed_nonseed sum: #{nonseed_nonseed_sum}, nonseed_nonseed total num: #{nonseed_nonseed_total}"
+
+
+      end
+
+    end
+
+  end
+
+
   desc "Invalidates votes with bad response times"
   task :invalidate_votes_with_bad_response_times => :environment do
     badvotes = [] 
