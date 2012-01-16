@@ -93,43 +93,13 @@ namespace :test_api do
         successes << message
       end
 
-      message, error_occurred = answered_appearances_equals_votes_and_skips(question)
-      if error_occurred
-        errors << message
-      else
-        successes << message
-      end
-
-
-      message, error_occurred = check_each_choice_appears_within_n_stddevs(question)
-      if error_occurred
-        errors << message
-      else
-        successes << message
-      end
-
-      message, error_occurred = check_each_choice_equally_likely_to_appear_left_or_right(question)
-      if error_occurred
-        errors << message
-      else
-        successes << message
-      end
-
-
-
-      message, error_occurred = check_object_counter_cache_values_match_actual_values(question)
-      if error_occurred
-        errors << message
-      else
-        successes << message
-      end
-
-
-      message, error_occurred = check_prompt_cache_hit_rate(question)
-      if error_occurred
-        errors << message
-      else
-        successes << message
+      @question_tasks.each do |taskname, description|
+        message, error_occurred = send(taskname, question)
+        if error_occurred
+          errors << message
+        else
+          successes << message
+        end
       end
 
     end
@@ -301,10 +271,10 @@ namespace :test_api do
   end
 
 
-  namespace :question do
 
+  namespace :question do
     # use this to dynamically create rake task for each question test
-    question_tasks = {
+    @question_tasks = {
       :answered_appearances_equals_votes_and_skips => "Ensure that a question has: answered_appearances == votes + skips",
       :check_each_choice_appears_within_n_stddevs => "Ensure each choice appears within 6 standard deviations",
       :check_each_choice_equally_likely_to_appear_left_or_right => "Ensure each choice is equally likely to appear on left or right",
@@ -313,7 +283,7 @@ namespace :test_api do
     }
 
     # dynamically create tasks for each question task
-    question_tasks.each do |taskname, description|
+    @question_tasks.each do |taskname, description|
       desc description
       task taskname, [:question_id] => :environment do |t, args|
         a = cleanup_args(args)
