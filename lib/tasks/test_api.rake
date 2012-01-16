@@ -125,14 +125,11 @@ namespace :test_api do
       end
 
 
-      #catchup specific 
-      if question.uses_catchup?
-        message, error_occurred = check_prompt_cache_hit_rate(question)
-        if error_occurred
-          errors << message
-        else
-          successes << message
-        end
+      message, error_occurred = check_prompt_cache_hit_rate(question)
+      if error_occurred
+        errors << message
+      else
+        successes << message
       end
 
     end
@@ -303,155 +300,172 @@ namespace :test_api do
     return error_message.blank? ? [success_message, false] : [error_message, true] 
   end
 
-  def check_each_choice_appears_within_n_stddevs(question)
-    error_message =""
-    success_message = "Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question " +
-      "(Note: this applies only to seed choices (not user submitted) and choices currently marked active)"
 
-    wins_by_choice_id = question.votes.active.count(:group => :choice_id, :conditions => ["creator_id = ?", question.creator_id])
-    losses_by_choice_id= question.votes.active_loser.count(:group => :loser_choice_id, :conditions => ["creator_id = ?", question.creator_id])
+  namespace :question do
 
-    #Rails returns an ordered hash, which doesn't allow for blocks to change merging logic.
-    #A little hack to create a normal hash
-    wins_hash = {}
-    wins_hash.merge!(wins_by_choice_id)
-    losses_hash = {}
-    losses_hash.merge!(losses_by_choice_id)
+    # use this to dynamically create rake task for each question test
+    question_tasks = {
+      :answered_appearances_equals_votes_and_skips => "Ensure that a question has: answered_appearances == votes + skips",
+      :check_each_choice_appears_within_n_stddevs => "Ensure each choice appears within 6 standard deviations",
+      :check_each_choice_equally_likely_to_appear_left_or_right => "Ensure each choice is equally likely to appear on left or right",
+      :check_prompt_cache_hit_rate => "Check prompt cache hit rate",
+      :check_object_counter_cache_values_match_actual_values => "Check that object counter cache values match actual values"
+    }
 
-
-
-    appearances_by_choice_id = wins_hash.merge(losses_hash) do |key, oldval, newval| oldval + newval end
-
-    sum = total_appearances = appearances_by_choice_id.values.inject(0) {|sum, x| sum +=x}
-    mean = average_appearances = total_appearances.to_f / appearances_by_choice_id.size.to_f
-
-    if sum > 0:
-      stddev = Math.sqrt( appearances_by_choice_id.values.inject(0) { |sum, e| sum + (e - mean) ** 2 } / appearances_by_choice_id.size.to_f )
-
-      # this choice appears to have been deactivated then reactivated after
-      # a period of voting
-      ignore_choices = [133189]
-      appearances_by_choice_id.each do |choice_id, n_i| 
-        if ((n_i < (mean - 6*stddev)) || (n_i > mean + 6 *stddev)) && !ignore_choices.include?(choice_id) && Choice.find(choice_id).active?
-          error_message += "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question\n"
+    # dynamically create tasks for each question task
+    question_tasks.each do |taskname, description|
+      desc description
+      task taskname, [:question_id] => :environment do |t, args|
+        a = cleanup_args(args)
+        questions = Question.find(a[:question_id])
+        questions.each do |question|
+          # call task
+          puts send(taskname, question).inspect
         end
       end
     end
 
-    return error_message.blank? ? [success_message, false] : [error_message, true] 
-  end
-
-  def check_each_choice_equally_likely_to_appear_left_or_right(question)
-    error_message = ""
-    success_message = "All choices have equal probability of appearing on left or right (within error params)"
-    question.choices.each do |c|
-      left_prompts_ids = c.prompts_on_the_left.ids_only
-      right_prompts_ids = c.prompts_on_the_right.ids_only
-
-      left_appearances = question.appearances.count(:conditions => {:prompt_id => left_prompts_ids})
-      right_appearances = question.appearances.count(:conditions => {:prompt_id => right_prompts_ids})
-
-      n = left_appearances + right_appearances
-
-      if n == 0
-        next
+    def answered_appearances_equals_votes_and_skips(question)
+      error_message = ""
+      success_message = "All vote and skip objects have an associated appearance object"
+      skip_appearances_count = Appearance.count(
+        :conditions => ["skips.valid_record = 1 and appearances.question_id = ? AND answerable_id IS NOT NULL AND answerable_type = 'Skip'", question.id],
+        :joins => "LEFT JOIN skips ON (skips.id = appearances.answerable_id)")
+      vote_appearances_count = Appearance.count(
+        :conditions => ["votes.valid_record = 1 and appearances.question_id = ? AND answerable_id IS NOT NULL and answerable_type = 'Vote'", question.id],
+        :joins => "LEFT JOIN votes ON (votes.id = appearances.answerable_id)")
+      total_answered_appearances = skip_appearances_count + vote_appearances_count
+      total_votes = question.votes.count
+      total_skips = question.skips.count
+      if (total_answered_appearances != total_votes + total_skips)
+        error_message += "Question #{question.id}: answered_appearances = #{total_answered_appearances}, votes = #{total_votes}, skips = #{total_skips}"
       end
-      est_p = right_appearances.to_f / n.to_f
-      z = (est_p - 0.5).abs / Math.sqrt((0.5 * 0.5) / n.to_f)
 
-      if z > 6 
-        error_message += "Error: Choice ID #{c.id} seems to favor one side: Left Appearances #{left_appearances}, Right Appearances: #{right_appearances}, z = #{z}\n"
+
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
+    end
+
+    def check_each_choice_appears_within_n_stddevs(question)
+      error_message =""
+      success_message = "Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question " +
+        "(Note: this applies only to seed choices (not user submitted) and choices currently marked active)"
+
+      wins_by_choice_id = question.votes.active.count(:group => :choice_id, :conditions => ["creator_id = ?", question.creator_id])
+      losses_by_choice_id= question.votes.active_loser.count(:group => :loser_choice_id, :conditions => ["creator_id = ?", question.creator_id])
+
+      #Rails returns an ordered hash, which doesn't allow for blocks to change merging logic.
+      #A little hack to create a normal hash
+      wins_hash = {}
+      wins_hash.merge!(wins_by_choice_id)
+      losses_hash = {}
+      losses_hash.merge!(losses_by_choice_id)
+
+
+
+      appearances_by_choice_id = wins_hash.merge(losses_hash) do |key, oldval, newval| oldval + newval end
+
+      sum = total_appearances = appearances_by_choice_id.values.inject(0) {|sum, x| sum +=x}
+      mean = average_appearances = total_appearances.to_f / appearances_by_choice_id.size.to_f
+
+      if sum > 0:
+        stddev = Math.sqrt( appearances_by_choice_id.values.inject(0) { |sum, e| sum + (e - mean) ** 2 } / appearances_by_choice_id.size.to_f )
+
+        # this choice appears to have been deactivated then reactivated after
+        # a period of voting
+        ignore_choices = [133189]
+        appearances_by_choice_id.each do |choice_id, n_i| 
+          if ((n_i < (mean - 6*stddev)) || (n_i > mean + 6 *stddev)) && !ignore_choices.include?(choice_id) && Choice.find(choice_id).active?
+            error_message += "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question\n"
+          end
+        end
       end
-    end
-    return error_message.blank? ? [success_message, false] : [error_message, true] 
-  end
-  def check_prompt_cache_hit_rate(question)
-    error_message = ""
-    success_message = "At least 90% of prompts on catchup algorithm questions were served from cache\n" 
 
-    misses = question.get_prompt_cache_misses(Date.yesterday).to_i
-    hits = question.get_prompt_cache_hits(Date.yesterday).to_i
-
-    question.expire_prompt_cache_tracking_keys(Date.yesterday)
-
-    yesterday_appearances = question.appearances.count(:conditions => ['date(created_at) = ?', Date.yesterday])
-
-    if misses + hits != yesterday_appearances
-      error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}, Hits: #{hits}, Misses: #{misses}\n"
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
 
-    if yesterday_appearances > 5 # this test isn't worthwhile for small numbers of appearances
-      miss_rate = misses.to_f / yesterday_appearances.to_f
-      if miss_rate > 0.1
-        error_message += "Warning! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}, total appearances yesterday: #{yesterday_appearances}\n"
+    def check_each_choice_equally_likely_to_appear_left_or_right(question)
+      error_message = ""
+      success_message = "All choices have equal probability of appearing on left or right (within error params)"
+      question.choices.each do |c|
+        left_prompts_ids = c.prompts_on_the_left.ids_only
+        right_prompts_ids = c.prompts_on_the_right.ids_only
+
+        left_appearances = question.appearances.count(:conditions => {:prompt_id => left_prompts_ids})
+        right_appearances = question.appearances.count(:conditions => {:prompt_id => right_prompts_ids})
+
+        n = left_appearances + right_appearances
+
+        if n == 0
+          next
+        end
+        est_p = right_appearances.to_f / n.to_f
+        z = (est_p - 0.5).abs / Math.sqrt((0.5 * 0.5) / n.to_f)
+
+        if z > 6 
+          error_message += "Error: Choice ID #{c.id} seems to favor one side: Left Appearances #{left_appearances}, Right Appearances: #{right_appearances}, z = #{z}\n"
+        end
       end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
-    return error_message.blank? ? [success_message, false] : [error_message, true] 
-  end
+    def check_prompt_cache_hit_rate(question)
+      error_message = ""
+      success_message = "At least 90% of prompts on catchup algorithm questions were served from cache\n" 
+      return [success_message, false] unless question.uses_catchup?
 
-  def check_object_counter_cache_values_match_actual_values(question)
-    error_message = ""
-    success_message = "All cached object values match actual values within database"
-    # Checks that counter_cache is working as expected
-    cached_prompts_size = question.prompts.size
-    actual_prompts_size = question.prompts.count
+      misses = question.get_prompt_cache_misses(Date.yesterday).to_i
+      hits = question.get_prompt_cache_hits(Date.yesterday).to_i
 
-    if cached_prompts_size != actual_prompts_size
-      error_message += "Error! Question #{question.id} has an inconsistent # of prompts! cached#: #{cached_prompts_size}, actual#: #{actual_prompts_size}\n"
-    end
+      question.expire_prompt_cache_tracking_keys(Date.yesterday)
 
-    cached_votes_size = question.votes.size
-    actual_votes_size = question.votes.count
+      yesterday_appearances = question.appearances.count(:conditions => ['date(created_at) = ?', Date.yesterday])
 
-    if cached_votes_size != actual_votes_size
-      error_message += "Error! Question #{question.id} has an inconsistent # of votes! cached#: #{cached_votes_size}, actual#: #{actual_votes_size}\n"
-    end
-
-    cached_choices_size = question.choices.size
-    actual_choices_size = question.choices.count
-
-    if cached_choices_size != actual_choices_size
-      error_message+= "Error! Question #{question.id} has an inconsistent # of choices! cached#: #{cached_choices_size}, actual#: #{actual_choices_size}\n"
-    end
-
-    #if cached_prompts_size != question.choices.size **2 - question.choices.size 
-    # error_message += "Error! Question #{question.id} has an incorrect number of prompts! Expected #{question.choices.size **2 - question.choices.size}, Actual: #{cached_prompts_size}\n"
-    #end
-    return error_message.blank? ? [success_message, false] : [error_message, true] 
-  end
-
-  namespace :question do
-
-    desc "Ensure that a question has: answered_appearances == votes + skips"
-    task :answered_appearances_equals_votes_and_skips, [:question_id] => :environment do |t, args|
-      a = cleanup_args(args)
-      questions = Question.find(a[:question_id])
-      questions.each do |question|
-        puts answered_appearances_equals_votes_and_skips(question).inspect
+      if misses + hits != yesterday_appearances
+        error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}, Hits: #{hits}, Misses: #{misses}\n"
       end
+
+      if yesterday_appearances > 5 # this test isn't worthwhile for small numbers of appearances
+        miss_rate = misses.to_f / yesterday_appearances.to_f
+        if miss_rate > 0.1
+          error_message += "Warning! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}, total appearances yesterday: #{yesterday_appearances}\n"
+        end
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
 
-  end
+    def check_object_counter_cache_values_match_actual_values(question)
+      error_message = ""
+      success_message = "All cached object values match actual values within database"
+      # Checks that counter_cache is working as expected
+      cached_prompts_size = question.prompts.size
+      actual_prompts_size = question.prompts.count
 
-  def answered_appearances_equals_votes_and_skips(question)
-    error_message = ""
-    success_message = "All vote and skip objects have an associated appearance object"
-    skip_appearances_count = Appearance.count(
-      :conditions => ["skips.valid_record = 1 and appearances.question_id = ? AND answerable_id IS NOT NULL AND answerable_type = 'Skip'", question.id],
-      :joins => "LEFT JOIN skips ON (skips.id = appearances.answerable_id)")
-    vote_appearances_count = Appearance.count(
-      :conditions => ["votes.valid_record = 1 and appearances.question_id = ? AND answerable_id IS NOT NULL and answerable_type = 'Vote'", question.id],
-      :joins => "LEFT JOIN votes ON (votes.id = appearances.answerable_id)")
-    total_answered_appearances = skip_appearances_count + vote_appearances_count
-    total_votes = question.votes.count
-    total_skips = question.skips.count
-    if (total_answered_appearances != total_votes + total_skips)
-      error_message += "Question #{question.id}: answered_appearances = #{total_answered_appearances}, votes = #{total_votes}, skips = #{total_skips}"
+      if cached_prompts_size != actual_prompts_size
+        error_message += "Error! Question #{question.id} has an inconsistent # of prompts! cached#: #{cached_prompts_size}, actual#: #{actual_prompts_size}\n"
+      end
+
+      cached_votes_size = question.votes.size
+      actual_votes_size = question.votes.count
+
+      if cached_votes_size != actual_votes_size
+        error_message += "Error! Question #{question.id} has an inconsistent # of votes! cached#: #{cached_votes_size}, actual#: #{actual_votes_size}\n"
+      end
+
+      cached_choices_size = question.choices.size
+      actual_choices_size = question.choices.count
+
+      if cached_choices_size != actual_choices_size
+        error_message+= "Error! Question #{question.id} has an inconsistent # of choices! cached#: #{cached_choices_size}, actual#: #{actual_choices_size}\n"
+      end
+
+      #if cached_prompts_size != question.choices.size **2 - question.choices.size 
+      # error_message += "Error! Question #{question.id} has an incorrect number of prompts! Expected #{question.choices.size **2 - question.choices.size}, Actual: #{cached_prompts_size}\n"
+      #end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
-
-
-    return error_message.blank? ? [success_message, false] : [error_message, true] 
   end
+
+  # END OF QUESTION NAMESPACE
+
 
   def response_time_tests
     error_message = ""
