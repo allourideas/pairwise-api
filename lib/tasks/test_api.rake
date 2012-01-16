@@ -3,40 +3,6 @@ namespace :test_api do
   desc "Run all API tests"
   task :all => [:question_vote_consistency]
 
-  desc "Ensure all appearance and votes have matching prompt_ids"
-  task :verify_appearance_vote_prompt_ids => :environment do
-    puts verify_appearance_vote_prompt_ids().inspect
-  end
-
-  def verify_appearance_vote_prompt_ids
-    bad_records = Vote.connection.select_all "
-      SELECT votes.id
-      FROM votes LEFT JOIN appearances
-        ON (votes.id = appearances.answerable_id
-            AND appearances.answerable_type = 'Vote')
-      WHERE votes.prompt_id <> appearances.prompt_id"
-    success_message = "Appearance and vote prompt_ids match"
-    error_message = bad_records.map do |record|
-      "Vote ##{record["id"]} has a different prompt_id than its appearance."
-    end
-    error_message = error_message.join "\n"
-    return error_message.blank? ? [success_message, false] : [error_message, true]
-  end
-
-  desc "Ensure that all choices have 0 <= score <= 100"
-  task :verify_range_of_choices_scores => :environment do
-    puts verify_range_of_choices_scores().inspect
-  end
-
-  def verify_range_of_choices_scores
-    bad_choices_count = Choice.count(:conditions => 'score < 0 OR score > 100')
-    success_message = "All choices have a score within 0-100"
-    if bad_choices_count > 0
-      error_message = "Some choices have a score less than 0 or greater than 100"
-    end
-    return error_message.blank? ? [success_message, false] : [error_message, true]
-  end
-
   namespace :choice do
     desc "Ensure that cached prompt counts are valid for a choice"
     task :verify_cached_prompt_counts, [:choice_id] => :environment do |t, args|
@@ -104,24 +70,13 @@ namespace :test_api do
 
     end
 
-    message, error_occurred = response_time_tests  
-
-    if error_occurred
-      errors << message
-    else
-      successes << message
-    end
-    message, error_occurred = verify_range_of_choices_scores
-    if error_occurred
-      errors << message
-    else
-      successes << message
-    end
-    message, error_occurred = verify_appearance_vote_prompt_ids
-    if error_occurred
-      errors << message
-    else
-      successes << message
+    @global_tasks.each do |taskname, description|
+      message, error_occurred = send(taskname)
+      if error_occurred
+        errors << message
+      else
+        successes << message
+      end
     end
 
     email_text = "Conducted the following tests on API data and found the following results\n" + "For each of the #{questions.length} questions in the database: \n"
@@ -436,44 +391,90 @@ namespace :test_api do
 
   # END OF QUESTION NAMESPACE
 
+  namespace :global do
+    @global_tasks = {
+      :response_time_tests => "Verify all vote objects have accurate response time",
+      :verify_appearance_vote_prompt_ids => "Ensure all appearance and votes have matching prompt_ids",
+      :verify_range_of_choices_scores => "Ensure that all choices have 0 <= score <= 100"
+    }
 
-  def response_time_tests
-    error_message = ""
-    success_message = "All Vote objects have an client response time < calculated server roundtrip time\n" 
-
-    recording_client_time_start_date = Vote.find(:all, :conditions => 'time_viewed IS NOT NULL', :order => 'created_at', :limit => 1).first.created_at
-
-    Vote.find_each(:batch_size => 1000, :include => :appearance) do |v|
-
-      next if v.nil? || v.appearance.nil?
-      # Subtracting DateTime objects results in the difference in days
-      server_response_time = v.created_at.to_f - v.appearance.created_at.to_f
-      if server_response_time < 0
-        the_error_msg = "Error! Vote #{v.id} was created before the appearance associated with it: Appearance id: #{v.appearance.id}, Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}\n"
-
-        error_message += the_error_msg
-        print "Error!" + the_error_msg
+    # dynamically create tasks for each global task
+    @global_tasks.each do |taskname, description|
+      desc description
+      task taskname => :environment do
+        # call task
+        puts send(taskname).inspect
       end
+    end
+  
+    def verify_appearance_vote_prompt_ids
+      bad_records = Vote.connection.select_all "
+        SELECT votes.id
+        FROM votes LEFT JOIN appearances
+          ON (votes.id = appearances.answerable_id
+              AND appearances.answerable_type = 'Vote')
+        WHERE votes.prompt_id <> appearances.prompt_id"
+      success_message = "Appearance and vote prompt_ids match"
+      error_message = bad_records.map do |record|
+        "Vote ##{record["id"]} has a different prompt_id than its appearance."
+      end
+      error_message = error_message.join "\n"
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
+  
+    desc "Ensure that all choices have 0 <= score <= 100"
+    task :verify_range_of_choices_scores => :environment do
+      puts verify_range_of_choices_scores().inspect
+    end
+  
+    def verify_range_of_choices_scores
+      bad_choices_count = Choice.count(:conditions => 'score < 0 OR score > 100')
+      success_message = "All choices have a score within 0-100"
+      if bad_choices_count > 0
+        error_message = "Some choices have a score less than 0 or greater than 100"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
+    def response_time_tests
+      error_message = ""
+      success_message = "All Vote objects have an client response time < calculated server roundtrip time\n" 
 
-      if v.time_viewed && v.time_viewed/1000 > server_response_time 
-        the_error_msg = "Warning! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Server roundtrip time is: #{v.created_at.to_f - v.appearance.created_at.to_f} seconds, but client side response time is: #{v.time_viewed.to_f / 1000.0} seconds\n"
+      recording_client_time_start_date = Vote.find(:all, :conditions => 'time_viewed IS NOT NULL', :order => 'created_at', :limit => 1).first.created_at
 
-        error_message += the_error_msg
-        print the_error_msg
+      Vote.find_each(:batch_size => 1000, :include => :appearance) do |v|
 
-      elsif v.time_viewed.nil?
-        if v.created_at > recording_client_time_start_date && v.missing_response_time_exp != 'invalid'
-          the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, does not have a client response, even though it should! Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}, Client side response time: #{v.time_viewed}\n"
+        next if v.nil? || v.appearance.nil?
+        # Subtracting DateTime objects results in the difference in days
+        server_response_time = v.created_at.to_f - v.appearance.created_at.to_f
+        if server_response_time < 0
+          the_error_msg = "Error! Vote #{v.id} was created before the appearance associated with it: Appearance id: #{v.appearance.id}, Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}\n"
+
+          error_message += the_error_msg
+          print "Error!" + the_error_msg
+        end
+
+        if v.time_viewed && v.time_viewed/1000 > server_response_time 
+          the_error_msg = "Warning! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Server roundtrip time is: #{v.created_at.to_f - v.appearance.created_at.to_f} seconds, but client side response time is: #{v.time_viewed.to_f / 1000.0} seconds\n"
+
           error_message += the_error_msg
           print the_error_msg
+
+        elsif v.time_viewed.nil?
+          if v.created_at > recording_client_time_start_date && v.missing_response_time_exp != 'invalid'
+            the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, does not have a client response, even though it should! Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}, Client side response time: #{v.time_viewed}\n"
+            error_message += the_error_msg
+            print the_error_msg
+          end
+
         end
 
       end
 
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
-
-    return error_message.blank? ? [success_message, false] : [error_message, true] 
   end
+  # END OF GLOBAL NAMESPACE
+
 end
 
 def cleanup_args(args)
