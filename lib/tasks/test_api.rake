@@ -1,7 +1,7 @@
 namespace :test_api do
 
   desc "Run all API tests"
-  task :all => [:question_vote_consistency,:generate_density_information]
+  task :all => [:question_vote_consistency]
 
   desc "Ensure all appearance and votes have matching prompt_ids"
   task :verify_appearance_vote_prompt_ids => :environment do
@@ -37,66 +37,36 @@ namespace :test_api do
     return error_message.blank? ? [success_message, false] : [error_message, true]
   end
 
-  desc "Ensure that cached prompt counts are valid for a choice"
-  task :verify_cached_prompt_counts, [:choice_id] => :environment do |t, args|
-    choice = Choice.find(args[:choice_id])
-    puts verify_cached_prompt_counts(choice).inspect
-  end
-
-  def verify_cached_prompt_counts(choice)
-    success_message = "Choice has accurate prompt cache count"
-    if choice.prompts_on_the_left.count != choice.prompts_on_the_left_count || choice.prompts_on_the_right.count != choice.prompts_on_the_right_count
-      error_message = "Choice #{choice.id} in Question ##{choice.question_id} has inaccurate prompt count cache"
-    end
-    return error_message.blank? ? [success_message, false] : [error_message, true]
-  end
-
-  desc "Ensure that an idea: appearances on left + appearances on right >= (wins + losses + skips)"
-  task :verify_choice_appearances_and_votes, [:choice_id] => :environment do |t, args|
-    choice = Choice.find(args[:choice_id])
-    puts verify_choice_appearances_and_votes(choice).inspect
-  end
-
-  def verify_choice_appearances_and_votes(choice)
-    success_message = "Choice has more appearances than votes and skips"
-    all_appearances  = choice.appearances_on_the_left.count + choice.appearances_on_the_right.count
-    skips = choice.skips_on_the_left.count + choice.skips_on_the_right.count
-
-    if all_appearances < choice.wins + choice.losses + skips
-      error_message = "Choice #{choice.id} in Question ##{choice.question_id} has fewer appearances than wins + losses + skips"
-    end
-    return error_message.blank? ? [success_message, false] : [error_message, true]
-  end
-
-
-  desc "Generate density information for each question - should be run nightly"
-  task(:generate_density_information => :environment) do
-
-    # calculating densities is expensive, so only do it for questions with new data
-    question_ids = Vote.count(:conditions => ['date(created_at) = ?', Date.yesterday], :group => 'question_id').keys()
-
-    Question.find(:all, :conditions => {:id => question_ids}).each do |q|
-      q.save_densities!
+  namespace :choice do
+    desc "Ensure that cached prompt counts are valid for a choice"
+    task :verify_cached_prompt_counts, [:choice_id] => :environment do |t, args|
+      choice = Choice.find(args[:choice_id])
+      puts verify_cached_prompt_counts(choice).inspect
     end
 
-    # we can just copy the previous night's data for remaining questions
-
-    Question.find(:all, :conditions => ['id NOT IN (?)', question_ids]).each do |q|
-      densities = q.densities.find(:all, :conditions => ['date(created_at) = ?', Date.yesterday])
-
-
-      densities.each do |d|
-        new_d = d.clone
-        new_d.created_at = new_d.updated_at = Time.now
-        new_d.save!
+    def verify_cached_prompt_counts(choice)
+      success_message = "Choice has accurate prompt cache count"
+      if choice.prompts_on_the_left.count != choice.prompts_on_the_left_count || choice.prompts_on_the_right.count != choice.prompts_on_the_right_count
+        error_message = "Choice #{choice.id} in Question ##{choice.question_id} has inaccurate prompt count cache"
       end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
 
-      if densities.blank?
-        #fallback in case there wasn't a successful run yesterday
-        q.save_densities!
+    desc "Ensure that an idea: appearances on left + appearances on right >= (wins + losses + skips)"
+    task :verify_choice_appearances_and_votes, [:choice_id] => :environment do |t, args|
+      choice = Choice.find(args[:choice_id])
+      puts verify_choice_appearances_and_votes(choice).inspect
+    end
 
+    def verify_choice_appearances_and_votes(choice)
+      success_message = "Choice has more appearances than votes and skips"
+      all_appearances  = choice.appearances_on_the_left.count + choice.appearances_on_the_right.count
+      skips = choice.skips_on_the_left.count + choice.skips_on_the_right.count
+
+      if all_appearances < choice.wins + choice.losses + skips
+        error_message = "Choice #{choice.id} in Question ##{choice.question_id} has fewer appearances than wins + losses + skips"
       end
-
+      return error_message.blank? ? [success_message, false] : [error_message, true]
     end
   end
 
@@ -444,13 +414,17 @@ namespace :test_api do
     return error_message.blank? ? [success_message, false] : [error_message, true] 
   end
 
-  desc "Ensure that a question has: answered_appearances == votes + skips"
-  task :answered_appearances_equals_votes_and_skips, [:question_id] => :environment do |t, args|
-    a = cleanup_args(args)
-    questions = Question.find(a[:question_id])
-    questions.each do |question|
-      puts answered_appearances_equals_votes_and_skips(question).inspect
+  namespace :question do
+
+    desc "Ensure that a question has: answered_appearances == votes + skips"
+    task :answered_appearances_equals_votes_and_skips, [:question_id] => :environment do |t, args|
+      a = cleanup_args(args)
+      questions = Question.find(a[:question_id])
+      questions.each do |question|
+        puts answered_appearances_equals_votes_and_skips(question).inspect
+      end
     end
+
   end
 
   def answered_appearances_equals_votes_and_skips(question)
