@@ -255,7 +255,6 @@ namespace :test_api do
     end
 
     def answered_appearances_equals_votes_and_skips(question)
-      error_message = ""
       success_message = "All vote and skip objects have an associated appearance object"
       skip_appearances_count = Appearance.count(
         :conditions => ["skips.valid_record = 1 and appearances.question_id = ? AND answerable_id IS NOT NULL AND answerable_type = 'Skip'", question.id],
@@ -267,15 +266,13 @@ namespace :test_api do
       total_votes = question.votes.count
       total_skips = question.skips.count
       if (total_answered_appearances != total_votes + total_skips)
-        error_message += "Question #{question.id}: answered_appearances = #{total_answered_appearances}, votes = #{total_votes}, skips = #{total_skips}"
+        error_message = "Question #{question.id}: answered_appearances = #{total_answered_appearances}, votes = #{total_votes}, skips = #{total_skips}"
       end
-
 
       return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
 
     def check_each_choice_appears_within_n_stddevs(question)
-      error_message =""
       success_message = "Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question " +
         "(Note: this applies only to seed choices (not user submitted) and choices currently marked active)"
 
@@ -304,7 +301,7 @@ namespace :test_api do
         ignore_choices = [133189]
         appearances_by_choice_id.each do |choice_id, n_i| 
           if ((n_i < (mean - 6*stddev)) || (n_i > mean + 6 *stddev)) && !ignore_choices.include?(choice_id) && Choice.find(choice_id).active?
-            error_message += "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question\n"
+            error_message = "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question\n"
           end
         end
       end
@@ -313,7 +310,6 @@ namespace :test_api do
     end
 
     def check_each_choice_equally_likely_to_appear_left_or_right(question)
-      error_message = ""
       success_message = "All choices have equal probability of appearing on left or right (within error params)"
       question.choices.each do |c|
         left_prompts_ids = c.prompts_on_the_left.ids_only
@@ -331,7 +327,7 @@ namespace :test_api do
         z = (est_p - 0.5).abs / Math.sqrt((0.5 * 0.5) / n.to_f)
 
         if z > 6 
-          error_message += "Error: Choice ID #{c.id} seems to favor one side: Left Appearances #{left_appearances}, Right Appearances: #{right_appearances}, z = #{z}\n"
+          error_message = "Error: Choice ID #{c.id} seems to favor one side: Left Appearances #{left_appearances}, Right Appearances: #{right_appearances}, z = #{z}\n"
         end
       end
       return error_message.blank? ? [success_message, false] : [error_message, true] 
