@@ -27,6 +27,7 @@ namespace :test_api do
     end
 
     def verify_losses_equals_losing_votes(choice)
+      error_message   = ""
       success_message = "Choice losses equals losing votes"
       # votes before 2010-02-17 have null loser_choice_id
       # therefore we want to ignore this test for any question with votes
@@ -40,6 +41,7 @@ namespace :test_api do
     end
 
     def verify_wins_equals_vote_wins(choice)
+      error_message   = ""
       success_message = "Choice wins equals vote wins"
       choice_votes_count = choice.votes.count
       if (choice.wins != choice_votes_count)
@@ -49,6 +51,7 @@ namespace :test_api do
     end
 
     def verify_cached_score_equals_computed_score(choice)
+      error_message   = ""
       success_message = "Choice has accurate cached score"
       cached_score = choice.score.to_f
       generated_score = choice.compute_score.to_f
@@ -63,6 +66,7 @@ namespace :test_api do
     end
 
     def verify_valid_cached_score(choice)
+      error_message   = ""
       success_message = "Choice has valid cached score"
       cached_score = choice.score.to_f
       if cached_score == 0.0 || cached_score == 100.0 || cached_score.nil?
@@ -72,6 +76,7 @@ namespace :test_api do
     end
 
     def verify_cached_prompt_counts(choice)
+      error_message   = ""
       success_message = "Choice has accurate prompt cache count"
       if choice.prompts_on_the_left.count != choice.prompts_on_the_left_count || choice.prompts_on_the_right.count != choice.prompts_on_the_right_count
         error_message = "Choice #{choice.id} in Question ##{choice.question_id} has inaccurate prompt count cache"
@@ -80,6 +85,7 @@ namespace :test_api do
     end
 
     def verify_choice_appearances_and_votes(choice)
+      error_message   = ""
       success_message = "Choice has more appearances than votes and skips"
       return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(choice.question_id)
       all_appearances  = choice.appearances_on_the_left.count + choice.appearances_on_the_right.count
@@ -181,6 +187,7 @@ namespace :test_api do
     end
 
     def generated_prompts_on_each_side_are_equal(question)
+      error_message   = ""
       success_message = "Number of generated prompts on left are equal to number generated on right"
       generated_on_left = Choice.connection.select_one("
         SELECT COUNT(*) AS total FROM prompts
@@ -195,6 +202,7 @@ namespace :test_api do
     end
 
     def check_scores_over_above_fifty(question)
+      error_message   = ""
       success_message = "Scores are distributed above and below 50"
       return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(question.id)
       totals_lte_fifty = Choice.connection.select_one("
@@ -213,6 +221,7 @@ namespace :test_api do
     end
 
     def wins_and_losses_equals_two_times_vote_count(question)
+      error_message   = ""
       success_message = "Wins and losses equals 2 times vote count"
       return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(question.id)
       totals = Question.connection.select_one("
@@ -227,6 +236,7 @@ namespace :test_api do
     end
 
     def wins_and_losses_is_even(question)
+      error_message   = ""
       success_message = "Total Votes is even"
       return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(question.id)
       totals = Question.connection.select_one("
@@ -241,6 +251,7 @@ namespace :test_api do
     end
 
     def wins_and_losses_equals_two_times_wins(question)
+      error_message   = ""
       success_message = "2 x Total Wins == Total Votes"
       return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(question.id)
       totals = Question.connection.select_one("
@@ -248,13 +259,14 @@ namespace :test_api do
                SUM(wins) AS total_wins,
                SUM(losses) AS total_losses FROM choices
          WHERE question_id = #{question.id}")
-      if (2*totals["total_wins"] != totals["total"])
+      if (2*totals["total_wins"].to_i != totals["total"].to_i)
         error_message = "Error: 2 x Total Wins != Total votes"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
 
     def answered_appearances_equals_votes_and_skips(question)
+      error_message   = ""
       success_message = "All vote and skip objects have an associated appearance object"
       skip_appearances_count = Appearance.count(
         :conditions => ["skips.valid_record = 1 and appearances.question_id = ? AND answerable_id IS NOT NULL AND answerable_type = 'Skip'", question.id],
@@ -273,6 +285,7 @@ namespace :test_api do
     end
 
     def check_each_choice_appears_within_n_stddevs(question)
+      error_message   = ""
       success_message = "Each choice has appeared n times, where n falls within 6 stddevs of the mean number of appearances for a question " +
         "(Note: this applies only to seed choices (not user submitted) and choices currently marked active)"
 
@@ -310,6 +323,7 @@ namespace :test_api do
     end
 
     def check_each_choice_equally_likely_to_appear_left_or_right(question)
+      error_message   = ""
       success_message = "All choices have equal probability of appearing on left or right (within error params)"
       question.choices.each do |c|
         left_prompts_ids = c.prompts_on_the_left.ids_only
@@ -430,6 +444,7 @@ namespace :test_api do
   
     def verify_range_of_choices_scores
       bad_choices_count = Choice.count(:conditions => 'score < 0 OR score > 100')
+      error_message   = ""
       success_message = "All choices have a score within 0-100"
       if bad_choices_count > 0
         error_message = "Some choices have a score less than 0 or greater than 100"
