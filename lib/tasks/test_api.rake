@@ -244,7 +244,7 @@ namespace :test_api do
                SUM(wins) AS total_wins,
                SUM(losses) AS total_losses FROM choices
          WHERE question_id = #{question.id}")
-      if (totals["total"] % 2 != 0)
+      if (!totals["total"].blank? && totals["total"] % 2 != 0)
         error_message = "Error: Total votes is not Even!"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true] 
