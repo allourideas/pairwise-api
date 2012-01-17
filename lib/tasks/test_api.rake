@@ -100,21 +100,23 @@ namespace :test_api do
 
     questions.each do |question|
 
-      message, error_occurred = check_basic_balanced_stats(question)
-      # hack for now, get around to doing this with block/yield to
-      # get rid of duplication
-      if error_occurred
-        errors << message
-      else
-        successes << message
-      end
-
       @question_tasks.each do |taskname, description|
         message, error_occurred = send(taskname, question)
         if error_occurred
           errors << message
         else
           successes << message
+        end
+      end
+
+      question.choices.each do |choice|
+        @choice_tasks.each do |taskname, description|
+          message, error_occurred = send(taskname, question)
+          if error_occurred
+            errors << message
+          else
+            successes << message
+          end
         end
       end
 
@@ -150,95 +152,6 @@ namespace :test_api do
 
   end
 
-  def check_basic_balanced_stats(question)
-    error_message = ""
-    success_message = "2 x Total Wins = Total Votes\n" +
-      "Total Votes (wins + losses) is Even\n" +
-      "Total Votes (wins + losses) = 2 x the number of vote objects that belong to the question\n" +
-      "Total generated prompts on left = Total generated prompts on right"
-    total_wins =0
-    total_votes =0
-    total_generated_prompts_on_left = 0
-    total_generated_prompts_on_right = 0
-    total_scores_gte_fifty= 0
-    total_scores_lte_fifty= 0
-    error_bool = false
-    # votes before 2010-02-17 have null loser_choice_id therefore we
-    # want to ignore some tests for any question with votes before 2010-02-17
-    question_has_votes_before_2010_02_17 = question.votes.count(:conditions => ["created_at < ?", '2010-02-17']) > 0
-
-    # reload question to make sure we have most recent data
-    question.reload
-    question.choices.each do |choice|
-
-      if choice.wins
-        total_wins += choice.wins
-        total_votes += choice.wins
-      end
-
-      if choice.losses
-        total_votes += choice.losses
-      end
-
-      total_generated_prompts_on_left += choice.prompts_on_the_left.size
-      total_generated_prompts_on_right += choice.prompts_on_the_right.size
-
-      cached_score = choice.score.to_f
-      if cached_score >= 50
-        total_scores_gte_fifty +=1
-      end
-      if cached_score <= 50
-        total_scores_lte_fifty +=1
-      end
-
-      @choice_tasks.each do |taskname, description|
-        message, error_occurred = send(taskname, question)
-        if error_occurred
-          error_message += message + "\n"
-        end
-      end
-
-    end
-
-
-    unless question_has_votes_before_2010_02_17
-      if (2*total_wins != total_votes)
-        error_message += "Error 1: 2 x Total Wins != Total votes\n"
-        error_bool= true
-      end
-
-      if(total_votes % 2 != 0)
-        error_message += "Error 2: Total votes is not Even!\n"
-        error_bool= true
-      end
-
-      if(total_votes != 2* question.votes_count)
-        error_message += "Error 3: Total votes != 2 x # vote objects\n"
-        error_bool = true
-      end
-    end
-
-    if(total_generated_prompts_on_right != total_generated_prompts_on_right)
-      error_message += "Error 4: Total generated prompts on left != Total generated prompts on right\n"
-      error_bool = true
-    end
-
-    unless question_has_votes_before_2010_02_17
-      if(total_scores_lte_fifty == question.choices.size || total_scores_gte_fifty == question.choices.size) && (total_scores_lte_fifty != total_scores_gte_fifty)
-        error_message += "Error: The scores of all choices are either all above 50, or all below 50. This is probably wrong\n"
-        error_bool = true
-        puts "Error score fifty: #{question.id}"
-      end
-    end
-
-    if error_bool
-      error_message += "Question #{question.id}: 2*wins = #{2*total_wins}, total votes = #{total_votes}, vote_count = #{question.votes_count}\n"
-    end
-    return error_message.blank? ? [success_message, false] : [error_message, true] 
-  end
-
-
-
   namespace :question do
     # use this to dynamically create rake task for each question test
     @question_tasks = {
@@ -246,13 +159,18 @@ namespace :test_api do
       :check_each_choice_appears_within_n_stddevs => "Ensure each choice appears within 6 standard deviations",
       :check_each_choice_equally_likely_to_appear_left_or_right => "Ensure each choice is equally likely to appear on left or right",
       :check_prompt_cache_hit_rate => "Check prompt cache hit rate",
-      :check_object_counter_cache_values_match_actual_values => "Check that object counter cache values match actual values"
+      :check_object_counter_cache_values_match_actual_values => "Check that object counter cache values match actual values",
+      :wins_and_losses_equals_two_times_wins => "Verifies that wins and losses are equal to 2 times the total number of wins",
+      :wins_and_losses_is_even => "Verify that sum of wins and losses is even",
+      :wins_and_losses_equals_two_times_vote_count => "Verify that sum of wins and losses equals two times the vote count",
+      :check_scores_over_above_fifty => "Check that there are some scores above fifty and some below",
+      :generated_prompts_on_each_side_are_equal => "Verify that count of generated prompts on each side is equal"
     }
 
     # dynamically create tasks for each question task
     @question_tasks.each do |taskname, description|
       desc description
-      task taskname, [:question_id] => :environment do |t, args|
+      task taskname, [:question_id] => [:environment, :question_ids_with_votes_before_2010_02_17] do |t, args|
         a = cleanup_args(args)
         questions = Question.find(a[:question_id])
         questions.each do |question|
@@ -260,6 +178,80 @@ namespace :test_api do
           puts send(taskname, question).inspect
         end
       end
+    end
+
+    def generated_prompts_on_each_side_are_equal(question)
+      success_message = "Number of generated prompts on left are equal to number generated on right"
+      generated_on_left = Choice.connection.select_one("
+        SELECT COUNT(*) AS total FROM prompts
+         WHERE question_id = #{question.id} AND left_choice_id IN (SELECT id from choices where question_id = #{question.id})")
+      generated_on_right = Choice.connection.select_one("
+        SELECT COUNT(*) AS total FROM prompts
+         WHERE question_id = #{question.id} AND right_choice_id IN (SELECT id from choices where question_id = #{question.id})")
+      if (generated_on_left["total"] != generated_on_right["total"])
+        error_message = "Error 4: Total generated prompts on left != Total generated prompts on right"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
+    end
+
+    def check_scores_over_above_fifty(question)
+      success_message = "Scores are distributed above and below 50"
+      return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(question.id)
+      totals_lte_fifty = Choice.connection.select_one("
+        SELECT COUNT(*) AS total FROM choices
+         WHERE question_id = #{question.id} AND score <= 50")
+      totals_gte_fifty = Choice.connection.select_one("
+        SELECT COUNT(*) AS total FROM choices
+         WHERE question_id = #{question.id} AND score >= 50")
+      total_scores_lte_fifty = totals_lte_fifty["total"]
+      total_scores_gte_fifty = totals_gte_fifty["total"]
+      question_choices_count = question.choices.count
+      if (total_scores_lte_fifty == question_choices_count || total_scores_gte_fifty == question_choices_count) && (total_scores_lte_fifty != total_scores_gte_fifty)
+        error_message = "Error! Question #{question.id}: The scores of all choices are either all above 50, or all below 50. This is probably wrong"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
+    end
+
+    def wins_and_losses_equals_two_times_vote_count(question)
+      success_message = "Wins and losses equals 2 times vote count"
+      return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(question.id)
+      totals = Question.connection.select_one("
+        SELECT SUM(wins + losses) AS total,
+               SUM(wins) AS total_wins,
+               SUM(losses) AS total_losses FROM choices
+         WHERE question_id = #{question.id}")
+      if(totals["total"] != 2* question.votes_count)
+        error_message = "Error: Total votes != 2 x # vote objects"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
+    end
+
+    def wins_and_losses_is_even(question)
+      success_message = "Total Votes is even"
+      return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(question.id)
+      totals = Question.connection.select_one("
+        SELECT SUM(wins + losses) AS total,
+               SUM(wins) AS total_wins,
+               SUM(losses) AS total_losses FROM choices
+         WHERE question_id = #{question.id}")
+      if (totals["total"] % 2 != 0)
+        error_message = "Error: Total votes is not Even!"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
+    end
+
+    def wins_and_losses_equals_two_times_wins(question)
+      success_message = "2 x Total Wins == Total Votes"
+      return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(question.id)
+      totals = Question.connection.select_one("
+        SELECT SUM(wins + losses) AS total,
+               SUM(wins) AS total_wins,
+               SUM(losses) AS total_losses FROM choices
+         WHERE question_id = #{question.id}")
+      if (2*totals["total_wins"] != totals["total"])
+        error_message = "Error: 2 x Total Wins != Total votes"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
 
     def answered_appearances_equals_votes_and_skips(question)
@@ -370,6 +362,7 @@ namespace :test_api do
     end
 
     def check_object_counter_cache_values_match_actual_values(question)
+      # FIXME: split up into several tests
       error_message = ""
       success_message = "All cached object values match actual values within database"
       # Checks that counter_cache is working as expected
