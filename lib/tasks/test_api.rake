@@ -1,16 +1,74 @@
 namespace :test_api do
 
   desc "Run all API tests"
-  task :all => [:question_vote_consistency]
+  task :all => [:question_ids_with_votes_before_2010_02_17, :question_vote_consistency]
 
   namespace :choice do
-    desc "Ensure that cached prompt counts are valid for a choice"
-    task :verify_cached_prompt_counts, [:choice_id] => :environment do |t, args|
-      a = clean_up_args(args)
-      choices = Choice.find(a[:choice_id])
-      choices.each do |choice|
-        puts verify_cached_prompt_counts(choice).inspect
+    @choice_tasks = {
+      :verify_cached_prompt_counts => "Ensure that cached prompt counts are valid for a choice",
+      :verify_choice_appearances_and_votes => "Ensure that an idea: appearances on left + appearances on right >= (wins + losses + skips)",
+      :verify_valid_cached_score => "Verify that cached score is valid",
+      :verify_cached_score_equals_computed_score => "Verify accurate cached score",
+      :verify_wins_equals_vote_wins => "Verify wins equals vote wins",
+      :verify_losses_equals_losing_votes => "Verify losses equals losing votes count"
+    }
+
+    # dynamically create tasks for each choice task
+    @choice_tasks.each do |taskname, description|
+      desc description
+      task taskname, [:choice_id] => [:environment, :question_ids_with_votes_before_2010_02_17] do |t, args|
+        a = cleanup_args(args)
+        choices = Choice.find(a[:choice_id])
+        choices.each do |choice|
+          # call task
+          puts send(taskname, choice).inspect
+        end
       end
+    end
+
+    def verify_losses_equals_losing_votes(choice)
+      success_message = "Choice losses equals losing votes"
+      # votes before 2010-02-17 have null loser_choice_id
+      # therefore we want to ignore this test for any question with votes
+      # prior to 2010-02-17
+      return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(choice.question_id)
+      losing_votes_count = choice.losing_votes.count
+      if (choice.losses != losing_votes_count)
+        error_message = "Error!: Cached choice losses != actual choice losses for choice #{choice.id}, #{choice.losses} != #{losing_votes_count}\n"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
+
+    def verify_wins_equals_vote_wins(choice)
+      success_message = "Choice wins equals vote wins"
+      choice_votes_count = choice.votes.count
+      if (choice.wins != choice_votes_count)
+        error_message = "Error!: Cached choice wins != actual choice wins for choice #{choice.id}, #{choice_wins} != #{choice_votes_count}\n"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
+
+    def verify_cached_score_equals_computed_score(choice)
+      success_message = "Choice has accurate cached score"
+      cached_score = choice.score.to_f
+      generated_score = choice.compute_score.to_f
+
+      delta = 0.001
+
+      if (cached_score - generated_score).abs >= delta
+        error_message = "Error! The cached_score is not equal to the calculated score for choice #{choice.id}, cached: #{cached_score}, computed: #{generated_score}\n"
+
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
+
+    def verify_valid_cached_score(choice)
+      success_message = "Choice has valid cached score"
+      cached_score = choice.score.to_f
+      if cached_score == 0.0 || cached_score == 100.0 || cached_score.nil?
+        error_message = "Error! The cached_score for choice #{choice.id} is exactly 0 or 100, the value: #{cached_score}"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
     end
 
     def verify_cached_prompt_counts(choice)
@@ -21,17 +79,9 @@ namespace :test_api do
       return error_message.blank? ? [success_message, false] : [error_message, true]
     end
 
-    desc "Ensure that an idea: appearances on left + appearances on right >= (wins + losses + skips)"
-    task :verify_choice_appearances_and_votes, [:choice_id] => :environment do |t, args|
-      a = clean_up_args(args)
-      choices = Choice.find(a[:choice_id])
-      choices.each do |choice|
-        puts verify_choice_appearances_and_votes(choice).inspect
-      end
-    end
-
     def verify_choice_appearances_and_votes(choice)
       success_message = "Choice has more appearances than votes and skips"
+      return [success_message, false] if @question_ids_with_votes_before_2010_02_17.include?(choice.question_id)
       all_appearances  = choice.appearances_on_the_left.count + choice.appearances_on_the_right.count
       skips = choice.skips_on_the_left.count + choice.skips_on_the_right.count
 
@@ -134,36 +184,6 @@ namespace :test_api do
       total_generated_prompts_on_right += choice.prompts_on_the_right.size
 
       cached_score = choice.score.to_f
-      generated_score = choice.compute_score.to_f
-
-      delta = 0.001
-
-      if (cached_score - generated_score).abs >= delta
-        error_message += "Error! The cached_score is not equal to the calculated score for choice #{choice.id}\n"
-
-        print "This score is wrong! #{choice.id} , Question ID: #{question.id}, #{cached_score}, #{generated_score}, updated: #{choice.updated_at}\n"
-
-
-      end
-
-      if cached_score == 0.0 || cached_score == 100.0 || cached_score.nil?
-        error_message += "Error! The cached_score for choice #{choice.id} is exactly 0 or 100, the value: #{cached_score}"
-        print "Either 0 or 100 This score is wrong! #{choice.id} , Question ID: #{question.id}, #{cached_score}, #{generated_score}, updated: #{choice.updated_at}\n"
-      end
-
-      unless question_has_votes_before_2010_02_17
-        message, error_occurred = verify_choice_appearances_and_votes(choice)
-        if error_occurred
-          error_message += message + "\n"
-        end
-      end
-
-      message, error_occurred = verify_cached_prompt_counts(choice)
-      if error_occurred
-        error_message += message + "\n"
-      end
-
-
       if cached_score >= 50
         total_scores_gte_fifty +=1
       end
@@ -171,18 +191,10 @@ namespace :test_api do
         total_scores_lte_fifty +=1
       end
 
-      if (choice.wins != choice.votes.count)
-        error_message += "Error!: Cached choice wins != actual choice wins for choice #{choice.id}\n"
-        error_bool= true
-      end
-
-      # votes before 2010-02-17 have null loser_choice_id
-      # therefore we want to ignore this test for any question with votes
-      # prior to 2010-02-17
-      unless question_has_votes_before_2010_02_17
-        if (choice.losses != question.votes.count(:conditions => {:loser_choice_id => choice.id}))
-          error_message += "Error!: Cached choice losses != actual choice losses for choice #{choice.id}\n"
-          error_bool= true
+      @choice_tasks.each do |taskname, description|
+        message, error_occurred = send(taskname, question)
+        if error_occurred
+          error_message += message + "\n"
         end
       end
 
@@ -474,6 +486,15 @@ namespace :test_api do
     end
   end
   # END OF GLOBAL NAMESPACE
+
+  # votes before 2010-02-17 have null loser_choice_id therefore we
+  # want to ignore some tests for any question with votes before 2010-02-17
+  desc "Get all question_ids before 2010_02_17"
+  task :question_ids_with_votes_before_2010_02_17 => :environment do
+    @question_ids_with_votes_before_2010_02_17 = Vote.find(:all, :select => "DISTINCT(question_id)", :conditions => ["created_at < ?", '2010-02-17']).map {|v| v.question_id}
+    puts @question_ids_with_votes_before_2010_02_17.inspect
+    
+  end
 
 end
 

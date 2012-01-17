@@ -9,6 +9,7 @@ class Choice < ActiveRecord::Base
   #validates_length_of :item, :maximum => 140
   
   has_many :votes
+  has_many :losing_votes, :class_name => "Vote", :foreign_key => "loser_choice_id"
   has_many :flags
   has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id"
   has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
