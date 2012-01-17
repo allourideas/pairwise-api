@@ -45,7 +45,7 @@ namespace :test_api do
       success_message = "Choice wins equals vote wins"
       choice_votes_count = choice.votes.count
       if (choice.wins != choice_votes_count)
-        error_message = "Error!: Cached choice wins != actual choice wins for choice #{choice.id}, #{choice_wins} != #{choice_votes_count}\n"
+        error_message = "Error!: Cached choice wins != actual choice wins for choice #{choice.id}, #{choice.wins} != #{choice_votes_count}\n"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true]
     end
@@ -117,7 +117,7 @@ namespace :test_api do
 
       question.choices.each do |choice|
         @choice_tasks.each do |taskname, description|
-          message, error_occurred = send(taskname, question)
+          message, error_occurred = send(taskname, choice)
           if error_occurred
             errors << message
           else
@@ -496,7 +496,6 @@ namespace :test_api do
   desc "Get all question_ids before 2010_02_17"
   task :question_ids_with_votes_before_2010_02_17 => :environment do
     @question_ids_with_votes_before_2010_02_17 = Vote.find(:all, :select => "DISTINCT(question_id)", :conditions => ["created_at < ?", '2010-02-17']).map {|v| v.question_id}
-    puts @question_ids_with_votes_before_2010_02_17.inspect
     
   end
 
