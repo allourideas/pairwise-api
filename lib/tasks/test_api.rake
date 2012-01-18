@@ -196,7 +196,7 @@ namespace :test_api do
         SELECT COUNT(*) AS total FROM prompts
          WHERE question_id = #{question.id} AND right_choice_id IN (SELECT id from choices where question_id = #{question.id})")
       if (generated_on_left["total"] != generated_on_right["total"])
-        error_message = "Error 4: Total generated prompts on left != Total generated prompts on right"
+        error_message = "Question #{question.id}: Total generated prompts on left (#{generated_on_left["total"]}) != Total generated prompts on right (#{generated_on_right["total"]})"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
@@ -215,7 +215,7 @@ namespace :test_api do
       total_scores_gte_fifty = totals_gte_fifty["total"]
       question_choices_count = question.choices.count
       if (total_scores_lte_fifty == question_choices_count || total_scores_gte_fifty == question_choices_count) && (total_scores_lte_fifty != total_scores_gte_fifty)
-        error_message = "Error! Question #{question.id}: The scores of all choices are either all above 50, or all below 50. This is probably wrong"
+        error_message = "Question #{question.id}: The scores of all choices are either all above 50, or all below 50. This is probably wrong"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
@@ -230,7 +230,7 @@ namespace :test_api do
                SUM(losses) AS total_losses FROM choices
          WHERE question_id = #{question.id}")
       if(totals["total"] != 2* question.votes_count)
-        error_message = "Error: Total votes != 2 x # vote objects"
+        error_message = "Question #{question.id}: Total votes != 2 x # vote objects, total: #{totals["total"]}, vote_count: #{question.votes_count}"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
@@ -245,7 +245,7 @@ namespace :test_api do
                SUM(losses) AS total_losses FROM choices
          WHERE question_id = #{question.id}")
       if (!totals["total"].blank? && totals["total"] % 2 != 0)
-        error_message = "Error: Total votes is not Even!"
+        error_message = "Question #{question.id}: Total votes is not even: #{totals["total"]}"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
@@ -260,7 +260,7 @@ namespace :test_api do
                SUM(losses) AS total_losses FROM choices
          WHERE question_id = #{question.id}")
       if (2*totals["total_wins"].to_i != totals["total"].to_i)
-        error_message = "Error: 2 x Total Wins != Total votes"
+        error_message = "Question #{question.id}: 2 x Total Wins != Total votes. wins: #{2*totals["total_wins"].to_i}, total: #{totals["total"].to_i}"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
