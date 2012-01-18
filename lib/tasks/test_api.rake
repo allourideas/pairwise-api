@@ -100,14 +100,16 @@ namespace :test_api do
 
   desc "Description here"
   task(:question_vote_consistency => :environment) do
-    questions = Question.find(:all)
     errors = []
     successes = []
 
-    questions.each do |question|
+    Question.find_each(:batch_size => 3) do |question|
 
+      debug("Starting tasks for question #{question.id}")
       @question_tasks.each do |taskname, description|
+        debug("Starting task #{taskname} for question #{question.id}")
         message, error_occurred = send(taskname, question)
+        debug("Completed task #{taskname} for question #{question.id}")
         if error_occurred
           errors << message
         else
@@ -115,6 +117,7 @@ namespace :test_api do
         end
       end
 
+      debug("Starting choices tasks for question #{question.id}")
       question.choices.each do |choice|
         @choice_tasks.each do |taskname, description|
           message, error_occurred = send(taskname, choice)
@@ -125,11 +128,14 @@ namespace :test_api do
           end
         end
       end
+      debug("Completed choices tasks for question #{question.id}")
 
     end
 
     @global_tasks.each do |taskname, description|
+      debug("Starting global task #{taskname}")
       message, error_occurred = send(taskname)
+      debug("Completed global task #{taskname}")
       if error_occurred
         errors << message
       else
@@ -137,7 +143,7 @@ namespace :test_api do
       end
     end
 
-    email_text = "Conducted the following tests on API data and found the following results\n" + "For each of the #{questions.length} questions in the database: \n"
+    email_text = "Conducted the following tests on API data and found the following results\n" + "For each of the #{Question.all.count} questions in the database: \n"
     errors.each do |e|
       email_text += "     Test FAILED:\n" + e + "\n"
     end
@@ -511,4 +517,12 @@ def cleanup_args(args)
     a[:choice_id] = a[:choice_id].split(".")
   end
   a
+end
+
+def debug(message)
+  return unless ENV['debug'] == 'true'
+  if defined?(Rails)
+    logger = AuditLogger.new(STDOUT)
+    logger.info(message)
+  end
 end
