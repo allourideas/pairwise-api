@@ -481,21 +481,21 @@ namespace :test_api do
         # Subtracting DateTime objects results in the difference in days
         server_response_time = v.created_at.to_f - v.appearance.created_at.to_f
         if server_response_time < 0
-          the_error_msg = "Error! Vote #{v.id} was created before the appearance associated with it: Appearance id: #{v.appearance.id}, Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}\n"
+          the_error_msg = "Error! Vote #{v.id} was created before the appearance associated with it: Appearance id: #{v.appearance.id}, Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}\n\n"
 
           error_message += the_error_msg
           print "Error!" + the_error_msg
         end
 
         if v.time_viewed && v.time_viewed/1000 > server_response_time 
-          the_error_msg = "Warning! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Server roundtrip time is: #{v.created_at.to_f - v.appearance.created_at.to_f} seconds, but client side response time is: #{v.time_viewed.to_f / 1000.0} seconds\n"
+          the_error_msg = "Warning! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Server roundtrip time is: #{v.created_at.to_f - v.appearance.created_at.to_f} seconds, but client side response time is: #{v.time_viewed.to_f / 1000.0} seconds\n\n"
 
           error_message += the_error_msg
           print the_error_msg
 
         elsif v.time_viewed.nil?
           if v.created_at > recording_client_time_start_date && v.missing_response_time_exp != 'invalid'
-            the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, does not have a client response, even though it should! Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}, Client side response time: #{v.time_viewed}\n"
+            the_error_msg = "Error! Vote #{v.id} with Appearance #{v.appearance.id}, does not have a client response, even though it should! Vote creation time: #{v.created_at.to_s}, Appearance creation time: #{v.appearance.created_at.to_s}, Client side response time: #{v.time_viewed}\n\n"
             error_message += the_error_msg
             print the_error_msg
           end
