@@ -171,7 +171,9 @@ namespace :test_api do
       :check_each_choice_appears_within_n_stddevs => "Ensure each choice appears within 6 standard deviations",
       :check_each_choice_equally_likely_to_appear_left_or_right => "Ensure each choice is equally likely to appear on left or right",
       :check_prompt_cache_hit_rate => "Check prompt cache hit rate",
-      :check_object_counter_cache_values_match_actual_values => "Check that object counter cache values match actual values",
+      :check_prompt_counter_cache => "Verify that prompt counter cache is accurate",
+      :check_vote_counter_cache => "Verify that vote counter cache is accurate",
+      :check_choice_counter_cache => "Verify that choice counter cache is accurate",
       :wins_and_losses_equals_two_times_wins => "Verifies that wins and losses are equal to 2 times the total number of wins",
       :wins_and_losses_is_even => "Verify that sum of wins and losses is even",
       :wins_and_losses_equals_two_times_vote_count => "Verify that sum of wins and losses equals two times the vote count",
@@ -377,35 +379,45 @@ namespace :test_api do
       return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
 
-    def check_object_counter_cache_values_match_actual_values(question)
-      # FIXME: split up into several tests
+    def check_prompt_counter_cache(question)
       error_message = ""
-      success_message = "All cached object values match actual values within database"
+      success_message = "Prompt counter cache equals prompt count in database"
+
       # Checks that counter_cache is working as expected
       cached_prompts_size = question.prompts.size
       actual_prompts_size = question.prompts.count
 
       if cached_prompts_size != actual_prompts_size
-        error_message += "Error! Question #{question.id} has an inconsistent # of prompts! cached#: #{cached_prompts_size}, actual#: #{actual_prompts_size}\n"
+        error_message = "Error! Question #{question.id} has an inconsistent # of prompts! cached#: #{cached_prompts_size}, actual#: #{actual_prompts_size}\n"
       end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
+    end
 
+    def check_vote_counter_cache(question)
+      error_message = ""
+      success_message = "Vote counter cache equals vote count in database"
+
+      # Checks that counter_cache is working as expected
       cached_votes_size = question.votes.size
       actual_votes_size = question.votes.count
 
       if cached_votes_size != actual_votes_size
-        error_message += "Error! Question #{question.id} has an inconsistent # of votes! cached#: #{cached_votes_size}, actual#: #{actual_votes_size}\n"
+        error_message = "Error! Question #{question.id} has an inconsistent # of votes! cached#: #{cached_votes_size}, actual#: #{actual_votes_size}\n"
       end
+      return error_message.blank? ? [success_message, false] : [error_message, true] 
+    end
 
+    def check_choice_counter_cache(question)
+      error_message = ""
+      success_message = "Choice counter cache equals choice count in database"
+
+      # Checks that counter_cache is working as expected
       cached_choices_size = question.choices.size
       actual_choices_size = question.choices.count
 
       if cached_choices_size != actual_choices_size
-        error_message+= "Error! Question #{question.id} has an inconsistent # of choices! cached#: #{cached_choices_size}, actual#: #{actual_choices_size}\n"
+        error_message = "Error! Question #{question.id} has an inconsistent # of choices! cached#: #{cached_choices_size}, actual#: #{actual_choices_size}\n"
       end
-
-      #if cached_prompts_size != question.choices.size **2 - question.choices.size 
-      # error_message += "Error! Question #{question.id} has an incorrect number of prompts! Expected #{question.choices.size **2 - question.choices.size}, Actual: #{cached_prompts_size}\n"
-      #end
       return error_message.blank? ? [success_message, false] : [error_message, true] 
     end
   end
