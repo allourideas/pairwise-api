@@ -6,7 +6,7 @@ describe "Visitors" do
   before do
     @user = self.default_user = Factory(:email_confirmed_user)
     @visitors = @user.visitors << Array.new(30){ Factory(:visitor, :site => @user) }
-    @questions = Array.new(3){ Factory(:aoi_question, :site => @user, :creator => @visitors.rand) }
+    @questions = Array.new(3){ Factory(:aoi_question, :site => @user, :creator => @visitors.sample) }
   end
 
   describe "GET 'index'" do
@@ -30,8 +30,8 @@ describe "Visitors" do
     it "should return the number of votes for each visitor" do
       counts = Hash.new(0)
       20.times do
-        visitor = @visitors.rand
-        Factory(:vote, :question => @questions.rand, :voter => visitor)
+        visitor = @visitors.sample
+        Factory(:vote, :question => @questions.sample, :voter => visitor)
         counts[visitor.id] += 1
       end
       get_auth visitors_path, :votes_count => true
@@ -49,8 +49,8 @@ describe "Visitors" do
     it "should return the number of skips for each visitor" do
       counts = Hash.new(0)
       20.times do
-        visitor = @visitors.rand
-        Factory(:skip, :question => @questions.rand, :skipper => visitor)
+        visitor = @visitors.sample
+        Factory(:skip, :question => @questions.sample, :skipper => visitor)
         counts[visitor.id] += 1
       end
       get_auth visitors_path, :skips_count => true
@@ -67,14 +67,14 @@ describe "Visitors" do
 
     it "should return the number of user-submitted choices" do
       10.times do
-        question = @questions.rand
+        question = @questions.sample
         creator = question.creator
         Factory(:choice, :question => question, :creator => creator)
       end
       counts = Hash.new(0)
       10.times do
-        question = @questions.rand
-        creator = (@visitors - [question.creator]).rand
+        question = @questions.sample
+        creator = (@visitors - [question.creator]).sample
         counts[creator.id] += 1
         Factory(:choice, :question => question, :creator => creator)
       end
@@ -93,12 +93,12 @@ describe "Visitors" do
     it "should show which visitors are bounces" do
       bounce = {}
       @visitors.each do |v|
-        if [true,false].rand
-          Factory(:appearance, :question => @questions.rand, :voter => v)
+        if [true,false].sample
+          Factory(:appearance, :question => @questions.sample, :voter => v)
           bounce[v.id] = 1
         else
-          vote = Factory(:vote, :question => @questions.rand, :voter => v)
-          Factory(:appearance, :question => @questions.rand,
+          vote = Factory(:vote, :question => @questions.sample, :voter => v)
+          Factory(:appearance, :question => @questions.sample,
                   :voter => v, :answerable => vote)
         end
       end
@@ -134,10 +134,10 @@ describe "Visitors" do
 
     it "should return the visitor counts for a single question" do
       votes, skips, choices = Array.new(3){ Hash.new(0) }
-      the_question = @questions.rand
+      the_question = @questions.sample
       20.times do
-        question = @questions.rand
-        visitor = (@visitors - [question.creator]).rand
+        question = @questions.sample
+        visitor = (@visitors - [question.creator]).sample
         case rand(3)
         when 0 then
           Factory(:vote, :question => question, :voter => visitor)
@@ -172,15 +172,15 @@ describe "Visitors" do
     end
 
     it "should return the bounces for a single question" do
-      the_question = @questions.rand
+      the_question = @questions.sample
       bounces = @visitors.inject({}) do |h,v|
         if v.id.odd?  # bounce!
-          question = @questions.rand
+          question = @questions.sample
           Factory(:appearance, :question => question, :voter => v)
           h[v.id] = 1 if question == the_question
         else          # appearance w/ answerable
-          vote = Factory(:vote, :question => @questions.rand, :voter => v)
-          Factory(:appearance, :question => @questions.rand, :voter => v, :answerable => vote)
+          vote = Factory(:vote, :question => @questions.sample, :voter => v)
+          Factory(:appearance, :question => @questions.sample, :voter => v, :answerable => vote)
         end
         h
       end
