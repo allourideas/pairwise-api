@@ -382,7 +382,7 @@ namespace :prune_db do
   end
 
   #call this by doing rake prune_db:populate_seed_ideas['blahblah',questionnum], where blahblah is the filename
-  task(:populate_seed_ideas, :args1, :args2, :needs => :environment) do | task, arguments|
+  task(:populate_seed_ideas, [:args1, :args2,] => [:environment]) do | task, arguments|
   filename = arguments[:args1]
   question_num = arguments[:args2]
 
