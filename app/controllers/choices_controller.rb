@@ -2,7 +2,7 @@ class ChoicesController < InheritedResources::Base
   respond_to :xml, :json
   actions :show, :index, :create, :update, :new
   belongs_to :question
-  has_scope :active, :boolean => true, :only => :index
+  has_scope :active, :type => :boolean, :only => :index
 
   before_filter :authenticate
   
