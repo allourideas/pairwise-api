@@ -97,7 +97,9 @@ class Question < ActiveRecord::Base
     logger.info "inside Question#simple_random_choose_prompt"
     raise NotImplementedError.new("Sorry, we currently only support pairwise prompts.  Rank of the prompt must be 2.") unless rank == 2
     choice_id_array = distinct_array_of_choice_ids(:rank => rank, :only_active => true)
-    prompts.find_or_create_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1], :include => [:left_choice ,:right_choice ])
+    prompt = prompts.find_or_initialize_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1])
+    prompt.save
+    prompt
   end
 
   # adapted from ruby cookbook(2006): section 5-11
@@ -119,7 +121,8 @@ class Question < ActiveRecord::Base
           end
           target -= weight
         end
-        prompt = prompts.find_or_create_by_left_choice_id_and_right_choice_id(left_choice_id, right_choice_id, :include => [{ :left_choice => :item }, { :right_choice => :item }])
+        prompt = prompts.find_or_initialize_by_left_choice_id_and_right_choice_id(left_choice_id, right_choice_id)
+        prompt.save
       end
       generated_prompts.push prompt
     end
