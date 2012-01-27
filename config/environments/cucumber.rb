@@ -19,23 +19,6 @@ config.action_controller.allow_forgery_protection    = false
 # ActionMailer::Base.deliveries array.
 config.action_mailer.delivery_method = :test
 
-unless File.directory?(File.join(Rails.root, 'vendor/plugins/cucumber'))
-  config.gem 'cucumber',
-    :lib     => false,
-    :version => '>=0.4.2'
-end
-
-unless File.directory?(File.join(Rails.root, 'vendor/plugins/webrat'))
-  config.gem 'webrat',
-    :lib     => false,
-    :version => '>=0.5.0'
-end
-
-config.gem 'fakeweb',
-  :version => '>= 1.2.5'
-config.gem 'factory_girl', 
-  :source  => 'http://gemcutter.org',
-  :version => '>= 1.2.3'
 
 HOST = "localhost"
 AUTHORIZE_NET_API_LOGIN_ID    = ''
