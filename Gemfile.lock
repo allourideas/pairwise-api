@@ -81,6 +81,7 @@ PLATFORMS
 
 DEPENDENCIES
   ambethia-smtp-tls (= 1.1.2)
+  bundler (= 1.0.7)
   cucumber (= 0.8.5)
   delayed_job (= 2.0.6)
   factory_girl (= 1.2.3)
