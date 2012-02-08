@@ -20,7 +20,7 @@ GEM
       gherkin (~> 2.1.4)
       json_pure (~> 1.4.3)
       term-ansicolor (~> 1.0.4)
-    daemons (1.1.6)
+    daemons (1.1.8)
     delayed_job (2.0.6)
       daemons
     diff-lcs (1.1.3)
