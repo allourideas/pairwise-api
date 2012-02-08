@@ -1,7 +1,7 @@
 source :rubygems
 source "http://gems.github.com"
 
-gem "bundler", "1.0.7"
+gem "bundler", "1.0.21"
 gem "rails", "2.3.14"
 gem "hoptoad_notifier", "2.4.9"
 gem "ambethia-smtp-tls", "1.1.2", :require => "smtp-tls"
