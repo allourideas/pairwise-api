@@ -28,10 +28,7 @@ gem "newrelic_rpm", "3.3.0"
 gem "sendgrid", "0.1.4"
 gem "json_pure", "1.4.6"
 gem "rubaidh-google_analytics", "1.1.4", :require => "rubaidh/google_analytics"
-
-group :development do
-  gem 'mysql', '2.8.1'
-end
+gem 'mysql2', '0.3.11'
 
 
 group :cucumber do
