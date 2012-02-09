@@ -18,8 +18,5 @@ config.action_mailer.raise_delivery_errors = false
 
 HOST = 'localhost'
 
-config.gem 'mysql', 
-  :version => '2.8.1' 
-
 PHOTOCRACY_SITE_ID = 9
 ALLOURIDEAS_SITE_ID = 13

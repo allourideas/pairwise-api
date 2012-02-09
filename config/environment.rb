@@ -11,7 +11,7 @@ Rails::Initializer.run do |config|
 
   #config.time_zone = 'Eastern Time (US & Canada)'
 
-  config.active_record.default_timezone = 'Eastern Time (US & Canada)'
+  config.active_record.default_timezone = :local
   config.action_mailer.delivery_method = :smtp
   #config.action_mailer.delivery_method = :sendmail
 end

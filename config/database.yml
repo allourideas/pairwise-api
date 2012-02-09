@@ -2,7 +2,7 @@
 #   gem install sqlite3-ruby (not necessary on OS X Leopard)
 
 development: &default
-  adapter: mysql
+  adapter: mysql2
   database: rebirth_development
   pool: 5
   timeout: 5000
