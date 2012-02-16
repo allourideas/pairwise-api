@@ -672,6 +672,19 @@ class Question < ActiveRecord::Base
        last_appearance
   end
 
+  def vote_rate
+    return 0.to_f if total_uniq_sessions == 0
+    sessions_with_vote.to_f / total_uniq_sessions.to_f
+  end
 
+  def total_uniq_sessions
+    appearances.count(:select => "DISTINCT(voter_id)")
+  end
+
+  def sessions_with_vote
+    Question.connection.select_one("
+      SELECT COUNT(DISTINCT(appearances.voter_id)) from appearances LEFT JOIN votes ON (votes.voter_id = appearances.voter_id) WHERE votes.id IS NOT NULL AND appearances.question_id = #{self.id}
+    ").values.first
+  end
 
 end

@@ -206,6 +206,15 @@ class QuestionsController < InheritedResources::Base
     end
   end
 
+  def vote_rate
+    @question = current_user.questions.find(params[:id])
+    response = {:voterate => @question.vote_rate}
+    logger.info(@question.inspect)
+    respond_to do |format|
+    	format.xml { render :xml => response.to_xml and return}
+    end
+  end
+
   def object_info_totals_by_date
     object_type = params[:object_type]
 

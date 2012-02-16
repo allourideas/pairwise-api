@@ -2,6 +2,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe "Questions" do
   include IntegrationSupport
+  include DBSupport
   before do
     @user = self.default_user = Factory(:email_confirmed_user)
     @choices = {}
@@ -249,6 +250,30 @@ describe "Questions" do
   end
 
   describe "GET 'object_info_totals_by_date'" do
+  end
+
+  describe "GET 'vote_rate'" do
+    before(:all) { truncate_all }
+    it "should return the proper vote rate one vote" do
+      Factory.create(:vote, :question => @questions.first)
+      get_auth vote_rate_question_path(@questions.first, :format => 'xml')
+      response.should be_success
+      response.body.should have_tag("voterate", :text => "1.0")
+    end
+    it "should return the proper vote rate if 1 vote and 3 non-vote" do
+      Factory.create(:vote, :question => @questions.first)
+      3.times do
+        Factory.create(:appearance_new_user, :question => @questions.first)
+      end
+      get_auth vote_rate_question_path(@questions.first, :format => 'xml')
+      response.should be_success
+      response.body.should have_tag("voterate", :text => "0.25")
+    end
+    it "should return the proper vote rate if no votes" do
+      get_auth vote_rate_question_path(@questions.first, :format => 'xml')
+      response.should be_success
+      response.body.should have_tag("voterate", :text => "0.0")
+    end
   end
 
 end

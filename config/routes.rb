@@ -7,6 +7,7 @@ ActionController::Routing::Routes.draw do |map|
                             :member => {:object_info_totals_by_date => :get, 
 	  				:object_info_by_visitor_id => :get, 
 					    :median_votes_per_session => :get,
+              :vote_rate => :get,
                                         :export => :post} , 
 			    :collection => {:all_num_votes_by_visitor_id => :get, 
 					    :all_object_info_totals_by_date => :get,

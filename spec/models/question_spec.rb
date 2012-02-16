@@ -248,6 +248,51 @@ describe Question do
       endTime = Time.now
       (endTime - start).should < 20
   end
+
+  context "vote rate" do
+    before(:all) do
+      truncate_all
+      @q = Factory.create(:aoi_question)
+    end
+
+    it "should give proper stats required for vote rate" do
+      @q.total_uniq_sessions.should == 0
+      @q.sessions_with_vote.should == 0
+      @q.vote_rate.should == 0.0
+
+      # add new session + appearance, but no vote
+      Factory.create(:appearance_new_user, :question => @q)
+      @q.total_uniq_sessions.should == 1
+      @q.sessions_with_vote.should == 0
+      @q.vote_rate.should == 0.0
+
+      # add new vote + session
+      Factory.create(:vote, :question => @q)
+      Factory.create(:vote, :question => @q)
+      Factory.create(:vote, :question => @q)
+      @q.total_uniq_sessions.should == 2
+      @q.sessions_with_vote.should == 1
+      @q.vote_rate.should == 0.5
+
+      # add new session + appearance, but no vote
+      Factory.create(:appearance_new_user, :question => @q)
+      @q.total_uniq_sessions.should == 3
+      @q.sessions_with_vote.should == 1
+      @q.vote_rate.should == (1.to_f / 3.to_f)
+
+      # add new session + appearance, but no vote
+      Factory.create(:appearance_new_user, :question => @q)
+      @q.total_uniq_sessions.should == 4
+      @q.sessions_with_vote.should == 1
+      @q.vote_rate.should == 0.25
+
+      # add new vote + session
+      v = Factory.create(:vote_new_user, :question => @q)
+      @q.total_uniq_sessions.should == 5
+      @q.sessions_with_vote.should == 2
+      @q.vote_rate.should == 0.4
+    end
+  end
   context "catchup algorithm" do 
     before(:all) do
       @catchup_q = Factory.create(:aoi_question)

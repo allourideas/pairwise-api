@@ -67,19 +67,29 @@ Factory.define(:vote) do |f|
   f.choice {|v|  v.prompt.left_choice}
   f.loser_choice {|v|  v.prompt.right_choice}
   f.voter {|v|  v.question.creator}
+  f.appearance { |v| Factory.build(:appearance, :voter => v.voter, :question => v.question) }
+end
+
+Factory.define(:vote_new_user, :parent => :vote) do |f|
+  f.voter {|v| Factory.build(:visitor, :site => v.question.site)}
 end
 
 Factory.define(:skip) do |f|
   f.association :question, :factory => :aoi_question
+  f.appearance { |v| Factory.build(:appearance, :question => v.question) }
   f.prompt {|s|  s.question.prompts.first}
   f.skipper {|s|  s.question.creator}
 end
 
 Factory.define(:appearance) do |f|
   f.association :question, :factory => :aoi_question
-  f.prompt {|a| a.question.prompts.rand}
+  f.prompt {|a| a.question.prompts.sample}
   f.voter {|a| a.question.creator}
   f.answerable { nil }
+end
+
+Factory.define(:appearance_new_user, :parent => :appearance) do |f|
+  f.voter {|a| Factory.build(:visitor, :site => a.question.site)}
 end
 
 Factory.sequence :email do |n|
