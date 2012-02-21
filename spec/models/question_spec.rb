@@ -249,6 +249,57 @@ describe Question do
       (endTime - start).should < 20
   end
 
+  context "ratio of uploaded ideas to participation" do
+    before(:all) do
+      truncate_all
+      @q = Factory.create(:aoi_question)
+    end
+
+    it "should give proper stats required for idea:participation ratio" do
+      @q.sessions_with_uploaded_ideas.should == 0
+      @q.sessions_with_participation.should == 0
+      @q.upload_to_participation_ratio.should == 0.0
+
+      # 10 voting only sessions
+      10.times { Factory.create(:vote_new_user, :question => @q) }
+      @q.sessions_with_uploaded_ideas.should == 0
+      @q.sessions_with_participation.should == 10
+      @q.upload_to_participation_ratio.should == 0.0
+
+      # 7 users who voted and added ideas
+      7.times do
+        v = Factory.create(:vote_new_user, :question => @q)
+        Factory.create(:choice, :creator => v.voter, :question => @q)
+      end
+      @q.sessions_with_uploaded_ideas.should == 7
+      @q.sessions_with_participation.should == 17
+      @q.upload_to_participation_ratio.round(3).should == 0.412
+
+      # 2 users who only skip
+      2.times { Factory.create(:skip_new_user, :question => @q) }
+      @q.sessions_with_uploaded_ideas.should == 7
+      @q.sessions_with_participation.should == 19
+      @q.upload_to_participation_ratio.round(3).should == 0.368
+
+      # 3 users who did everything
+      3.times do
+        v = Factory.create(:vote_new_user, :question => @q)
+        Factory.create(:choice, :creator => v.voter, :question => @q)
+        Factory.create(:skip, :skipper => v.voter, :question => @q)
+      end
+      @q.sessions_with_uploaded_ideas.should == 10
+      @q.sessions_with_participation.should == 22
+      @q.upload_to_participation_ratio.round(3).should == 0.455
+
+      # 5 users who only added ideas
+      5.times { Factory.create(:choice_new_user, :question => @q) }
+      @q.sessions_with_uploaded_ideas.should == 15
+      @q.sessions_with_participation.should == 27
+      @q.upload_to_participation_ratio.round(3).should == 0.556
+
+    end
+  end
+
   context "vote rate" do
     before(:all) do
       truncate_all

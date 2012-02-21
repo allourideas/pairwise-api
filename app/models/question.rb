@@ -672,15 +672,44 @@ class Question < ActiveRecord::Base
        last_appearance
   end
 
+  def upload_to_participation_ratio
+    swp = sessions_with_participation
+    return 0.to_f if swp == 0
+    sessions_with_uploaded_ideas.to_f / swp.to_f
+  end
+
+  # total number of sessions that have uploaded an idea
+  def sessions_with_uploaded_ideas
+    choices.find(:all,
+      :conditions => ["creator_id <> ?", creator_id],
+      :group => :creator_id
+    ).count
+  end
+
+  # total sessions with at least one vote, skip, or uploaded idea
+  def sessions_with_participation
+    Question.connection.select_one("
+      SELECT COUNT(*) FROM (
+        (SELECT DISTINCT(skipper_id) vid FROM skips WHERE question_id = #{id})
+        UNION
+        (SELECT DISTINCT(voter_id) vid FROM votes WHERE question_id = #{id} AND valid_record = 1)
+        UNION
+        (SELECT DISTINCT(creator_id) vid FROM choices WHERE question_id = #{id})
+      ) AS t WHERE vid <> #{creator_id}
+    ").values.first
+  end
+
   def vote_rate
-    return 0.to_f if total_uniq_sessions == 0
-    sessions_with_vote.to_f / total_uniq_sessions.to_f
+    tus = total_uniq_sessions
+    return 0.to_f if tus == 0
+    sessions_with_vote.to_f / tus.to_f
   end
 
   def total_uniq_sessions
     appearances.count(:select => "DISTINCT(voter_id)")
   end
 
+  # total number of sessions with at least one vote
   def sessions_with_vote
     Question.connection.select_one("
       SELECT COUNT(DISTINCT(appearances.voter_id)) from appearances LEFT JOIN votes ON (votes.voter_id = appearances.voter_id) WHERE votes.id IS NOT NULL AND appearances.question_id = #{self.id}

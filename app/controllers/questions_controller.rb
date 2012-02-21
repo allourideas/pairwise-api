@@ -209,9 +209,16 @@ class QuestionsController < InheritedResources::Base
   def vote_rate
     @question = current_user.questions.find(params[:id])
     response = {:voterate => @question.vote_rate}
-    logger.info(@question.inspect)
     respond_to do |format|
-    	format.xml { render :xml => response.to_xml and return}
+      format.xml { render :xml => response.to_xml and return}
+    end
+  end
+
+  def upload_to_participation_ratio
+    @question = current_user.questions.find(params[:id])
+    response = {:uploadparticipationratio => @question.upload_to_participation_ratio}
+    respond_to do |format|
+      format.xml { render :xml => response.to_xml and return}
     end
   end
 

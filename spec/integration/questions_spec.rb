@@ -252,6 +252,38 @@ describe "Questions" do
   describe "GET 'object_info_totals_by_date'" do
   end
 
+  describe "GET 'upload_to_participation_ratio'" do
+    before(:all) { truncate_all }
+    it "should return the proper upload:participation ratio" do
+      q = Factory.create(:aoi_question, :site => @api_user)
+      get_auth upload_to_participation_ratio_question_path(q, :format => 'xml')
+      response.should be_success
+      response.body.should have_tag("uploadparticipationratio", :text => "0.0")
+
+      # 10 voting only sessions
+      10.times { Factory.create(:vote_new_user, :question => q) }
+      # 7 users who voted and added ideas
+      7.times do
+        v = Factory.create(:vote_new_user, :question => q)
+        Factory.create(:choice, :creator => v.voter, :question => q)
+      end
+      # 2 users who only skip
+      2.times { Factory.create(:skip_new_user, :question => q) }
+      # 3 users who did everything
+      3.times do
+        v = Factory.create(:vote_new_user, :question => q)
+        Factory.create(:choice, :creator => v.voter, :question => q)
+        Factory.create(:skip, :skipper => v.voter, :question => q)
+      end
+      # 5 users who only added ideas
+      5.times { Factory.create(:choice_new_user, :question => q) }
+
+      get_auth upload_to_participation_ratio_question_path(q, :format => 'xml')
+      response.should be_success
+      response.body.should have_tag("uploadparticipationratio", :text => "0.555555555555556")
+    end
+  end
+
   describe "GET 'vote_rate'" do
     before(:all) { truncate_all }
     it "should return the proper vote rate one vote" do

@@ -61,6 +61,10 @@ Factory.define(:choice) do |f|
   f.creator {|c| c.association(:visitor, :site => c.question.site)}
 end
 
+Factory.define(:choice_new_user, :parent => :choice) do |f|
+  f.creator {|c| Factory.build(:visitor, :site => c.question.site)}
+end
+
 Factory.define(:vote) do |f|
   f.association :question, :factory => :aoi_question
   f.prompt {|v|  v.question.prompts.first}
@@ -79,6 +83,9 @@ Factory.define(:skip) do |f|
   f.appearance { |v| Factory.build(:appearance, :question => v.question) }
   f.prompt {|s|  s.question.prompts.first}
   f.skipper {|s|  s.question.creator}
+end
+Factory.define(:skip_new_user, :parent => :skip) do |f|
+  f.skipper {|a| Factory.build(:visitor, :site => a.question.site)}
 end
 
 Factory.define(:appearance) do |f|

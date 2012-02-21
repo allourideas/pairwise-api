@@ -1,3 +1,4 @@
+ * Added upload_to_participation_ratio call to API
  * Added vote_rate call to API
 
 ## Pairwise 3.0.0 (Feb 10, 2012) ###
