@@ -1,3 +1,4 @@
+ * Added median_responses_per_session call to API
  * Added upload_to_participation_ratio call to API
  * Added vote_rate call to API
 

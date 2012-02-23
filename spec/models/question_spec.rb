@@ -255,6 +255,35 @@ describe Question do
       @q = Factory.create(:aoi_question)
     end
 
+    it "should properly calculate median_responses_per_session with no responses" do
+      @q.median_responses_per_session.should == 0
+    end
+
+    it "should properly calculate median_responses_per_session with 2 sessions" do
+      # one session with 1 vote, one with 2 votes
+      Factory.create(:vote_new_user, :question => @q)
+      v = Factory.create(:vote_new_user, :question => @q)
+      Factory.create(:vote, :question => @q, :voter => v.voter)
+      @q.median_responses_per_session.should == 1.5
+    end
+
+    it "should properly calculate median_responses_per_session with 3 sessions" do
+      # one session with 3 skips, 2 votes
+      v = Factory.create(:vote_new_user, :question => @q)
+      3.times { Factory.create(:skip, :question => @q, :skipper => v.voter) }
+      Factory.create(:vote, :question => @q, :voter => v.voter)
+
+      # second session with 3 skips
+      v = Factory.create(:skip_new_user, :question => @q)
+      2.times { Factory.create(:skip, :question => @q, :skipper => v.skipper) }
+
+      # third session with 4 votes, 5 skips
+      v = Factory.create(:vote_new_user, :question => @q)
+      3.times { Factory.create(:skip, :question => @q, :skipper => v.voter) }
+      4.times { Factory.create(:vote, :question => @q, :voter => v.voter) }
+      @q.median_responses_per_session.should == 5
+    end
+
     it "should give proper stats required for idea:participation ratio" do
       @q.sessions_with_uploaded_ideas.should == 0
       @q.sessions_with_participation.should == 0

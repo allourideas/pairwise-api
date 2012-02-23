@@ -8,6 +8,7 @@ ActionController::Routing::Routes.draw do |map|
 	  				:object_info_by_visitor_id => :get, 
 					    :median_votes_per_session => :get,
               :vote_rate => :get,
+              :median_responses_per_session => :get,
               :upload_to_participation_ratio => :get,
                                         :export => :post} , 
 			    :collection => {:all_num_votes_by_visitor_id => :get, 

@@ -91,6 +91,13 @@ class QuestionsController < InheritedResources::Base
     end
   end
 
+  def median_responses_per_session
+    @question = current_user.questions.find(params[:id])
+    respond_to do |format|
+      format.xml{ render :xml => {:median => @question.median_responses_per_session}.to_xml and return}
+    end
+  end
+
   def object_info_by_visitor_id
     
     object_type = params[:object_type]

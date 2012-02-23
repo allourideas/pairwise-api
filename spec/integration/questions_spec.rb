@@ -252,6 +252,19 @@ describe "Questions" do
   describe "GET 'object_info_totals_by_date'" do
   end
 
+  describe "GET 'median_responses_per_session'" do
+    before(:all) { truncate_all }
+    it "should return the median responses per session" do
+      q = Factory.create(:aoi_question, :site => @api_user)
+      Factory.create(:vote_new_user, :question => q)
+      v = Factory.create(:vote_new_user, :question => q)
+      Factory.create(:vote, :question => q, :voter => v.voter)
+      get_auth median_responses_per_session_question_path(q, :format => 'xml')
+      response.should be_success
+      response.body.should have_tag("median", :text => "1.5")
+    end
+  end
+
   describe "GET 'upload_to_participation_ratio'" do
     before(:all) { truncate_all }
     it "should return the proper upload:participation ratio" do

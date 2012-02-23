@@ -672,6 +672,17 @@ class Question < ActiveRecord::Base
        last_appearance
   end
 
+  # a response is either a vote or a skip, get the median per session
+  def median_responses_per_session
+    median(Question.connection.select_values("
+      SELECT COUNT(*) total FROM (
+        (SELECT voter_id   vid FROM votes WHERE question_id = #{id})
+        UNION ALL
+        (SELECT skipper_id vid FROM skips WHERE question_id = #{id})
+      ) b GROUP BY b.vid ORDER BY total
+    "), true) || 0
+  end
+
   def upload_to_participation_ratio
     swp = sessions_with_participation
     return 0.to_f if swp == 0
