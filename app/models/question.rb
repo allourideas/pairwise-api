@@ -146,7 +146,7 @@ class Question < ActiveRecord::Base
     # batches.
     ActiveRecord::Base.connection.select_all(sql).each do |p|
       value = [(1.0/ (p['votes_count'].to_i + 1).to_f).to_f, throttle_min].min
-      weights[p['left_choice_id']+", "+p['right_choice_id']] = value
+      weights[p['left_choice_id'].to_s+", "+p['right_choice_id'].to_s] = value
       sum += value
     end
 
