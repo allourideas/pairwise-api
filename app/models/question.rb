@@ -672,6 +672,16 @@ class Question < ActiveRecord::Base
        last_appearance
   end
 
+  def votes_per_uploaded_choice(only_active=false)
+    if only_active
+      uploaded_choices_count = choices.active.not_created_by(creator_id).count
+    else
+      uploaded_choices_count = choices.not_created_by(creator_id).count
+    end
+    return 0.to_f if uploaded_choices_count == 0
+    votes.count.to_f / uploaded_choices_count.to_f
+  end
+
   # a response is either a vote or a skip, get the median per session
   def median_responses_per_session
     median(Question.connection.select_values("

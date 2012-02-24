@@ -98,6 +98,14 @@ class QuestionsController < InheritedResources::Base
     end
   end
 
+  def votes_per_uploaded_choice
+    @question = current_user.questions.find(params[:id])
+    only_active = params[:only_active] == 'true'
+    respond_to do |format|
+      format.xml{ render :xml => {:value => @question.votes_per_uploaded_choice(only_active)}.to_xml and return}
+    end
+  end
+
   def object_info_by_visitor_id
     
     object_type = params[:object_type]

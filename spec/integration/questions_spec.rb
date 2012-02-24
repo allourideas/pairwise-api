@@ -252,6 +252,32 @@ describe "Questions" do
   describe "GET 'object_info_totals_by_date'" do
   end
 
+  describe "GET 'votes_per_uploaded_choice'" do
+    before(:all) { truncate_all }
+    it "should return the proper value" do
+      q = Factory.create(:aoi_question, :site => @api_user)
+      get_auth votes_per_uploaded_choice_question_path(q, :format => 'xml')
+      response.should be_success
+      response.body.should have_tag("value", :text => "0.0")
+
+      get_auth votes_per_uploaded_choice_question_path(q, :format => 'xml', :only_active => true)
+      response.should be_success
+      response.body.should have_tag("value", :text => "0.0")
+
+      v = Factory.create(:vote_new_user, :question => q)
+      Factory.create(:choice, :creator => v.voter, :question => q)
+      Factory.create(:choice, :creator => v.voter, :question => q, :active => true)
+      4.times { Factory.create(:vote, :question => q, :voter => v.voter) }
+      get_auth votes_per_uploaded_choice_question_path(q, :format => 'xml')
+      response.should be_success
+      response.body.should have_tag("value", :text => "2.5")
+
+      get_auth votes_per_uploaded_choice_question_path(q, :format => 'xml', :only_active => true)
+      response.should be_success
+      response.body.should have_tag("value", :text => "5.0")
+    end
+  end
+
   describe "GET 'median_responses_per_session'" do
     before(:all) { truncate_all }
     it "should return the median responses per session" do

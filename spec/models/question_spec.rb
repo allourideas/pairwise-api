@@ -249,17 +249,17 @@ describe Question do
       (endTime - start).should < 20
   end
 
-  context "ratio of uploaded ideas to participation" do
+  context "median response per session" do
     before(:all) do
       truncate_all
       @q = Factory.create(:aoi_question)
     end
 
-    it "should properly calculate median_responses_per_session with no responses" do
+    it "should properly calculate with no responses" do
       @q.median_responses_per_session.should == 0
     end
 
-    it "should properly calculate median_responses_per_session with 2 sessions" do
+    it "should properly calculate with 2 sessions" do
       # one session with 1 vote, one with 2 votes
       Factory.create(:vote_new_user, :question => @q)
       v = Factory.create(:vote_new_user, :question => @q)
@@ -267,7 +267,7 @@ describe Question do
       @q.median_responses_per_session.should == 1.5
     end
 
-    it "should properly calculate median_responses_per_session with 3 sessions" do
+    it "should properly calculate with 3 sessions" do
       # one session with 3 skips, 2 votes
       v = Factory.create(:vote_new_user, :question => @q)
       3.times { Factory.create(:skip, :question => @q, :skipper => v.voter) }
@@ -283,7 +283,33 @@ describe Question do
       4.times { Factory.create(:vote, :question => @q, :voter => v.voter) }
       @q.median_responses_per_session.should == 5
     end
+  end
 
+  context "votes per uploaded choice" do
+    before(:all) do
+      truncate_all
+      @q = Factory.create(:aoi_question)
+    end
+    it "should be calculated properly with no uploaded choices" do
+      @q.votes_per_uploaded_choice.should == 0.0
+      @q.votes_per_uploaded_choice(true).should == 0.0
+    end
+
+    it "should be calculated properly with some choices and votes" do
+        v = Factory.create(:vote_new_user, :question => @q)
+        Factory.create(:choice, :creator => v.voter, :question => @q)
+        Factory.create(:choice, :creator => v.voter, :question => @q, :active => true)
+        4.times { Factory.create(:vote, :question => @q, :voter => v.voter) }
+        @q.votes_per_uploaded_choice.should == 2.5
+        @q.votes_per_uploaded_choice(true).should == 5.0
+    end
+  end
+
+  context "ratio of uploaded ideas to participation" do
+    before(:all) do
+      truncate_all
+      @q = Factory.create(:aoi_question)
+    end
     it "should give proper stats required for idea:participation ratio" do
       @q.sessions_with_uploaded_ideas.should == 0
       @q.sessions_with_participation.should == 0
