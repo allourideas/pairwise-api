@@ -1,5 +1,31 @@
 namespace :prune_db do
 
+  desc "Finds ambiguous times due to daylight savings time"
+  task :find_ambiguous_times => :environment do
+    datetime_fields = {
+      :appearances  => ['created_at', 'updated_at'],
+      :choices      => ['created_at', 'updated_at'],
+      :clicks       => ['created_at', 'updated_at'],
+      :densities    => ['created_at', 'updated_at'],
+      :flags        => ['created_at', 'updated_at'],
+      :prompts      => ['created_at', 'updated_at'],
+      :skips        => ['created_at', 'updated_at'],
+      :votes        => ['created_at', 'updated_at'],
+      :visitors     => ['created_at', 'updated_at'],
+      :users        => ['created_at', 'updated_at'],
+      :questions    => ['created_at', 'updated_at'],
+      :question_versions => ['created_at', 'updated_at'],
+      :delayed_jobs => ['created_at', 'updated_at', 'run_at', 'locked_at', 'failed_at'],
+    }
+    datetime_fields.each do |table, columns|
+      where = columns.map{|c| "((#{c} > '2010-11-07 00:59:59' AND #{c} < '2010-11-07 02:00:00') OR (#{c} > '2011-11-06 00:59:59' AND #{c} < '2011-11-06 02:00:00'))"}.join(" OR ")
+      rows = ActiveRecord::Base.connection.select_all(
+        "SELECT id, #{columns.join(", ")} FROM #{table} WHERE #{where}"
+      )
+      puts rows.inspect if rows.length > 0
+    end
+  end
+
   desc "Converts all dates from PT to UTC"
   task :convert_dates_to_utc => :environment do
     time_spans = [
