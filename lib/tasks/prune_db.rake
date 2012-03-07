@@ -1,6 +1,74 @@
 namespace :prune_db do
 
-  task :all => [:invalidate_votes_with_bad_response_times]
+  desc "Converts all dates from PT to UTC"
+  task :convert_dates_to_utc => :environment do
+    time_spans = [
+      #{ :gt => "2009-11-01 02:00:00", :lt => "2010-03-14 02:00:00", :h => 8},
+      #{ :gt => "2010-03-14 02:00:00", :lt => "2010-11-07 01:00:00", :h => 7},
+      { :gt => "2010-11-07 01:00:00", :lt => "2010-11-07 02:00:00", :h => nil},
+      #{ :gt => "2010-11-07 02:00:00", :lt => "2011-03-13 02:00:00", :h => 8},
+      #{ :gt => "2011-03-13 02:00:00", :lt => "2011-11-06 01:00:00", :h => 7},
+      { :gt => "2011-11-06 01:00:00", :lt => "2011-11-06 02:00:00", :h => nil},
+      #{ :gt => "2011-11-06 02:00:00", :lt => "2012-03-11 02:00:00", :h => 8},
+      #{ :gt => "2012-03-11 02:00:00", :lt => "2012-11-04 01:00:00", :h => 7}
+    ]
+    # UTC because Rails will be thinking DB is in UTC when we run this
+    time_spans.map! do |t|
+      { :gt => Time.parse("#{t[:gt]} UTC"),
+        :lt => Time.parse("#{t[:lt]} UTC"),
+        :h  => t[:h] }
+    end
+    datetime_fields = {
+      :appearances  => ['created_at', 'updated_at'],
+      :choices      => ['created_at', 'updated_at'],
+      :clicks       => ['created_at', 'updated_at'],
+      :densities    => ['created_at', 'updated_at'],
+      :flags        => ['created_at', 'updated_at'],
+      :prompts      => ['created_at', 'updated_at'],
+      :skips        => ['created_at', 'updated_at'],
+      :votes        => ['created_at', 'updated_at'],
+      :visitors     => ['created_at', 'updated_at'],
+      :users        => ['created_at', 'updated_at'],
+      :questions    => ['created_at', 'updated_at'],
+      :question_versions => ['created_at', 'updated_at'],
+      :delayed_jobs => ['created_at', 'updated_at', 'run_at', 'locked_at', 'failed_at'],
+    }
+
+    STDOUT.sync = true
+    datetime_fields.each do |table, columns|
+      print "#{table}"
+      batch_size = 10000
+      i = 0
+      while true do
+        rows = ActiveRecord::Base.connection.select_all(
+          "SELECT id, #{columns.join(", ")} FROM #{table} ORDER BY id LIMIT #{i*batch_size}, #{batch_size}"
+        )
+        print "."
+
+        rows.each do |row|
+          row.each do |column, value|
+            if value.class == Time
+              time_spans.each do |span|
+                # TODO: update row if match and span has :h
+                # log if :h is nil these will be manually sorted out
+                # log if no time_span found
+                if value < span[:lt] && value > span[:gt]
+                  if span[:h].blank?
+                    puts "#{row.inspect}: #{span.inspect}"
+                  end
+                  break
+                end
+              end
+            end
+          end
+        end
+
+        i+= 1
+        break if rows.length < 1000
+      end
+      print "\n"
+    end
+  end
 
   desc "Fixes a mis-match between a vote's prompt_id and its appearance's prompt_id. Sets the appearance prompt_id to match the vote's prompt_id"
   task :fix_promptid_mismatch => :environment do
