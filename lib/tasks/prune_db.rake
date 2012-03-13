@@ -91,7 +91,7 @@ namespace :prune_db do
                   logger.info "AMBIGUOUS: #{table} #{row["id"]} #{column}: #{value}"
                   updated_values[column] = nil
                 else
-                  updated_values[column] = Time.parse("#{value} UTC") + span[:h].hours
+                  updated_values[column] = span[:h]
                 end
                 break
               end
@@ -105,7 +105,7 @@ namespace :prune_db do
           # remove ambiguous columns (we set them to nil above)
           updated_values.delete_if {|key, value| value.blank? }
           if updated_values.length > 0
-            update = "UPDATE #{table} SET #{updated_values.map{|k,v| "#{k} = '#{v.to_formatted_s(:db)}'"}.join(", ")} WHERE id = #{row["id"]}"
+            update = "UPDATE #{table} SET #{updated_values.map{|k,v| "#{k} = DATE_ADD(#{k}, INTERVAL #{v} HOUR)"}.join(", ")} WHERE id = #{row["id"]}"
 	    num = ActiveRecord::Base.connection.update_sql(update)
 	    if num == 1
               logger.info "UPDATE: #{table} #{row.inspect} #{updated_values.inspect}"
