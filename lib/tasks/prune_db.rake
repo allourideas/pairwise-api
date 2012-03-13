@@ -27,7 +27,9 @@ namespace :prune_db do
   end
 
   desc "Converts all dates from PT to UTC"
-  task :convert_dates_to_utc => :environment do
+  task :convert_dates_to_utc, [:workerid, :workers] => [:environment] do|t,args|
+    args.with_defaults(:workerid => 0, :workers => 1)
+    raise "workerid can not be greater than workers" if args[:workerid] > args[:workers]
     time_spans = [
       { :gt => "2009-11-01 01:59:59", :lt => "2010-03-14 02:00:00", :h => 8},
       { :gt => "2010-03-14 01:59:59", :lt => "2010-11-07 01:00:00", :h => 7},
@@ -39,25 +41,25 @@ namespace :prune_db do
       { :gt => "2012-03-11 01:59:59", :lt => "2012-11-04 01:00:00", :h => 7}
     ]
     # UTC because Rails will be thinking DB is in UTC when we run this
-    time_spans.map! do |t|
-      { :gt => Time.parse("#{t[:gt]} UTC"),
-        :lt => Time.parse("#{t[:lt]} UTC"),
-        :h  => t[:h] }
-    end
+    #time_spans.map! do |t|
+    #  { :gt => Time.parse("#{t[:gt]} UTC"),
+    #    :lt => Time.parse("#{t[:lt]} UTC"),
+    #    :h  => t[:h] }
+    #end
     datetime_fields = {
-      :appearances  => ['created_at', 'updated_at'],
-      :choices      => ['created_at', 'updated_at'],
-      :clicks       => ['created_at', 'updated_at'],
+      #:appearances  => ['created_at', 'updated_at'],
+      #:choices      => ['created_at', 'updated_at'],
+      #:clicks       => ['created_at', 'updated_at'],
       :densities    => ['created_at', 'updated_at'],
-      :flags        => ['created_at', 'updated_at'],
-      :prompts      => ['created_at', 'updated_at'],
-      :skips        => ['created_at', 'updated_at'],
-      :votes        => ['created_at', 'updated_at'],
-      :visitors     => ['created_at', 'updated_at'],
-      :users        => ['created_at', 'updated_at'],
-      :questions    => ['created_at', 'updated_at'],
-      :question_versions => ['created_at', 'updated_at'],
-      :delayed_jobs => ['created_at', 'updated_at', 'run_at', 'locked_at', 'failed_at'],
+      #:flags        => ['created_at', 'updated_at'],
+      #:prompts      => ['created_at', 'updated_at'],
+      #:skips        => ['created_at', 'updated_at'],
+      #:votes        => ['created_at', 'updated_at'],
+      #:visitors     => ['created_at', 'updated_at'],
+      #:users        => ['created_at', 'updated_at'],
+      #:questions    => ['created_at', 'updated_at'],
+      #:question_versions => ['created_at', 'updated_at'],
+      #:delayed_jobs => ['created_at', 'updated_at', 'run_at', 'locked_at', 'failed_at'],
     }
 
     STDOUT.sync = true
@@ -66,9 +68,13 @@ namespace :prune_db do
       print "#{table}"
       batch_size = 10000
       i = 0
+      where = ''
+      if args[:workers] > "1"
+        where = "WHERE MOD(id, #{args[:workers]}) = #{args[:workerid]}"
+      end
       while true do
         rows = ActiveRecord::Base.connection.select_all(
-          "SELECT id, #{columns.join(", ")} FROM #{table} ORDER BY id LIMIT #{i*batch_size}, #{batch_size}"
+          "SELECT id, #{columns.join(", ")} FROM #{table} #{where} ORDER BY id LIMIT #{i*batch_size}, #{batch_size}"
         )
         print "."
 
@@ -77,7 +83,7 @@ namespace :prune_db do
           # delete any value where the value is blank
           row.delete_if {|key, value| value.blank? }
           row.each do |column, value|
-            next unless value.class == Time
+            next if column == "id"
             time_spans.each do |span|
               if value < span[:lt] && value > span[:gt]
                 # if blank then ambiguous and we don't know how to translate
@@ -85,7 +91,7 @@ namespace :prune_db do
                   logger.info "AMBIGUOUS: #{table} #{row["id"]} #{column}: #{value}"
                   updated_values[column] = nil
                 else
-                  updated_values[column] = value + span[:h].hours
+                  updated_values[column] = Time.parse("#{value} UTC") + span[:h].hours
                 end
                 break
               end
@@ -99,7 +105,13 @@ namespace :prune_db do
           # remove ambiguous columns (we set them to nil above)
           updated_values.delete_if {|key, value| value.blank? }
           if updated_values.length > 0
-            logger.info "UPDATE: #{table} #{row.inspect} #{updated_values.inspect}"
+            update = "UPDATE #{table} SET #{updated_values.map{|k,v| "#{k} = '#{v.to_formatted_s(:db)}'"}.join(", ")} WHERE id = #{row["id"]}"
+	    num = ActiveRecord::Base.connection.update_sql(update)
+	    if num == 1
+              logger.info "UPDATE: #{table} #{row.inspect} #{updated_values.inspect}"
+	    else
+              logger.info "UPDATE FAILED: #{table} #{row.inspect} #{updated_values.inspect} #{num.inspect}"
+	    end
           end
         end
 
