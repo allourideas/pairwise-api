@@ -29,14 +29,14 @@ namespace :prune_db do
   desc "Converts all dates from PT to UTC"
   task :convert_dates_to_utc => :environment do
     time_spans = [
-      #{ :gt => "2009-11-01 02:00:00", :lt => "2010-03-14 02:00:00", :h => 8},
-      #{ :gt => "2010-03-14 02:00:00", :lt => "2010-11-07 01:00:00", :h => 7},
+      { :gt => "2009-11-01 02:00:00", :lt => "2010-03-14 02:00:00", :h => 8},
+      { :gt => "2010-03-14 02:00:00", :lt => "2010-11-07 01:00:00", :h => 7},
       { :gt => "2010-11-07 01:00:00", :lt => "2010-11-07 02:00:00", :h => nil},
-      #{ :gt => "2010-11-07 02:00:00", :lt => "2011-03-13 02:00:00", :h => 8},
-      #{ :gt => "2011-03-13 02:00:00", :lt => "2011-11-06 01:00:00", :h => 7},
+      { :gt => "2010-11-07 02:00:00", :lt => "2011-03-13 02:00:00", :h => 8},
+      { :gt => "2011-03-13 02:00:00", :lt => "2011-11-06 01:00:00", :h => 7},
       { :gt => "2011-11-06 01:00:00", :lt => "2011-11-06 02:00:00", :h => nil},
-      #{ :gt => "2011-11-06 02:00:00", :lt => "2012-03-11 02:00:00", :h => 8},
-      #{ :gt => "2012-03-11 02:00:00", :lt => "2012-11-04 01:00:00", :h => 7}
+      { :gt => "2011-11-06 02:00:00", :lt => "2012-03-11 02:00:00", :h => 8},
+      { :gt => "2012-03-11 02:00:00", :lt => "2012-11-04 01:00:00", :h => 7}
     ]
     # UTC because Rails will be thinking DB is in UTC when we run this
     time_spans.map! do |t|
@@ -61,6 +61,7 @@ namespace :prune_db do
     }
 
     STDOUT.sync = true
+    logger = Rails.logger
     datetime_fields.each do |table, columns|
       print "#{table}"
       batch_size = 10000
@@ -72,20 +73,33 @@ namespace :prune_db do
         print "."
 
         rows.each do |row|
+          updated_values = {}
+          # delete any value where the value is blank
+          row.delete_if {|key, value| value.blank? }
           row.each do |column, value|
-            if value.class == Time
-              time_spans.each do |span|
-                # TODO: update row if match and span has :h
-                # log if :h is nil these will be manually sorted out
-                # log if no time_span found
-                if value < span[:lt] && value > span[:gt]
-                  if span[:h].blank?
-                    puts "#{row.inspect}: #{span.inspect}"
-                  end
-                  break
+            next unless value.class == Time
+            time_spans.each do |span|
+              if value < span[:lt] && value > span[:gt]
+                # if blank then ambiguous and we don't know how to translate
+                if span[:h].blank?
+                  logger.info "AMBIGUOUS: #{table} #{row["id"]} #{column}: #{value}"
+                  updated_values[column] = nil
+                else
+                  updated_values[column] = value + span[:h].hours
                 end
+                break
               end
             end
+          end
+          # Check if some columns did not match any spans
+          key_diff = row.keys - updated_values.keys - ["id"]
+          if key_diff.length > 0
+            logger.info "MISSING SPAN: #{table} #{row["id"]} #{key_diff.inspect} #{row.inspect}"
+          end
+          # remove ambiguous columns (we set them to nil above)
+          updated_values.delete_if {|key, value| value.blank? }
+          if updated_values.length > 0
+            logger.info "UPDATE: #{table} #{row.inspect} #{updated_values.inspect}"
           end
         end
 
