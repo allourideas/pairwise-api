@@ -26,6 +26,8 @@ namespace :prune_db do
     end
   end
 
+  # There is a very similar task in the AOI code base as well.
+  # Any core changes to this task should probably be reflected there.
   desc "Converts all dates from PT to UTC"
   task :convert_dates_to_utc, [:workerid, :workers] => [:environment] do|t,args|
     args.with_defaults(:workerid => "0", :workers => "1")
@@ -109,6 +111,9 @@ namespace :prune_db do
       batch_size = 10000
       i = 0
       where = ''
+      # This is how we split the rows of a table between the various workers
+      # so that they don't attempt to work on the same row as another worker.
+      # The workerid is any number 0 through workers - 1.
       if args[:workers] > "1"
         where = "WHERE MOD(id, #{args[:workers]}) = #{args[:workerid]}"
       end
@@ -120,7 +125,7 @@ namespace :prune_db do
 
         rows.each do |row|
           updated_values = {}
-          # delete any value where the value is blank
+          # delete any value where the value is blank (just for delayed_jobs)
           row.delete_if {|key, value| value.blank? }
           row.each do |column, value|
             next if column == "id"
@@ -162,7 +167,7 @@ namespace :prune_db do
         end
 
         i+= 1
-        break if rows.length < 1000
+        break if rows.length < batchsize
       end
       print "\n"
     end
