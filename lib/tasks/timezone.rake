@@ -141,7 +141,7 @@ namespace :timezone do
         end
 
         i+= 1
-        break if rows.length < batchsize
+        break if rows.length < batch_size
       end
       print "\n"
     end
