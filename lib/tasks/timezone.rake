@@ -63,19 +63,34 @@ namespace :timezone do
     #    :h  => t[:h] }
     #end
     datetime_fields = {
-      #:appearances  => ['created_at', 'updated_at'],
-      #:choices      => ['created_at', 'updated_at'],
-      #:clicks       => ['created_at', 'updated_at'],
-      #:densities    => ['created_at', 'updated_at'],
-      #:flags        => ['created_at', 'updated_at'],
-      #:prompts      => ['created_at', 'updated_at'],
+      :appearances  => ['created_at', 'updated_at'],
+      :choices      => ['created_at', 'updated_at'],
+      :clicks       => ['created_at', 'updated_at'],
+      :densities    => ['created_at', 'updated_at'],
+      :flags        => ['created_at', 'updated_at'],
+      :prompts      => ['created_at', 'updated_at'],
       :skips        => ['created_at', 'updated_at'],
-      #:votes        => ['created_at', 'updated_at'],
-      #:visitors     => ['created_at', 'updated_at'],
-      #:users        => ['created_at', 'updated_at'],
-      #:questions    => ['created_at', 'updated_at'],
-      #:question_versions => ['created_at', 'updated_at'],
-      #:delayed_jobs => ['created_at', 'updated_at', 'run_at', 'locked_at', 'failed_at'],
+      :votes        => ['created_at', 'updated_at'],
+      :visitors     => ['created_at', 'updated_at'],
+      :users        => ['created_at', 'updated_at'],
+      :questions    => ['created_at', 'updated_at'],
+      :question_versions => ['created_at', 'updated_at'],
+      :delayed_jobs => ['created_at', 'updated_at', 'run_at', 'locked_at', 'failed_at'],
+    }
+    max_ids = {
+      :appearances  => 99999999999999,
+      :choices      => 99999999999999,
+      :clicks       => 99999999999999,
+      :densities    => 99999999999999,
+      :flags        => 99999999999999,
+      :prompts      => 99999999999999,
+      :skips        => 99999999999999,
+      :votes        => 99999999999999,
+      :visitors     => 99999999999999,
+      :users        => 99999999999999,
+      :questions    => 99999999999999,
+      :question_versions => 99999999999999,
+      :delayed_jobs => 99999999999999,
     }
 
     STDOUT.sync = true
@@ -84,12 +99,12 @@ namespace :timezone do
       print "#{table}"
       batch_size = 10000
       i = 0
-      where = ''
+      where = "WHERE id < #{max_ids[table]}"
       # This is how we split the rows of a table between the various workers
       # so that they don't attempt to work on the same row as another worker.
       # The workerid is any number 0 through workers - 1.
       if args[:workers] > "1"
-        where = "WHERE MOD(id, #{args[:workers]}) = #{args[:workerid]}"
+        where += " AND MOD(id, #{args[:workers]}) = #{args[:workerid]}"
       end
       while true do
         rows = ActiveRecord::Base.connection.select_all(
