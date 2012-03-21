@@ -78,19 +78,19 @@ namespace :timezone do
       :delayed_jobs => ['created_at', 'updated_at', 'run_at', 'locked_at', 'failed_at'],
     }
     max_ids = {
-      :appearances  => 99999999999999,
-      :choices      => 99999999999999,
-      :clicks       => 99999999999999,
-      :densities    => 99999999999999,
-      :flags        => 99999999999999,
-      :prompts      => 99999999999999,
-      :skips        => 99999999999999,
-      :votes        => 99999999999999,
-      :visitors     => 99999999999999,
-      :users        => 99999999999999,
-      :questions    => 99999999999999,
-      :question_versions => 99999999999999,
-      :delayed_jobs => 99999999999999,
+      :appearances  => 5065164,
+      :choices      => 199505,
+      :clicks       => 9874,
+      :densities    => 2417129,
+      :flags        => 1528,
+      :prompts      => 10130927,
+      :skips        => 435948,
+      :votes        => 3660738,
+      :visitors     => 1095417,
+      :users        => 9,
+      :questions    => 2253,
+      :question_versions => 15063,
+      :delayed_jobs => 4623375,
     }
 
     STDOUT.sync = true
