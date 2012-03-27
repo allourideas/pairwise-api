@@ -319,7 +319,7 @@ namespace :test_api do
 
         # this choice appears to have been deactivated then reactivated after
         # a period of voting
-        ignore_choices = [133189]
+        ignore_choices = [133189, 196277]
         appearances_by_choice_id.each do |choice_id, n_i| 
           if ((n_i < (mean - 6*stddev)) || (n_i > mean + 6 *stddev)) && !ignore_choices.include?(choice_id) && Choice.find(choice_id).active?
             error_message = "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question\n"
