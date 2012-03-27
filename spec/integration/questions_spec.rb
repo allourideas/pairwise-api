@@ -72,12 +72,15 @@ describe "Questions" do
 
     it "should calculate the number of votes submitted since some date" do
       votes = {}
+      date = rand(365).days.ago
       @questions.each do |q|
         votes[q.id] = Array.new(20) do
           Factory(:vote, :question => q, :created_at => rand(365).days.ago)
         end
+        # always add at least on vote so we know each question
+        # has a vote after the date
+        votes[q.id].push Factory(:vote, :question => q, :created_at => date + 1.day)
       end
-      date = rand(365).days.ago
       get_auth questions_path(:format => 'xml'), :votes_since => date.strftime("%Y-%m-%d")
 
       response.should be_success
