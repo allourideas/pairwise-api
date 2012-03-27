@@ -17,10 +17,6 @@ describe "Choices" do
         @params = { :choice => { :data => "hey"} }
       end
 
-      specify "given only the visitor identifier" do
-        @params = { :choice => { :visitor_identifier => @visitor.identifier } }
-      end
-      
       after do
         post_auth question_choices_path(@question), @params
         response.should be_success
