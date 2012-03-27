@@ -265,30 +265,20 @@ namespace :prune_db do
 
 
   desc "Invalidates votes with bad response times"
-  task :invalidate_votes_with_bad_response_times => :environment do
-    badvotes = [] 
-    #might want to optimize later to not start from the beginning each time
+  task :invalidate_votes_with_bad_response_times, [:start_vote_id] => [:environment] do |t, args|
+    args.with_defaults(:start_vote_id => 0)
     STDOUT.sync = true
-    Vote.find_each(:batch_size => 10000, :include => :appearance) do |v|
+    Vote.find_each(:batch_size => 10000, :include => :appearance, :conditions => ["votes.id >= ?", args[:start_vote_id]]) do |v|
       next if v.nil? || v.appearance.nil?
       server_response_time = v.created_at.to_f - v.appearance.created_at.to_f
       if v.time_viewed && v.time_viewed/1000 > server_response_time 
-        badvotes << v
-        print "."
-      end
-    end
-    puts "\n"
-
-    if badvotes.any?
-
-      badvotes.each do |v|
         v.time_viewed = nil
         v.missing_response_time_exp = "invalid"
         v.save!
+        print "."
       end
-    else
-      puts "Could not find any bad votes. Yay."
     end
+    print "\n"
   end
 
   task :associate_skips_with_appearances => :environment do
