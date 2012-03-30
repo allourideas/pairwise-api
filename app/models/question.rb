@@ -690,7 +690,7 @@ class Question < ActiveRecord::Base
         UNION ALL
         (SELECT skipper_id vid FROM skips WHERE question_id = #{id})
       ) b GROUP BY b.vid ORDER BY total
-    "), true) || 0
+    "), true) || nil
   end
 
   def upload_to_participation_ratio
