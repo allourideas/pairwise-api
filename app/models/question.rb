@@ -678,7 +678,7 @@ class Question < ActiveRecord::Base
     else
       uploaded_choices_count = choices.not_created_by(creator_id).count
     end
-    return 0.to_f if uploaded_choices_count == 0
+    return nil if uploaded_choices_count == 0
     votes.count.to_f / uploaded_choices_count.to_f
   end
 
@@ -695,7 +695,7 @@ class Question < ActiveRecord::Base
 
   def upload_to_participation_ratio
     swp = sessions_with_participation
-    return 0.to_f if swp == 0
+    return nil if swp == 0
     sessions_with_uploaded_ideas.to_f / swp.to_f
   end
 
@@ -722,7 +722,7 @@ class Question < ActiveRecord::Base
 
   def vote_rate
     tus = total_uniq_sessions
-    return 0.to_f if tus == 0
+    return nil if tus == 0
     sessions_with_vote.to_f / tus.to_f
   end
 

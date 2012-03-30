@@ -261,11 +261,11 @@ describe "Questions" do
       q = Factory.create(:aoi_question, :site => @api_user)
       get_auth votes_per_uploaded_choice_question_path(q, :format => 'xml')
       response.should be_success
-      response.body.should have_tag("value", :text => "0.0")
+      response.body.should have_tag("value[nil=true]", :text => "")
 
       get_auth votes_per_uploaded_choice_question_path(q, :format => 'xml', :only_active => true)
       response.should be_success
-      response.body.should have_tag("value", :text => "0.0")
+      response.body.should have_tag("value[nil=true]", :text => "")
 
       v = Factory.create(:vote_new_user, :question => q)
       Factory.create(:choice, :creator => v.voter, :question => q)
@@ -300,7 +300,7 @@ describe "Questions" do
       q = Factory.create(:aoi_question, :site => @api_user)
       get_auth upload_to_participation_ratio_question_path(q, :format => 'xml')
       response.should be_success
-      response.body.should have_tag("uploadparticipationratio", :text => "0.0")
+      response.body.should have_tag("uploadparticipationratio[nil=true]", :text => "")
 
       # 10 voting only sessions
       10.times { Factory.create(:vote_new_user, :question => q) }
@@ -346,7 +346,7 @@ describe "Questions" do
     it "should return the proper vote rate if no votes" do
       get_auth vote_rate_question_path(@questions.first, :format => 'xml')
       response.should be_success
-      response.body.should have_tag("voterate", :text => "0.0")
+      response.body.should have_tag("voterate[nil=true]", :text => "")
     end
   end
 
