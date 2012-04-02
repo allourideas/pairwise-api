@@ -317,11 +317,14 @@ namespace :test_api do
       if sum > 0:
         stddev = Math.sqrt( appearances_by_choice_id.values.inject(0) { |sum, e| sum + (e - mean) ** 2 } / appearances_by_choice_id.size.to_f )
 
+        # add small number to standard deviation to give some leniency when stddev is low
+        stddev += 0.5
+
         # this choice appears to have been deactivated then reactivated after
         # a period of voting
         ignore_choices = [133189]
         appearances_by_choice_id.each do |choice_id, n_i| 
-          if (n_i > 10 && (n_i < (mean - 6*stddev)) || (n_i > mean + 6 *stddev)) && !ignore_choices.include?(choice_id) && Choice.find(choice_id).active?
+          if ((n_i < (mean - 6*stddev)) || (n_i > mean + 6 *stddev)) && !ignore_choices.include?(choice_id) && Choice.find(choice_id).active?
             error_message = "Choice #{choice_id} in Question ##{question.id} has an irregular number of appearances: #{n_i}, as compared to the mean: #{mean} and stddev #{stddev} for this question\n"
           end
         end
