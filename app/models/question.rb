@@ -693,7 +693,7 @@ class Question < ActiveRecord::Base
     "), true) || nil
   end
 
-  def upload_to_participation_ratio
+  def upload_to_participation_rate
     swp = sessions_with_participation
     return nil if swp == 0
     sessions_with_uploaded_ideas.to_f / swp.to_f
@@ -709,6 +709,8 @@ class Question < ActiveRecord::Base
 
   # total sessions with at least one vote, skip, or uploaded idea
   def sessions_with_participation
+    # only select votes that are valid because wikipedia project has new votes
+    # marked as invalid and we want that to be effectively closed to updating this value.
     Question.connection.select_one("
       SELECT COUNT(*) FROM (
         (SELECT DISTINCT(skipper_id) vid FROM skips WHERE question_id = #{id})

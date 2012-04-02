@@ -229,9 +229,9 @@ class QuestionsController < InheritedResources::Base
     end
   end
 
-  def upload_to_participation_ratio
+  def upload_to_participation_rate
     @question = current_user.questions.find(params[:id])
-    response = {:uploadparticipationratio => @question.upload_to_participation_ratio}
+    response = {:uploadparticipationrate => @question.upload_to_participation_rate}
     respond_to do |format|
       format.xml { render :xml => response.to_xml and return}
     end

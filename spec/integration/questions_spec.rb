@@ -297,13 +297,13 @@ describe "Questions" do
     end
   end
 
-  describe "GET 'upload_to_participation_ratio'" do
+  describe "GET 'upload_to_participation_rate'" do
     before(:all) { truncate_all }
-    it "should return the proper upload:participation ratio" do
+    it "should return the proper upload:participation rate" do
       q = Factory.create(:aoi_question, :site => @api_user)
-      get_auth upload_to_participation_ratio_question_path(q, :format => 'xml')
+      get_auth upload_to_participation_rate_question_path(q, :format => 'xml')
       response.should be_success
-      response.body.should have_tag("uploadparticipationratio[nil=true]", :text => "")
+      response.body.should have_tag("uploadparticipationrate[nil=true]", :text => "")
 
       # 10 voting only sessions
       10.times { Factory.create(:vote_new_user, :question => q) }
@@ -323,9 +323,9 @@ describe "Questions" do
       # 5 users who only added ideas
       5.times { Factory.create(:choice_new_user, :question => q) }
 
-      get_auth upload_to_participation_ratio_question_path(q, :format => 'xml')
+      get_auth upload_to_participation_rate_question_path(q, :format => 'xml')
       response.should be_success
-      response.body.should have_tag("uploadparticipationratio", :text => "0.555555555555556")
+      response.body.should have_tag("uploadparticipationrate", :text => "0.555555555555556")
     end
   end
 
