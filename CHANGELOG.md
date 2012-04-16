@@ -1,3 +1,5 @@
+## Pairwise 3.0.1 (Apr 16, 2012) ###
+
  * Added votes_per_uploaded_choice call to API
  * Added median_responses_per_session call to API
  * Added upload_to_participation_rate call to API
