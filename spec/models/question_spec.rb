@@ -256,7 +256,7 @@ describe Question do
     end
 
     it "should properly calculate with no responses" do
-      @q.median_responses_per_session.should == 0
+      @q.median_responses_per_session.should == nil
     end
 
     it "should properly calculate with 2 sessions" do
@@ -291,8 +291,8 @@ describe Question do
       @q = Factory.create(:aoi_question)
     end
     it "should be calculated properly with no uploaded choices" do
-      @q.votes_per_uploaded_choice.should == 0.0
-      @q.votes_per_uploaded_choice(true).should == 0.0
+      @q.votes_per_uploaded_choice.should == nil
+      @q.votes_per_uploaded_choice(true).should == nil
     end
 
     it "should be calculated properly with some choices and votes" do
@@ -305,21 +305,21 @@ describe Question do
     end
   end
 
-  context "ratio of uploaded ideas to participation" do
+  context "rate of uploaded ideas to participation" do
     before(:all) do
       truncate_all
       @q = Factory.create(:aoi_question)
     end
-    it "should give proper stats required for idea:participation ratio" do
+    it "should give proper stats required for idea:participation rate" do
       @q.sessions_with_uploaded_ideas.should == 0
       @q.sessions_with_participation.should == 0
-      @q.upload_to_participation_ratio.should == 0.0
+      @q.upload_to_participation_rate.should == nil
 
       # 10 voting only sessions
       10.times { Factory.create(:vote_new_user, :question => @q) }
       @q.sessions_with_uploaded_ideas.should == 0
       @q.sessions_with_participation.should == 10
-      @q.upload_to_participation_ratio.should == 0.0
+      @q.upload_to_participation_rate.should == 0.0
 
       # 7 users who voted and added ideas
       7.times do
@@ -328,13 +328,13 @@ describe Question do
       end
       @q.sessions_with_uploaded_ideas.should == 7
       @q.sessions_with_participation.should == 17
-      @q.upload_to_participation_ratio.round(3).should == 0.412
+      @q.upload_to_participation_rate.round(3).should == 0.412
 
       # 2 users who only skip
       2.times { Factory.create(:skip_new_user, :question => @q) }
       @q.sessions_with_uploaded_ideas.should == 7
       @q.sessions_with_participation.should == 19
-      @q.upload_to_participation_ratio.round(3).should == 0.368
+      @q.upload_to_participation_rate.round(3).should == 0.368
 
       # 3 users who did everything
       3.times do
@@ -344,13 +344,13 @@ describe Question do
       end
       @q.sessions_with_uploaded_ideas.should == 10
       @q.sessions_with_participation.should == 22
-      @q.upload_to_participation_ratio.round(3).should == 0.455
+      @q.upload_to_participation_rate.round(3).should == 0.455
 
       # 5 users who only added ideas
       5.times { Factory.create(:choice_new_user, :question => @q) }
       @q.sessions_with_uploaded_ideas.should == 15
       @q.sessions_with_participation.should == 27
-      @q.upload_to_participation_ratio.round(3).should == 0.556
+      @q.upload_to_participation_rate.round(3).should == 0.556
 
     end
   end
@@ -364,7 +364,7 @@ describe Question do
     it "should give proper stats required for vote rate" do
       @q.total_uniq_sessions.should == 0
       @q.sessions_with_vote.should == 0
-      @q.vote_rate.should == 0.0
+      @q.vote_rate.should == nil
 
       # add new session + appearance, but no vote
       Factory.create(:appearance_new_user, :question => @q)
