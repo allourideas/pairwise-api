@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20111017171903) do
+ActiveRecord::Schema.define(:version => 20120426144214) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -29,6 +29,32 @@ ActiveRecord::Schema.define(:version => 20111017171903) do
   add_index "appearances", ["lookup"], :name => "index_appearances_on_lookup"
   add_index "appearances", ["prompt_id"], :name => "index_appearances_on_prompt_id"
   add_index "appearances", ["question_id", "voter_id"], :name => "index_appearances_on_question_id_voter_id"
+
+  create_table "choice_versions", :force => true do |t|
+    t.integer  "choice_id"
+    t.integer  "version"
+    t.integer  "item_id"
+    t.integer  "question_id"
+    t.integer  "position"
+    t.integer  "ratings"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "request_id"
+    t.integer  "prompt_id"
+    t.boolean  "active",                     :default => false
+    t.text     "tracking"
+    t.float    "score"
+    t.string   "local_identifier"
+    t.integer  "prompts_on_the_left_count",  :default => 0
+    t.integer  "prompts_on_the_right_count", :default => 0
+    t.integer  "wins",                       :default => 0
+    t.integer  "losses",                     :default => 0
+    t.integer  "prompts_count",              :default => 0
+    t.string   "data"
+    t.integer  "creator_id"
+  end
+
+  add_index "choice_versions", ["choice_id"], :name => "index_choice_versions_on_choice_id"
 
   create_table "choices", :force => true do |t|
     t.integer  "item_id"
@@ -50,6 +76,7 @@ ActiveRecord::Schema.define(:version => 20111017171903) do
     t.integer  "prompts_count",              :default => 0
     t.string   "data"
     t.integer  "creator_id"
+    t.integer  "version"
   end
 
   add_index "choices", ["creator_id"], :name => "index_choices_on_creator_id"

@@ -1,4 +1,5 @@
 class Choice < ActiveRecord::Base
+  acts_as_versioned
   
   belongs_to :question, :counter_cache => true
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"

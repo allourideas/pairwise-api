@@ -1,3 +1,5 @@
+ * Update choices to act_as_versioned
+
 ## Pairwise 3.0.1 (Apr 16, 2012) ###
 
  * Added votes_per_uploaded_choice call to API
