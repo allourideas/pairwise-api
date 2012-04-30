@@ -2,7 +2,7 @@ class AddVersionToChoice < ActiveRecord::Migration
   def self.up
     # if you want to manually run the query to create
     # all the initial versions in choice_versions table set this to true
-    run_query_manually = true
+    run_query_manually = false
     # default of 1 so all existing rows have a version of 1
     add_column :choices, :version, :integer, :default => 1
     # make version nil by default
