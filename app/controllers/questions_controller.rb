@@ -250,8 +250,8 @@ class QuestionsController < InheritedResources::Base
       data = Choice.count(:conditions => "choices.question_id = #{@question.id} AND choices.creator_id <> #{@question.creator_id}", 
 			  :group => "date(choices.created_at)")
       # we want graphs to go from date of first vote -> date of last vote, so adding those two boundries here.
-      mindate = Vote.minimum('date(created_at)', :conditions => {:question_id => @question.id}).to_date
-      maxdate = Vote.maximum('date(created_at)', :conditions => {:question_id => @question.id}).to_date
+      mindate = Vote.minimum('date(created_at)', :conditions => {:question_id => @question.id}).try(:to_date)
+      maxdate = Vote.maximum('date(created_at)', :conditions => {:question_id => @question.id}).try(:to_date)
 
       data[mindate] = 0 if !data.include?(mindate) && !mindate.nil?
       data[maxdate] = 0 if !data.include?(maxdate) && !maxdate.nil?
