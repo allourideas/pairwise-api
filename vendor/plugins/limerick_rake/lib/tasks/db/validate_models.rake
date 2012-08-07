@@ -3,14 +3,18 @@ namespace :db do
   desc "Run model validations on all model records in database"
   task :validate_models => :environment do
     # because rails loads stuff on demand...
-    Dir.glob(RAILS_ROOT + '/app/models/**/*.rb').each do |file| 
+    Dir.glob(Rails.root.to_s + '/app/models/**/*.rb').each do |file| 
       silence_warnings do
         require file
       end
     end
-  
+
     Object.subclasses_of(ActiveRecord::Base).select { |c| c.base_class == c}.sort_by(&:name).each do |klass|
       next if klass.name == "CGI::Session::ActiveRecordStore::Session"
+      unless klass.table_exists?
+        puts "WARNING: Could not find table for #{klass} (skipping)"
+        next
+      end
       invalid_count = 0
       total = klass.count
       chunk_size = 1000
