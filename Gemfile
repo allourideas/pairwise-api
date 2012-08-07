@@ -1,20 +1,19 @@
 source :rubygems
 source "http://gems.github.com"
 
-gem "bundler", "1.0.21"
+gem "rake", "~> 0.9.2.2"
+gem "bundler", "~> 1.1.5"
 gem "rails", "2.3.14"
 gem "hoptoad_notifier", "2.4.9"
 gem "ambethia-smtp-tls", "1.1.2", :require => "smtp-tls"
-gem "thoughtbot-paperclip", "2.3.1",
-    :require => "paperclip"
+gem "paperclip", "2.3.1"
 gem "mime-types", "1.16",
     :require => "mime/types"
 gem "xml-simple", "1.0.12",
     :require     => "xmlsimple"
 gem "yfactorial-utility_scopes", "0.2.2",
     :require     => "utility_scopes"
-gem "justinfrench-formtastic", "0.2.2",
-    :require     => "formtastic"
+gem "formtastic", "~> 0.2.2"
 gem "inherited_resources",  "1.0.4"
 gem "has_scope",  "0.4.2"
 gem "responders",  "0.4.8"
