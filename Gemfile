@@ -2,6 +2,7 @@ source :rubygems
 source "http://gems.github.com"
 
 gem "rake", "~> 0.9.2.2"
+gem "rdoc", "~> 3.12"
 gem "bundler", "~> 1.1.5"
 gem "rails", "2.3.14"
 gem "hoptoad_notifier", "2.4.9"
