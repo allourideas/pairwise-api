@@ -32,20 +32,23 @@ gem 'mysql2', '0.2.18'
 
 
 group :cucumber do
-  gem 'cucumber', '0.8.5'
+  gem 'cucumber', '1.1.0'
+  gem 'cucumber-rails', '0.3.2'
   gem 'webrat', "0.5.3"
   gem 'fakeweb', '1.2.5'
-  gem 'factory_girl', '1.2.3'
 end
 
 group :test do
   gem "rspec", "~>1.3.1"
   gem "rspec-rails", "1.3.4"
-  gem "factory_girl", "1.2.3"
   gem "shoulda", "~>2.10.1"
   gem "jtrupiano-timecop", "0.2.1",
     :require     => "timecop"
   gem "fakeweb", "1.2.5"
   gem "jferris-mocha", "0.9.5.0.1241126838",
     :require     => "mocha"
+end
+
+group :test, :cucumber do
+  gem 'factory_girl', '1.2.3'
 end
