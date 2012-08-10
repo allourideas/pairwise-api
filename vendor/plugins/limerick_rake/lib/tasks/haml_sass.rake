@@ -1,8 +1,8 @@
 # Dan Croak, February 2008
 
-@css_dir   = "#{RAILS_ROOT}/public/stylesheets"
+@css_dir   = "#{Rails.root.to_s}/public/stylesheets"
 @sass_dir  = "#{@css_dir}/sass"
-@views_dir = "#{RAILS_ROOT}/app/views"
+@views_dir = "#{Rails.root.to_s}/app/views"
 
 def convert_css_to_sass(basename)
   system "css2sass #{@css_dir}/#{basename}.css > #{@sass_dir}/#{basename}.sass"
@@ -39,7 +39,7 @@ namespace :sass do
       convert_sass_to_css basename
     end
   end
-  
+
   desc "Convert all Sass files to CSS."
   task :all_sass2css => :environment do
     files = Dir.entries(@sass_dir).find_all do |f| 
@@ -65,7 +65,7 @@ namespace :haml do
     controllers.each do |controller|
       files = Dir.entries("#{@views_dir}/#{controller}").find_all do |f|
         (File.new("#{@views_dir}/#{controller}/#{f}").path.include?(".html.erb") ||
-         File.new("#{@views_dir}/#{controller}/#{f}").path.include?(".rhtml")) &&
+        File.new("#{@views_dir}/#{controller}/#{f}").path.include?(".rhtml")) &&
         File.basename("#{@views_dir}/#{controller}/#{f}") !~ /^[.]/
       end
       files.each do |filename|
@@ -75,4 +75,3 @@ namespace :haml do
     end
   end
 end
-

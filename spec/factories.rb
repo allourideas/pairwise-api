@@ -1,8 +1,3 @@
-Factory.define(:item) do |f|
-  f.sequence(:data) { |i| "Item #{i}" }
-end
-
-
 Factory.define(:question) do |f|
   f.sequence(:name) { |i| "Name #{i}" }
   f.site {|s| s.association(:user)}
@@ -99,16 +94,3 @@ Factory.define(:appearance_new_user, :parent => :appearance) do |f|
   f.voter {|a| Factory.build(:visitor, :site => a.question.site)}
 end
 
-Factory.sequence :email do |n|
-  "user#{n}@example.com"
-end
-
-Factory.define :user do |user|
-  user.email                 { Factory.next :email }
-  user.password              { "password" }
-  user.password_confirmation { "password" }
-end
-
-Factory.define :email_confirmed_user, :parent => :user do |user|
-  user.email_confirmed { true }
-end
