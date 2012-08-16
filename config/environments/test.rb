@@ -21,8 +21,6 @@ config.action_controller.allow_forgery_protection    = false
 # ActionMailer::Base.deliveries array.
 config.action_mailer.delivery_method = :test
 
-$redis = MockRedis.new
-
 HOST = 'localhost'
 
 AUTHORIZE_NET_API_LOGIN_ID    = ''
