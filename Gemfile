@@ -51,4 +51,5 @@ end
 
 group :test, :cucumber do
   gem 'factory_girl', '1.2.3'
+  gem 'mock_redis', '0.4.1'
 end
