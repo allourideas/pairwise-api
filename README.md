@@ -1,4 +1,4 @@
-Pairwise 2.0
+Pairwise 2.0 [![Build Status](https://secure.travis-ci.org/allourideas/pairwise-api.png?branch=master)](http://travis-ci.org/allourideas/pairwise-api)
 -------------------
 
 Pairwise web service 2.0.  This provides the API utilized by [photocracy.org](http://www.photocracy.org/) and [allourideas.org](http://www.allourideas.org/)
