@@ -16,7 +16,7 @@ Getting Started Using the API
 
 <https://github.com/allourideas/pairwise-api/wiki/Using-The-API>
 
-Discussion group
+Email List
 -------------------
 
 If you would like to join the allourideas email list, send a message to allourideas+subscribe@googlegroups.com.
