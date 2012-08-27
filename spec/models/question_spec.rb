@@ -233,7 +233,7 @@ describe Question do
       @question.choices.count.should == 3
   end
 
-  it "should create 2000 ideas question in less than 20 seconds" do
+  it "should create 2000 ideas question in less than 30 seconds" do
       start = Time.now
       @question = Factory.build(:question)
       @question.ideas = []
@@ -246,7 +246,7 @@ describe Question do
       @question.choices.count.should == 2000
 
       endTime = Time.now
-      (endTime - start).should < 20
+      (endTime - start).should < 30
   end
 
   context "median response per session" do
