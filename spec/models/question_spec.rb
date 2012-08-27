@@ -233,20 +233,18 @@ describe Question do
       @question.choices.count.should == 3
   end
 
-  it "should create 2000 ideas question in less than 30 seconds" do
-      start = Time.now
+  it "should create 500 ideas question without creating any prompts" do
       @question = Factory.build(:question)
       @question.ideas = []
       o = [('a'..'z'),('A'..'Z')].map{|i| i.to_a}.flatten
-      2000.times do
+      500.times do
         @question.ideas << (0..10).map{ o[rand(o.length)]  }.join
       end
 
       @question.save
-      @question.choices.count.should == 2000
+      @question.choices.count.should == 500
 
-      endTime = Time.now
-      (endTime - start).should < 30
+      @question.reload.prompts.count.should == 0
   end
 
   context "median response per session" do
