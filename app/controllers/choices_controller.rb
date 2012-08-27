@@ -96,7 +96,13 @@ class ChoicesController < InheritedResources::Base
   def show
     @question = current_user.questions.find(params[:question_id])
     @choice = @question.choices.find(params[:id])
-    show!
+    response_options = {}
+    response_options[:include] = :versions if params[:version] == 'all'
+
+    respond_to do |format|
+      format.xml { render :xml => @choice.to_xml(response_options) }
+      format.json { render :json => @choice.to_json(response_options) }
+    end
   end
 
 
