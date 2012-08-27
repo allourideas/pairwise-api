@@ -23,13 +23,15 @@ class QuestionsController < InheritedResources::Base
     @question_optional_information.each do |key, value|
       optional_information << Proc.new { |options| options[:builder].tag!(key, value)}
     end
+    response_options = { :methods => [:item_count], :procs => optional_information }
+    response_options[:include] = :versions if params[:version] == "all"
 
     respond_to do |format|
       format.xml { 
-        render :xml => @question.to_xml(:methods => [:item_count], :procs => optional_information)
+        render :xml => @question.to_xml(response_options)
       }
       format.js{
-      	render :json => @question.to_json(:methods => [:item_count], :procs => optional_information)
+        render :json => @question.to_json(response_options)
       }
     end
   end

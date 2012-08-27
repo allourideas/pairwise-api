@@ -125,4 +125,25 @@ describe ChoicesController do
       end
     end
   
+    describe "GET show" do
+      it "doesn't returns all versions by default" do
+        question = Factory(:question, :site => @user)
+        choice = Factory(:choice, :question => question)
+
+        get :show, :question_id => question.id, :id => choice.id, :format => "xml"
+
+        response.code.should == "200"
+        response.body.should_not have_tag("versions")
+      end
+
+      it "responds with all versions if requested" do
+        question = Factory(:question, :site => @user)
+        choice = Factory(:choice, :question => question)
+
+        get :show, :question_id => question.id, :id => choice.id, :format => "xml", :version => "all"
+
+        response.code.should == "200"
+        response.body.should have_tag("versions")
+      end
+    end
 end

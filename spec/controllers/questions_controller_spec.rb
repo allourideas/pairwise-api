@@ -17,6 +17,7 @@ describe QuestionsController do
     assigns[:question].should == @question
     @response.body.should have_tag("question")
     @response.code.should == "200"
+    @response.body.should_not have_tag("versions")
   end
 
 
@@ -31,5 +32,13 @@ describe QuestionsController do
     @response.body.should have_tag("appearance_id")
     @response.body.should have_tag("visitor_votes")
     @response.body.should have_tag("visitor_ideas")
+  end
+
+  it "responds with all versions if requested" do
+    get :show, :id => @question.id, :format => "xml", :version => "all"
+
+    assigns[:question].should == @question
+    @response.code.should == "200"
+    @response.body.should have_tag("versions")
   end
 end
