@@ -82,6 +82,30 @@ describe Question do
 
   end
 
+  describe "random_question" do
+    it "should return a prompt from a random question" do
+      site = Factory(:user)
+      question = Factory(:aoi_question, :active => true, :site => site)
+      Factory(:aoi_question, :active => true, :site => site)
+
+      Question.stub!(:rand).and_return(0, 1)
+
+      first_prompt = question.choose_prompt(:algorithm => "random_question")
+      second_prompt = question.choose_prompt(:algorithm => "random_question")
+
+      first_prompt.question.should_not == second_prompt.question
+    end
+
+    it "should not return a prompt from a question from another site" do
+      question = Factory(:aoi_question, :active => true)
+      other_question = Factory(:aoi_question, :active => true)
+
+      question.site.questions.count.should == 1
+      prompt = question.choose_prompt(:algorithm => "random_question")
+      prompt.question.site.should_not == other_question.site
+    end
+  end
+
   it "should return nil if optional parameters are empty" do 
     @question_optional_information = @question.get_optional_information(nil)
     @question_optional_information.should be_empty

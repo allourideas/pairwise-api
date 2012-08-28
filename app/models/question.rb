@@ -38,8 +38,12 @@ class Question < ActiveRecord::Base
   @@percent_full = 0.9
   @@num_prompts = 1000
 
+  named_scope :active, :conditions => { :active => true }
   named_scope :created_by, lambda { |id|
     {:conditions => { :local_identifier => id } }
+  }
+  named_scope :site, lambda { |site|
+    {:conditions => { :site_id => site.id } }
   }
 
   def create_choices_from_ideas
@@ -73,7 +77,9 @@ class Question < ActiveRecord::Base
       raise RuntimeError, "More than one choice needs to be active"
     end
 
-    if self.uses_catchup? || options[:algorithm] == "catchup"
+    if options[:algorithm] == "random_question"
+        return self.random_question_choose_prompt
+    elsif self.uses_catchup? || options[:algorithm] == "catchup"
         logger.info("Question #{self.id} is using catchup algorithm!")
         next_prompt = self.pop_prompt_queue
         if next_prompt.nil?
@@ -90,6 +96,18 @@ class Question < ActiveRecord::Base
         return self.simple_random_choose_prompt
     end
           
+  end
+
+  def random_question_choose_prompt
+    question = Question.random_by_site(site)
+    question.choose_prompt if question
+  end
+
+  def self.random_by_site(site)
+    active_questions_by_site_count = active.site(site).count
+    return unless active_questions_by_site_count > 0
+    offset = rand(active_questions_by_site_count)
+    active.site(site).find(:first, :offset => offset)
   end
 
   #TODO: generalize for prompts of rank > 2
