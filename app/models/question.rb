@@ -254,6 +254,16 @@ class Question < ActiveRecord::Base
       result.merge!(:average_votes => average.round) # round to 2 decimals
     end
 
+    if params[:user_ideas]
+      result[:user_ideas] = choices.not_created_by(creator_id).count
+    end
+    if params[:active_user_ideas]
+      result[:active_user_ideas] = choices.not_created_by(creator_id).active.count
+    end
+    if params[:votes_since]
+      result[:recent_votes] = votes.recent(params[:votes_since]).count
+    end
+
     return result
   end
 

@@ -226,6 +226,27 @@ describe Question do
     @question.get_prompt_cache_misses(Date.today).should == "1"
   end
   
+  it "should return a hash with the user ideas count when optional parameters contains 'user_ideas'" do
+    params = {:id => 124, :user_ideas => true}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:user_ideas)
+    @question_optional_information[:user_ideas].should be_an_instance_of(Fixnum)
+  end
+
+  it "should return a hash with the active user ideas count when optional parameters contains 'active_user_ideas'" do
+    params = {:id => 124, :active_user_ideas => true}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:active_user_ideas)
+    @question_optional_information[:active_user_ideas].should be_an_instance_of(Fixnum)
+  end
+
+  it "should return a hash with the recent votes count when optional parameters contains 'votes_since'" do
+    params = {:id => 124, :votes_since => 1.day.ago}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:recent_votes)
+    @question_optional_information[:recent_votes].should be_an_instance_of(Fixnum)
+  end
+
   it "should auto create ideas when 'ideas' attribute is set" do
       @question = Factory.build(:question)
       @question.ideas = %w(one two three)
