@@ -82,6 +82,30 @@ describe Question do
 
   end
 
+  describe "random_question" do
+    it "should return a prompt from a random question" do
+      site = Factory(:user)
+      question = Factory(:aoi_question, :active => true, :site => site)
+      Factory(:aoi_question, :active => true, :site => site)
+
+      Question.stub!(:rand).and_return(0, 1)
+
+      first_prompt = question.choose_prompt(:algorithm => "random_question")
+      second_prompt = question.choose_prompt(:algorithm => "random_question")
+
+      first_prompt.question.should_not == second_prompt.question
+    end
+
+    it "should not return a prompt from a question from another site" do
+      question = Factory(:aoi_question, :active => true)
+      other_question = Factory(:aoi_question, :active => true)
+
+      question.site.questions.count.should == 1
+      prompt = question.choose_prompt(:algorithm => "random_question")
+      prompt.question.site.should_not == other_question.site
+    end
+  end
+
   it "should return nil if optional parameters are empty" do 
     @question_optional_information = @question.get_optional_information(nil)
     @question_optional_information.should be_empty
@@ -226,6 +250,27 @@ describe Question do
     @question.get_prompt_cache_misses(Date.today).should == "1"
   end
   
+  it "should return a hash with the user ideas count when optional parameters contains 'user_ideas'" do
+    params = {:id => 124, :user_ideas => true}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:user_ideas)
+    @question_optional_information[:user_ideas].should be_an_instance_of(Fixnum)
+  end
+
+  it "should return a hash with the active user ideas count when optional parameters contains 'active_user_ideas'" do
+    params = {:id => 124, :active_user_ideas => true}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:active_user_ideas)
+    @question_optional_information[:active_user_ideas].should be_an_instance_of(Fixnum)
+  end
+
+  it "should return a hash with the recent votes count when optional parameters contains 'votes_since'" do
+    params = {:id => 124, :votes_since => 1.day.ago}
+    @question_optional_information = @question.get_optional_information(params)
+    @question_optional_information.should include(:recent_votes)
+    @question_optional_information[:recent_votes].should be_an_instance_of(Fixnum)
+  end
+
   it "should auto create ideas when 'ideas' attribute is set" do
       @question = Factory.build(:question)
       @question.ideas = %w(one two three)

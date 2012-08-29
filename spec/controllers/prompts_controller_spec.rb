@@ -55,6 +55,17 @@ describe PromptsController do
        assigns[:question_optional_information][:visitor_votes].should_not be_nil
        assigns[:question_optional_information][:visitor_ideas].should_not be_nil
      end
+
+    it "records a skip, responds with random question's next prompt" do
+       controller.current_user.stub!(:record_skip).and_return(true)
+       random_question = Factory(:aoi_question)
+       Question.stub!(:random_by_site).and_return(random_question)
+
+       post(:skip, :question_id => @question.id, :id => @prompt.id, :format => 'json',
+            :next_prompt => { :algorithm => 'random_question' })
+
+       JSON.parse(response.body)['prompt']['question_id'].should == random_question.id
+     end
    end
 
   describe "POST vote" do
@@ -90,6 +101,16 @@ describe PromptsController do
     it "should prevent other users from voting on non owned questions" do
     end
 
+    it "responds with random question's next prompt" do
+       controller.current_user.stub!(:record_vote).and_return(true)
+       random_question = Factory(:aoi_question)
+       Question.stub!(:random_by_site).and_return(random_question)
+
+       post(:vote, :question_id => @question.id, :id => @prompt.id, :format => 'json',
+            :next_prompt => { :algorithm => 'random_question' })
+
+       JSON.parse(response.body)['prompt']['question_id'].should == random_question.id
+     end
   end
 
 end
