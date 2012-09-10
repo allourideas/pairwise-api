@@ -88,9 +88,12 @@ class ChoicesController < InheritedResources::Base
     # prevent AttributeNotFound error and only update actual Choice columns, since we add extra information in 'show' method
     choice_attributes = Choice.new.attribute_names
     params[:choice] = params[:choice].delete_if {|key, value| !choice_attributes.include?(key)}
-    @question = current_user.questions.find(params[:question_id])
-    @choice = @question.choices.find(params[:id])
-    update!
+    Choice.transaction do
+      # lock question since we'll need a lock on it later in Choice.update_questions_counter
+      @question = current_user.questions.find(params[:question_id], :lock => true)
+      @choice = @question.choices.find(params[:id])
+      update!
+    end
   end
 
   def show
