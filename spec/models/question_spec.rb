@@ -353,6 +353,21 @@ describe Question do
     end
   end
 
+  context "sessions_with_vote" do
+    before(:all) do
+      truncate_all
+      @q1 = Factory.create(:aoi_question)
+      @q2 = Factory.create(:aoi_question)
+    end
+
+    it "should not count sessions for another question" do
+      Factory.create(:vote, :question => @q1)
+      appearance = Factory.create(:appearance_new_user, :question => @q1)
+      Factory.create(:vote_new_user, :question => @q2, :voter => appearance.voter)
+      @q1.sessions_with_vote.should == 1
+    end
+
+  end
   context "vote rate" do
     before(:all) do
       truncate_all
