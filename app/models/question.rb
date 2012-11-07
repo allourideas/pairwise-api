@@ -735,7 +735,7 @@ class Question < ActiveRecord::Base
   # total number of sessions with at least one vote
   def sessions_with_vote
     Question.connection.select_one("
-      SELECT COUNT(DISTINCT(appearances.voter_id)) from appearances LEFT JOIN votes ON (votes.voter_id = appearances.voter_id) WHERE votes.id IS NOT NULL AND appearances.question_id = #{self.id}
+      SELECT COUNT(DISTINCT(voter_id)) FROM votes WHERE votes.question_id = #{self.id}
     ").values.first
   end
 
