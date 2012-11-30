@@ -3,7 +3,6 @@ source "http://gems.github.com"
 
 gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
-gem "bundler", "~> 1.1.5"
 gem "rails", "2.3.14"
 gem "hoptoad_notifier", "2.4.9"
 gem "ambethia-smtp-tls", "1.1.2", :require => "smtp-tls"
@@ -30,7 +29,9 @@ gem "json_pure", "1.4.6"
 gem "rubaidh-google_analytics", "1.1.4", :require => "rubaidh/google_analytics"
 gem 'mysql2', '0.2.18'
 
-
+group :production do
+  gem 'ey_config'
+end
 group :cucumber do
   gem 'cucumber', '1.1.0'
   gem 'cucumber-rails', '0.3.2'
