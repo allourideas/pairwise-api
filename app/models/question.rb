@@ -37,6 +37,8 @@ class Question < ActiveRecord::Base
   # regenerating prompts too frequently
   @@percent_full = 0.9
   @@num_prompts = 1000
+  # expire prompts after 30 days of no use
+  @@expire_prompt_cache_in_seconds = 60 * 60 * 24 * 30
 
   named_scope :created_by, lambda { |id|
     {:conditions => { :local_identifier => id } }
@@ -504,6 +506,7 @@ class Question < ActiveRecord::Base
     # 2 because redis starts indexes at 0
     new_size = (@@num_prompts * @@percent_full - 2).floor
     $redis.ltrim(self.pq_key, 0, new_size)
+    $redis.expire(self.pq_key, @@expire_prompt_cache_in_seconds)
   end
 
   def add_prompt_to_queue
@@ -518,6 +521,7 @@ class Question < ActiveRecord::Base
       prompts.each do |prompt|
         $redis.rpush(self.pq_key, prompt.id)
       end
+      $redis.expire(self.pq_key, @@expire_prompt_cache_in_seconds)
       return prompts
     end
   end
@@ -526,8 +530,9 @@ class Question < ActiveRecord::Base
     begin
        prompt_id = $redis.lpop(self.pq_key)
        prompt = prompt_id.nil? ? nil : Prompt.find(prompt_id.to_i)
-          end until (prompt.nil? || prompt.active?)
-          prompt
+    end until (prompt.nil? || prompt.active?)
+    $redis.expire(self.pq_key, @@expire_prompt_cache_in_seconds)
+    prompt
   end
 
   def record_prompt_cache_miss
