@@ -22,7 +22,6 @@ gem "thoughtbot-clearance", "0.8.2",
 gem "fastercsv", "1.5.1"
 gem "delayed_job", "2.0.6"
 gem "redis", "~> 3.0.1"
-gem "newrelic_rpm", "3.3.0"
 
 gem "sendgrid", "0.1.4"
 gem "json_pure", "1.4.6"
@@ -54,3 +53,4 @@ group :test, :cucumber do
   gem 'factory_girl', '1.2.3'
   gem 'mock_redis', '0.4.1'
 end
+gem "newrelic_rpm"
