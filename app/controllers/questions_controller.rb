@@ -326,6 +326,21 @@ class QuestionsController < InheritedResources::Base
     update!
   end
 
+  def site_stats
+    results = Question.connection.select_one("SELECT COUNT(*) as total_questions, SUM(votes_count) as votes_count, SUM(choices_count) choices_count FROM questions where site_id = #{current_user.id}")
+    results.each do |key, value|
+      results[key] = value.to_i
+    end
+    respond_to do |format|
+      format.xml {
+        render :xml => results.to_xml
+      }
+      format.js{
+        render :json => results.to_json
+      }
+    end
+  end
+
   def index
 
     counts = {}

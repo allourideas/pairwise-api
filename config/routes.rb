@@ -14,6 +14,7 @@ ActionController::Routing::Routes.draw do |map|
                                         :export => :post} , 
 			    :collection => {:all_num_votes_by_visitor_id => :get, 
 					    :all_object_info_totals_by_date => :get,
+					    :site_stats => :get,
 					    :object_info_totals_by_question_id => :get,
 				            :recent_votes_by_question_id => :get} do |question|
       question.resources :prompts, :only => :show,

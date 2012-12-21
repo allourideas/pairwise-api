@@ -1,3 +1,4 @@
+ * Add site_stats call to API
  * Fix bug in response user_generated_ideas totals over time, where the min and max dates were getting added as strings instead of date objects
  * Update choices to act_as_versioned
 

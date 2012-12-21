@@ -11,6 +11,16 @@ describe "Questions" do
     end
   end
 
+  describe "GET 'site_stats'" do
+    it "should return site_stats" do
+      Factory.create(:vote, :question => @questions.first)
+      get_auth site_stats_questions_path(:format => 'xml')
+      response.should be_success
+      response.body.should have_tag("total-questions", :text => @questions.count)
+      response.body.should have_tag("votes-count", :text => 1)
+    end
+  end
+
   describe "GET 'median_votes_per_session'" do
     it "should return the median" do
       Factory.create(:vote, :question => @questions.first)
