@@ -3,7 +3,7 @@ source "http://gems.github.com"
 
 gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
-gem "rails", "2.3.14"
+gem "rails", "2.3.15"
 gem "hoptoad_notifier", "2.4.9"
 gem "ambethia-smtp-tls", "1.1.2", :require => "smtp-tls"
 gem "paperclip", "2.3.1"
