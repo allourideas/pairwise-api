@@ -75,9 +75,11 @@ class Vote < ActiveRecord::Base
     opts = {:except => 'tracking'}
     options.merge!(opts)
     super(options) do |xml|
-      xml.tracking do
-        self.tracking.each do |key, value|
-          xml.tag!(key.to_s) { value }
+      if tracking.class == Hash
+        xml.tracking do
+          self.tracking.each do |key, value|
+            xml.tag!(key.to_s) { value }
+          end
         end
       end
     end
