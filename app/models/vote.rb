@@ -70,4 +70,16 @@ class Vote < ActiveRecord::Base
 	     loser_choice.compute_score!
      end
   end
+
+  def to_xml(options={})
+    opts = {:except => 'tracking'}
+    options.merge!(opts)
+    super(options) do |xml|
+      xml.tracking do
+        self.tracking.each do |key, value|
+          xml.tag!(key.to_s) { value }
+        end
+      end
+    end
+  end
 end
