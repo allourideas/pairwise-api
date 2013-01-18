@@ -48,7 +48,7 @@ GEM
     mime-types (1.16)
     mock_redis (0.4.1)
     mysql2 (0.2.18)
-    newrelic_rpm (3.5.3.25)
+    newrelic_rpm (3.5.5.38)
     nokogiri (1.5.5)
     paperclip (2.3.1)
     rack (1.1.4)
