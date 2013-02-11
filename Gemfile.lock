@@ -42,7 +42,7 @@ GEM
       responders (~> 0.4.3)
     jferris-mocha (0.9.5.0.1241126838)
       rake
-    json (1.7.4)
+    json (1.7.7)
     json_pure (1.4.6)
     jtrupiano-timecop (0.2.1)
     mime-types (1.16)
