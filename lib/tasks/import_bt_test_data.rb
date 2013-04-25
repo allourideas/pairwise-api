@@ -11,7 +11,7 @@ inserts = []
 
 timestring = Time.now.to_s(:db) #isn't rails awesome?
 totalchoices=0
-FasterCSV.foreach(BASEDIR + "choices_7000.txt", {:headers => :first_row, :return_headers => false}) do |choice|
+CSVBridge.foreach(BASEDIR + "choices_7000.txt", {:headers => :first_row, :return_headers => false}) do |choice|
 # for each choice, create an insert with unique id
    id = choice[0].to_i + choice_offset
    wins = choice[1].to_i
@@ -26,7 +26,7 @@ ActiveRecord::Base.connection.execute(sql)
 inserts = []
 prompt_offset = Prompt.last.id
 totalprompts = 0
-FasterCSV.foreach(BASEDIR + "prompts_7000.txt", {:headers => :first_row, :return_headers => false}) do |prompt|
+CSVBridge.foreach(BASEDIR + "prompts_7000.txt", {:headers => :first_row, :return_headers => false}) do |prompt|
    id = prompt[0].to_i + prompt_offset
    left_choice_id = prompt[1].to_i + choice_offset
    right_choice_id = prompt[2].to_i + choice_offset
@@ -43,7 +43,7 @@ ActiveRecord::Base.connection.execute(sql)
 inserts = []
 vote_offset = Vote.last.id
 totalvotes=0
-FasterCSV.foreach(BASEDIR + "votes_7000.txt", {:headers => :first_row, :return_headers => false}) do |vote|
+CSVBridge.foreach(BASEDIR + "votes_7000.txt", {:headers => :first_row, :return_headers => false}) do |vote|
    id = vote[0].to_i + vote_offset
    prompt_id = vote[1].to_i + prompt_offset 
    choice_id = vote[2].to_i + choice_offset
