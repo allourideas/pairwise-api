@@ -1,5 +1,4 @@
 require 'csv'
-require 'fastercsv'
  
 if CSV.const_defined?(:Reader)
   class CSVBridge < FasterCSV
