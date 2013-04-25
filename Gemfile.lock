@@ -34,6 +34,8 @@ GEM
     gherkin (2.5.4)
       json (>= 1.4.6)
     has_scope (0.4.2)
+    hoe (3.6.0)
+      rake (>= 0.8, < 11.0)
     hoptoad_notifier (2.4.9)
       activesupport
       builder
@@ -74,6 +76,8 @@ GEM
     sendgrid (0.1.4)
     shoulda (2.10.3)
     term-ansicolor (1.0.7)
+    test-unit (1.2.3)
+      hoe (>= 1.5.1)
     thoughtbot-clearance (0.8.2)
     webrat (0.5.3)
       nokogiri (>= 1.2.0)
@@ -116,6 +120,7 @@ DEPENDENCIES
   rubaidh-google_analytics (= 1.1.4)
   sendgrid (= 0.1.4)
   shoulda (~> 2.10.1)
+  test-unit (= 1.2.3)
   thoughtbot-clearance (= 0.8.2)
   webrat (= 0.5.3)
   xml-simple (= 1.0.12)

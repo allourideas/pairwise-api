@@ -39,6 +39,7 @@ group :cucumber do
 end
 
 group :test do
+  gem "test-unit", "1.2.3"
   gem "rspec", "~>1.3.1"
   gem "rspec-rails", "1.3.4"
   gem "shoulda", "~>2.10.1"
