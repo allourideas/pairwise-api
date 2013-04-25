@@ -1,6 +1,3 @@
-require 'fastercsv'
-require 'generator.rb'
-
 class QuestionsController < InheritedResources::Base
   actions :all, :except => [ :show, :edit, :delete ]
   before_filter :authenticate
