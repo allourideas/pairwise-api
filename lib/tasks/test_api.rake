@@ -314,7 +314,7 @@ namespace :test_api do
       sum = total_appearances = appearances_by_choice_id.values.inject(0) {|sum, x| sum +=x}
       mean = average_appearances = total_appearances.to_f / appearances_by_choice_id.size.to_f
 
-      if sum > 0:
+      if sum > 0
         stddev = Math.sqrt( appearances_by_choice_id.values.inject(0) { |sum, e| sum + (e - mean) ** 2 } / appearances_by_choice_id.size.to_f )
 
         # add small number to standard deviation to give some leniency when stddev is low
