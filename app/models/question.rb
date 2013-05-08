@@ -580,7 +580,7 @@ class Question < ActiveRecord::Base
         raise "Unsupported export type: #{type}"
     end
 
-    csv_data = FasterCSV.generate do |csv|
+    csv_data = CSVBridge.generate do |csv|
       csv << headers 
       case type
         when 'votes'

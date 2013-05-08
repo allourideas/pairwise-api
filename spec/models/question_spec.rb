@@ -539,7 +539,7 @@ describe Question do
 
       # Not specifying exact file syntax, it's likely to change frequently
       #
-      rows = FasterCSV.parse(csv)
+      rows = CSVBridge.parse(csv)
       rows.first.should include("Vote ID")
       rows.first.should_not include("Idea ID")
 
@@ -567,7 +567,7 @@ describe Question do
     it "should export non vote data to a string" do 
       csv = @aoi_question.export('non_votes')
 
-      rows = FasterCSV.parse(csv)
+      rows = CSVBridge.parse(csv)
       rows.first.should include("Record ID")
       rows.first.should include("Record Type")
       rows.first.should_not include("Idea ID")
@@ -580,7 +580,7 @@ describe Question do
 
       # Not specifying exact file syntax, it's likely to change frequently
       #
-      rows = FasterCSV.parse(csv)
+      rows = CSVBridge.parse(csv)
       rows.first.should include("Idea ID")
       rows.first.should_not include("Skip ID")
     end
@@ -648,7 +648,7 @@ describe Question do
 
       # Not specifying exact file syntax, it's likely to change frequently
       #
-      rows = FasterCSV.parse(csv)
+      rows = CSVBridge.parse(csv)
       rows.first.should include("Idea ID")
       rows.first.should_not include("Skip ID")
 
@@ -664,7 +664,7 @@ describe Question do
 
       # Not specifying exact file syntax, it's likely to change frequently
       #
-      rows = FasterCSV.parse(csv)
+      rows = CSVBridge.parse(csv)
       rows.first.should include("Vote ID")
       rows.first.should_not include("Idea ID")
 

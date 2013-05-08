@@ -1,6 +1,3 @@
-require 'fastercsv'
-require 'generator.rb'
-
 class QuestionsController < InheritedResources::Base
   actions :all, :except => [ :show, :edit, :delete ]
   before_filter :authenticate
@@ -372,7 +369,7 @@ class QuestionsController < InheritedResources::Base
     # objects. This  solution  depends on Array#to_xml rendering each
     # member in the correct order. Internally, it just uses, #each, so
     # this _should_ work.
-    ids = Generator.new{ |g|  @questions.each{ |q| g.yield q.id } }
+    ids = Enumerator.new{ |g|  @questions.each{ |q| g.yield q.id } }
     extra_info = Proc.new do |o|
       id = ids.next
       counts.each_pair do |attr, hash|

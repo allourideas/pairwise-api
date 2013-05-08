@@ -335,7 +335,7 @@ describe "Questions" do
 
       get_auth upload_to_participation_rate_question_path(q, :format => 'xml')
       response.should be_success
-      response.body.should have_tag("uploadparticipationrate", :text => "0.555555555555556")
+      response.body.should have_tag("uploadparticipationrate", :text => (5.0 / 9.0).to_s)
     end
   end
 
