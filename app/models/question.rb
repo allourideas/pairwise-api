@@ -183,7 +183,7 @@ class Question < ActiveRecord::Base
     if params[:with_prompt]
      
       if params[:with_appearance] && visitor_identifier.present?
-        visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
+        visitor = Visitor.find_or_create_by_identifier_and_site_id(visitor_identifier, current_user.id)
 
         last_appearance = get_first_unanswered_appearance(visitor)
 
