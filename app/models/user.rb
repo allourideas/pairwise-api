@@ -10,12 +10,12 @@ class User < ActiveRecord::Base
   
   def create_question(visitor_identifier, question_params)
     logger.info "the question_params are #{question_params.inspect}"
-    visitor = visitors.find_or_create_by_identifier(visitor_identifier)
+    visitor = Visitor.find_or_create_by_identifier_and_site_id(visitor_identifier, self.id)
     question = visitor.questions.create(question_params.merge(:site => self))
   end
   
   def create_choice(visitor_identifier, question, choice_params = {})
-    visitor = visitors.find_or_create_by_identifier(visitor_identifier)
+    visitor = Visitor.find_or_create_by_identifier_and_site_id(visitor_identifier, self.id)
     raise "Question not found" if question.nil?
 
     #TODO Does this serve a purpose?
@@ -35,7 +35,7 @@ class User < ActiveRecord::Base
     if visitor_identifier.nil?
        visitor = default_visitor
     else
-       visitor = visitors.find_or_create_by_identifier(visitor_identifier)
+       visitor = Visitor.find_or_create_by_identifier_and_site_id(visitor_identifier, self.id)
     end
     visitor.vote_for!(options)
   end
@@ -50,7 +50,7 @@ class User < ActiveRecord::Base
     if visitor_identifier.nil?
       visitor = default_visitor
     else
-      visitor = visitors.find_or_create_by_identifier(visitor_identifier)
+      visitor = Visitor.find_or_create_by_identifier_and_site_id(visitor_identifier, self.id)
     end
     visitor.skip!(options)
   end
