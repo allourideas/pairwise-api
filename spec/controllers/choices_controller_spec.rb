@@ -69,7 +69,9 @@ describe ChoicesController do
        
        it "adds visitor_id params to flag if sent" do
 	    @visitor_identifier = "somelongunique32charstring"
-            Visitor.should_receive(:find_or_create_by_identifier_and_site_id).with(@visitor_identifier, @user.id).and_return(mock_visitor)
+	    visitor_list = [mock_visitor]
+            @user.stub!(:visitors).and_return(visitor_list)
+            visitor_list.should_receive(:find_or_create_by_identifier).with(@visitor_identifier).and_return(mock_visitor)
 
 	    Flag.should_receive(:create!).with({:choice_id => 123, :question_id => 37, :site_id => @user.id, :explanation => "This is offensive", :visitor_id => mock_visitor.id})   
 
