@@ -45,7 +45,7 @@ class ChoicesController < InheritedResources::Base
 
     visitor = current_user.default_visitor 
     if visitor_identifier
-      visitor = Visitor.find_or_create_by_identifier_and_site_id(visitor_identifier, current_user.id)
+      visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
     end
     params[:choice].merge!(:creator => visitor)
 
@@ -68,7 +68,7 @@ class ChoicesController < InheritedResources::Base
 		   
     end
     if visitor_identifier = params[:visitor_identifier]
-            visitor = Visitor.find_or_create_by_identifier_and_site_id(visitor_identifier, current_user.id)
+            visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
 	    flag_params.merge!({:visitor_id => visitor.id})
     end
     respond_to do |format|
