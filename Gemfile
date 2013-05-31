@@ -5,6 +5,7 @@ gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
 gem "rails", "2.3.18"
 gem "hoptoad_notifier", "2.4.9"
+gem "libxml-ruby", "2.2.2", :require => "libxml"
 gem "ambethia-smtp-tls", "1.1.2", :require => "smtp-tls"
 gem "paperclip", "2.3.1"
 gem "mime-types", "1.16",

@@ -26,3 +26,4 @@ extra_conf = "/data/extra-conf/environment-variables.rb"
 if File.exists?(extra_conf)
   require extra_conf
 end
+ActiveSupport::XmlMini.backend = 'LibXML'

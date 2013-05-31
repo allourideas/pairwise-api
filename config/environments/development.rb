@@ -20,3 +20,4 @@ HOST = 'localhost'
 
 PHOTOCRACY_SITE_ID = 9
 ALLOURIDEAS_SITE_ID = 13
+ActiveSupport::XmlMini.backend = 'LibXML'
