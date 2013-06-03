@@ -70,7 +70,7 @@ class Choice < ActiveRecord::Base
   
   def compute_score!
     self.score = compute_score
-    save!
+    Choice.connection.execute("UPDATE `choices` SET `score` = #{self.score}, `updated_at` = '#{Time.now.utc.to_s(:db)}' WHERE `id` = #{self.id}")
   end
 
   def user_created
