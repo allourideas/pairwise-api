@@ -48,7 +48,7 @@ class Visitor < ActiveRecord::Base
     other_choices = prompt.choices - [choice]
     loser_choice = other_choices.first
     
-    options.merge!(:question_id => prompt.question_id, :prompt_id => prompt.id, :voter_id=> self.id, :choice_id => choice.id, :loser_choice_id => loser_choice.id) 
+    options.merge!(:question_id => prompt.question_id, :prompt => prompt, :voter => self, :choice => choice, :loser_choice => loser_choice) 
 
     v = votes.create!(options)
     safely_associate_appearance(v, @appearance) if associate_appearance
