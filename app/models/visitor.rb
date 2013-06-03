@@ -86,12 +86,8 @@ class Visitor < ActiveRecord::Base
     # Manually update Appearance with id to ensure no double votes for a
     # single appearance.  Only update the answerable_id if it is NULL.
     # If we can't find any rows to update, then this object should be invalid.
-    rows_updated = Appearance.update_all("answerable_id = #{object.id}, answerable_type = '#{object.class.to_s}'", "id = #{appearance.id} AND answerable_id IS NULL")
-    if rows_updated === 1
-      # update relationship the ActiveRecord way, now
-      # that we know it is safe to do so
-      object.update_attributes!(:appearance => appearance)
-    else
+    rows_updated = Appearance.update_all("answerable_id = #{object.id}, answerable_type = '#{object.class.to_s}', updated_at = '#{Time.now.utc.to_s(:db)}'", "id = #{appearance.id} AND answerable_id IS NULL")
+    if rows_updated != 1
       object.update_attributes!(:valid_record => false, :validity_information => "Appearance #{appearance.id} already answered")
     end
   end
