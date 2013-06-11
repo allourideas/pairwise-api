@@ -1,3 +1,5 @@
+## Pairwise 3.0.2 (Jun 11, 2013) ##
+ * Optimize voting API call
  * Upgrade to Rails 2.3.16
  * Add site_stats call to API
  * Fix bug in response user_generated_ideas totals over time, where the min and max dates were getting added as strings instead of date objects
