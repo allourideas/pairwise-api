@@ -23,6 +23,7 @@ gem "thoughtbot-clearance", "0.8.2",
 gem "fastercsv", "1.5.1", :platforms => :ruby_18
 gem "delayed_job", "2.0.6"
 gem "redis", "~> 3.0.1"
+gem "test-unit", "1.2.3"
 
 gem "sendgrid", "0.1.4"
 gem "json_pure", "1.4.6"
@@ -40,7 +41,6 @@ group :cucumber do
 end
 
 group :test do
-  gem "test-unit", "1.2.3"
   gem "rspec", "~>1.3.1"
   gem "rspec-rails", "1.3.4"
   gem "shoulda", "~>2.10.1"
