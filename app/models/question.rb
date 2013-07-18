@@ -510,6 +510,12 @@ class Question < ActiveRecord::Base
   end
 
   def add_prompt_to_queue
+    # if this question has 1000 or more choices disable catchup
+    if self.uses_catchup? && self.choices.count >= 1000
+      self.uses_catchup = false
+      self.save
+    end
+    return unless self.uses_catchup?
     # if less than 90% full, regenerate prompts
     # we skip generating prompts if more than 90% full to
     # prevent one busy marketplace for ruling the queue
