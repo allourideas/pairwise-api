@@ -511,7 +511,7 @@ class Question < ActiveRecord::Base
 
   def add_prompt_to_queue
     # if this question has 1000 or more choices disable catchup
-    if self.uses_catchup? && self.choices.count >= 1000
+    if self.uses_catchup? && self.choices.active.count >= 1000
       self.uses_catchup = false
       self.save
     end
