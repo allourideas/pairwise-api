@@ -45,30 +45,40 @@ class VisitorsController < InheritedResources::Base
     index!
   end
 
-	def objects_by_session_ids
-		session_ids = params[:session_ids]
+  def objects_by_session_ids
+    session_ids = params[:session_ids]
 
-		visitor_ids = Visitor.find(:all, :conditions => { :identifier => session_ids})
-		votes_by_visitor_id = Vote.with_voter_ids(visitor_ids).count(:group => :voter_id) 
-		ideas_by_visitor_id = Choice.count(:group => :creator_id) 
+    # reject any session_ids that have characters outside of [a-f0-9]
+    session_ids_query = session_ids.reject{|si| si.match(/[^a-f0-9]/)}.map{|si| "'#{si}'"}.join(',')
+    vsql = "SELECT vi.identifier, count(*) as count_all
+            FROM visitors vi
+            LEFT JOIN votes vo ON (vi.id = vo.voter_id)
+            WHERE vi.identifier in (#{session_ids_query})
+            AND vo.valid_record = 1
+            AND vo.voter_id IS NOT NULL
+            GROUP BY vo.voter_id"
+    csql = "SELECT vi.identifier, count(*) as count_all
+            FROM visitors vi
+            LEFT JOIN choices c ON (vi.id = c.creator_id)
+            WHERE vi.identifier in (#{session_ids_query})
+            AND c.creator_id IS NOT NULL
+            GROUP BY c.creator_id"
+    votes = Visitor.connection.select_rows(vsql)
+    choices = Choice.connection.select_rows(csql)
 
-		objects_by_session_id = {}
-		
-		visitor_ids.each do |e| 
-			if votes_by_visitor_id.has_key?(e.id)
-				objects_by_session_id[e.identifier] = Hash.new
-				objects_by_session_id[e.identifier]['votes'] = votes_by_visitor_id[e.id]
-			end
-			if ideas_by_visitor_id.has_key?(e.id)
-				objects_by_session_id[e.identifier] = Hash.new if objects_by_session_id[e.identifier].nil?
-				objects_by_session_id[e.identifier]['ideas'] = ideas_by_visitor_id[e.id]
-			end
-		end
-    		
-		respond_to do |format|
-    			format.json { render :json => objects_by_session_id.to_json and return}
-    		end
-	end
+    objects_by_session_id = Hash.new {|hsh, key| hsh[key] = {} }
+
+    votes.each do |v|
+      objects_by_session_id[v[0]]['votes'] = v[1]
+    end
+    choices.each do |c|
+      objects_by_session_id[c[0]]['ideas'] = c[1]
+    end
+
+    respond_to do |format|
+      format.json { render :json => objects_by_session_id.to_json and return}
+    end
+  end
 
 	def votes
 	  @visitor = Visitor.find_by_identifier!(params[:id])
