@@ -12,6 +12,10 @@ GEM
     activeresource (2.3.18)
       activesupport (= 2.3.18)
     activesupport (2.3.18)
+    airbrake (3.1.12)
+      activesupport
+      builder
+      json
     ambethia-smtp-tls (1.1.2)
     builder (3.0.0)
     cucumber (1.1.0)
@@ -36,9 +40,6 @@ GEM
     has_scope (0.4.2)
     hoe (3.6.0)
       rake (>= 0.8, < 11.0)
-    hoptoad_notifier (2.4.9)
-      activesupport
-      builder
     inherited_resources (1.0.4)
       has_scope (~> 0.4.2)
       responders (~> 0.4.3)
@@ -91,6 +92,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  airbrake
   ambethia-smtp-tls (= 1.1.2)
   cucumber (= 1.1.0)
   cucumber-rails (= 0.3.2)
@@ -101,7 +103,6 @@ DEPENDENCIES
   fastercsv (= 1.5.1)
   formtastic (~> 0.2.2)
   has_scope (= 0.4.2)
-  hoptoad_notifier (= 2.4.9)
   inherited_resources (= 1.0.4)
   jferris-mocha (= 0.9.5.0.1241126838)
   json_pure (= 1.4.6)
