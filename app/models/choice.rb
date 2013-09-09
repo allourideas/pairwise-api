@@ -117,7 +117,7 @@ class Choice < ActiveRecord::Base
     return if previous_choices.empty?
     inserts = []
 
-    timestring = Time.now.to_s(:db) #isn't rails awesome?
+    timestring = Time.now.utc.to_s(:db) #isn't rails awesome?
 
     #add prompts with this choice on the left
     previous_choices.each do |r|

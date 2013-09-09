@@ -542,11 +542,11 @@ class Question < ActiveRecord::Base
   end
 
   def record_prompt_cache_miss
-    $redis.incr(self.pq_key + "_" + Time.now.to_date.to_s + "_"+ "misses")
+    $redis.incr(self.pq_key + "_" + Time.now.utc.to_date.to_s + "_"+ "misses")
   end
 
   def record_prompt_cache_hit
-    $redis.incr(self.pq_key + "_" + Time.now.to_date.to_s + "_"+ "hits")
+    $redis.incr(self.pq_key + "_" + Time.now.utc.to_date.to_s + "_"+ "hits")
   end
 
   def get_prompt_cache_misses(date)

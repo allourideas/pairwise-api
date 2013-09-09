@@ -362,12 +362,13 @@ namespace :test_api do
       success_message = "At least 90% of prompts on catchup algorithm questions were served from cache\n" 
       return [success_message, false] unless question.uses_catchup?
 
-      misses = question.get_prompt_cache_misses(Date.yesterday).to_i
-      hits = question.get_prompt_cache_hits(Date.yesterday).to_i
+      yesterday = Time.now.utc.yesterday.to_date
+      misses = question.get_prompt_cache_misses(yesterday).to_i
+      hits = question.get_prompt_cache_hits(yesterday).to_i
 
-      question.expire_prompt_cache_tracking_keys(Date.yesterday)
+      question.expire_prompt_cache_tracking_keys(yesterday)
 
-      yesterday_appearances = question.appearances.count(:conditions => ['created_at >= ? AND created_at < ?', Time.now.yesterday.midnight.utc, Time.now.midnight.utc])
+      yesterday_appearances = question.appearances.count(:conditions => ['created_at >= ? AND created_at < ?', Time.now.utc.yesterday.midnight, Time.now.utc.midnight])
 
       if misses + hits != yesterday_appearances
         error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}, Hits: #{hits}, Misses: #{misses}\n"
