@@ -374,7 +374,7 @@ namespace :test_api do
         error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}, Hits: #{hits}, Misses: #{misses}\n"
       end
 
-      if yesterday_appearances > 5 # this test isn't worthwhile for small numbers of appearances
+      if yesterday_appearances > 25 # this test isn't worthwhile for small numbers of appearances
         miss_rate = misses.to_f / yesterday_appearances.to_f
         if miss_rate > 0.1
           error_message += "Warning! Question #{question.id} has less than 90% of appearances taken from a pre-generated cache! Expected <#{0.1}, Actual: #{miss_rate}, total appearances yesterday: #{yesterday_appearances}\n"
