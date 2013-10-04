@@ -59,7 +59,7 @@ namespace :test_api do
       delta = 0.001
 
       if (cached_score - generated_score).abs >= delta
-        error_message = "Error! The cached_score is not equal to the calculated score for choice #{choice.id}, cached: #{cached_score}, computed: #{generated_score}\n"
+        error_message = "Error! The cached_score is not equal to the calculated score for choice #{choice.id} for question #{choice.question_id}, cached: #{cached_score}, computed: #{generated_score}\n"
 
       end
       return error_message.blank? ? [success_message, false] : [error_message, true]
