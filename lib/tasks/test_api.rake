@@ -100,6 +100,7 @@ namespace :test_api do
 
   desc "Description here"
   task(:question_vote_consistency => :environment) do
+    first_run_errors = []
     errors = []
     successes = []
 
@@ -111,7 +112,7 @@ namespace :test_api do
         message, error_occurred = send(taskname, question)
         debug("Completed task #{taskname} for question #{question.id}")
         if error_occurred
-          errors << message
+          first_run_errors << [taskname, question]
         else
           successes << message
         end
@@ -122,7 +123,7 @@ namespace :test_api do
         @choice_tasks.each do |taskname, description|
           message, error_occurred = send(taskname, choice)
           if error_occurred
-            errors << message
+            first_run_errors << [taskname, choice]
           else
             successes << message
           end
@@ -130,6 +131,18 @@ namespace :test_api do
       end
       debug("Completed choices tasks for question #{question.id}")
 
+    end
+
+    # retry the failed tasks in case they failed due to
+    # votes happening while the test was running.
+    debug("Re-running tasks that previously failed")
+    first_run_errors.each do |err|
+      message, error_occurred = send(err[0], err[1].reload)
+      if error_occurred
+        errors << message
+      else
+        successes << message
+      end
     end
 
     @global_tasks.each do |taskname, description|
