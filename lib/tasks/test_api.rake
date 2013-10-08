@@ -381,7 +381,7 @@ namespace :test_api do
 
       question.expire_prompt_cache_tracking_keys(yesterday)
 
-      yesterday_appearances = question.appearances.count(:conditions => ['created_at >= ? AND created_at < ?', Time.now.utc.yesterday.midnight, Time.now.utc.midnight])
+      yesterday_appearances = Appearance.count_with_exclusive_scope(:conditions => ['created_at >= ? AND created_at < ? AND question_id = ?', Time.now.utc.yesterday.midnight, Time.now.utc.midnight, question.id])
 
       if misses + hits != yesterday_appearances
         error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}, Hits: #{hits}, Misses: #{misses}\n"

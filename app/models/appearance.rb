@@ -9,4 +9,10 @@ class Appearance < ActiveRecord::Base
   def answered?
     !self.answerable_id.nil?
   end
+
+  def self.count_with_exclusive_scope(*args)
+    with_exclusive_scope() do
+      count(*args)
+    end
+  end
 end
