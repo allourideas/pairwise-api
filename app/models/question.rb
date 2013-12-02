@@ -599,7 +599,7 @@ class Question < ActiveRecord::Base
             left_id = v.prompt.nil? ? "" : v.prompt.left_choice_id
             right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
 
-            appearance_id = v.appearance.id.nil? ? "NA" : v.appearance.id
+            appearance_id = v.appearance.nil? ? "NA" : v.appearance.id
             time_viewed = v.time_viewed.nil? ? "NA": v.time_viewed.to_f / 1000.0
 
             csv << [ v.id, v.voter_id, v.question_id, v.choice_id, v.choice.data.strip, v.loser_choice_id, loser_data,
