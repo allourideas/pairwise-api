@@ -574,14 +574,14 @@ class Question < ActiveRecord::Base
       when 'votes'
         outfile = "ideamarketplace_#{self.id}_votes"
 
-        headers = ['Vote ID', 'Session ID', 'Ideamarketplace ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text', 'Prompt ID', 'Appearance ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
+        headers = ['Vote ID', 'Session ID', 'Wikisurvey ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text', 'Prompt ID', 'Appearance ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
     
       when 'ideas'
         outfile = "ideamarketplace_#{self.id}_ideas"
-        headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score', 'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active', 'Appearances on Left', 'Appearances on Right', 'Session Identifier']
+        headers = ['Wikisurvey ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score', 'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active', 'Appearances on Left', 'Appearances on Right', 'Session Identifier']
       when 'non_votes'
         outfile = "ideamarketplace_#{self.id}_non_votes"
-        headers = ['Record Type', 'Skip ID', 'Appearance ID', 'Session ID', 'Ideamarketplace ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
+        headers = ['Record Type', 'Skip ID', 'Appearance ID', 'Session ID', 'Wikisurvey ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
       else 
         raise "Unsupported export type: #{type}"
     end
@@ -632,7 +632,7 @@ class Question < ActiveRecord::Base
             valid = s.valid_record ? 'TRUE' : 'FALSE'
             time_viewed = s.time_viewed.nil? ? "NA": s.time_viewed.to_f / 1000.0
             prompt = s.prompt
-            csv << [ "Skip", s.id, s.skipper_id, a.id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.skip_reason, s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier,valid] 
+            csv << [ "Skip", s.id, a.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.skip_reason, s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier,valid]
         
           else
             # If no skip and no vote, this is an orphaned appearance
