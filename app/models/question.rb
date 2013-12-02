@@ -574,14 +574,14 @@ class Question < ActiveRecord::Base
       when 'votes'
         outfile = "ideamarketplace_#{self.id}_votes"
 
-        headers = ['Vote ID', 'Session ID', 'Ideamarketplace ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text', 'Prompt ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
+        headers = ['Vote ID', 'Session ID', 'Ideamarketplace ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text', 'Prompt ID', 'Appearance ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
     
       when 'ideas'
         outfile = "ideamarketplace_#{self.id}_ideas"
         headers = ['Ideamarketplace ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score', 'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active', 'Appearances on Left', 'Appearances on Right', 'Session Identifier']
       when 'non_votes'
         outfile = "ideamarketplace_#{self.id}_non_votes"
-        headers = ['Record Type', 'Record ID', 'Session ID', 'Ideamarketplace ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
+        headers = ['Record Type', 'Skip ID', 'Appearance ID', 'Session ID', 'Ideamarketplace ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
       else 
         raise "Unsupported export type: #{type}"
     end
@@ -591,7 +591,7 @@ class Question < ActiveRecord::Base
       case type
         when 'votes'
 
-          Vote.find_each_without_default_scope(:conditions => {:question_id => self}, :include => [:prompt, :choice, :loser_choice, :voter]) do |v|
+          Vote.find_each_without_default_scope(:conditions => {:question_id => self}, :include => [:prompt, :choice, :loser_choice, :voter, :appearance]) do |v|
             valid = v.valid_record ? "TRUE" : "FALSE"
             prompt = v.prompt
             # these may not exist
@@ -599,10 +599,11 @@ class Question < ActiveRecord::Base
             left_id = v.prompt.nil? ? "" : v.prompt.left_choice_id
             right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
 
+            appearance_id = v.appearance.id.nil? ? "NA" : v.appearance.id
             time_viewed = v.time_viewed.nil? ? "NA": v.time_viewed.to_f / 1000.0
 
             csv << [ v.id, v.voter_id, v.question_id, v.choice_id, v.choice.data.strip, v.loser_choice_id, loser_data,
-            v.prompt_id, left_id, right_id, v.created_at, v.updated_at,
+            v.prompt_id, appearance_id, left_id, right_id, v.created_at, v.updated_at,
             time_viewed, v.missing_response_time_exp , v.voter.identifier, valid] 
           end
 
@@ -631,7 +632,7 @@ class Question < ActiveRecord::Base
             valid = s.valid_record ? 'TRUE' : 'FALSE'
             time_viewed = s.time_viewed.nil? ? "NA": s.time_viewed.to_f / 1000.0
             prompt = s.prompt
-            csv << [ "Skip", s.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.skip_reason, s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier,valid] 
+            csv << [ "Skip", s.id, s.skipper_id, a.id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.skip_reason, s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier,valid] 
         
           else
             # If no skip and no vote, this is an orphaned appearance
@@ -640,7 +641,7 @@ class Question < ActiveRecord::Base
               ["voter_id = ? AND question_id = ? AND answerable_type IS NOT ?",
                 a.voter_id, a.question_id, nil])
             appearance_type = (action_appearances > 0) ? 'Stopped_Voting_Or_Skipping' : 'Bounce'
-            csv << [ appearance_type, a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'NA', a.created_at, a.updated_at, 'NA', '', a.voter.identifier, 'TRUE'] 
+            csv << [ appearance_type, 'NA', a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'NA', a.created_at, a.updated_at, 'NA', '', a.voter.identifier, 'TRUE'] 
           end
         end
       end
