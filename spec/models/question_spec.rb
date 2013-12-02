@@ -568,7 +568,8 @@ describe Question do
       csv = @aoi_question.export('non_votes')
 
       rows = CSVBridge.parse(csv)
-      rows.first.should include("Record ID")
+      rows.first.should include("Skip ID")
+      rows.first.should include("Appearance ID")
       rows.first.should include("Record Type")
       rows.first.should_not include("Idea ID")
       # ensure we have more than just the header row
@@ -666,6 +667,7 @@ describe Question do
       #
       rows = CSVBridge.parse(csv)
       rows.first.should include("Vote ID")
+      rows.first.should include("Appearance ID")
       rows.first.should_not include("Idea ID")
 
       rows.shift
