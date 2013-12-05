@@ -219,7 +219,7 @@ namespace :test_api do
                     LEFT JOIN appearances
                     ON (votes.question_id = appearances.question_id AND votes.id = appearances.answerable_id AND appearances.answerable_type = 'Vote')
                     WHERE appearances.id IS NULL
-                    AND (votes.validity_information IS NULL OR votes.validity_information NOT LIKE 'Appearance %')
+                    AND (votes.validity_information IS NULL OR votes.validity_information NOT LIKE 'Appearance % already answered')
                     AND votes.question_id = #{question.id}"
       bad_records = Vote.connection.select_all votes_sql
       bad_records.each do |record|
@@ -230,7 +230,7 @@ namespace :test_api do
                     LEFT JOIN appearances
                     ON (skips.question_id = appearances.question_id AND skips.id = appearances.answerable_id AND appearances.answerable_type = 'Skip')
                     WHERE appearances.id IS NULL
-                    AND (skips.validity_information IS NULL OR skips.validity_information NOT LIKE 'Appearance %')
+                    AND (skips.validity_information IS NULL OR skips.validity_information NOT LIKE 'Appearance % already answered')
                     AND skips.question_id = #{question.id}"
       bad_records = Skip.connection.select_all skips_sql
       bad_records.each do |record|
