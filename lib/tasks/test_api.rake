@@ -192,6 +192,7 @@ namespace :test_api do
       :wins_and_losses_equals_two_times_vote_count => "Verify that sum of wins and losses equals two times the vote count",
       :check_scores_over_above_fifty => "Check that there are some scores above fifty and some below",
       :generated_prompts_on_each_side_are_equal => "Verify that count of generated prompts on each side is equal",
+      :every_answer_has_an_appearances => "Verify that all answers have an appearance",
       :appearances_have_same_session_as_answer => "Appearances have the same session of their answer"
     }
 
@@ -206,6 +207,36 @@ namespace :test_api do
           puts send(taskname, question).inspect
         end
       end
+    end
+
+    # every answer should have an appearance except for those that are attempts
+    # to answer an already answered appearance.
+    def every_answer_has_an_appearances(question)
+      error_message   = ""
+      success_message = "All valid answers have an appearance."
+      votes_sql = "SELECT votes.id, votes.valid_record, votes.validity_information
+                    FROM votes
+                    LEFT JOIN appearances
+                    ON (votes.question_id = appearances.question_id AND votes.id = appearances.answerable_id AND appearances.answerable_type = 'Vote')
+                    WHERE appearances.id IS NULL
+                    AND (votes.validity_information IS NULL OR votes.validity_information NOT LIKE 'Appearance %')
+                    AND votes.question_id = #{question.id}"
+      bad_records = Vote.connection.select_all votes_sql
+      bad_records.each do |record|
+        error_message += "Vote ##{record["id"]} does not have an appearance\n"
+      end
+      skips_sql = "SELECT skips.id, skips.valid_record, skips.validity_information
+                    FROM skips
+                    LEFT JOIN appearances
+                    ON (skips.question_id = appearances.question_id AND skips.id = appearances.answerable_id AND appearances.answerable_type = 'Skip')
+                    WHERE appearances.id IS NULL
+                    AND (skips.validity_information IS NULL OR skips.validity_information NOT LIKE 'Appearance %')
+                    AND skips.question_id = #{question.id}"
+      bad_records = Skip.connection.select_all skips_sql
+      bad_records.each do |record|
+        error_message += "Skip ##{record["id"]} does not have an appearance\n"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
     end
 
     def appearances_have_same_session_as_answer(question)
