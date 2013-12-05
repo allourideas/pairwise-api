@@ -191,7 +191,8 @@ namespace :test_api do
       :wins_and_losses_is_even => "Verify that sum of wins and losses is even",
       :wins_and_losses_equals_two_times_vote_count => "Verify that sum of wins and losses equals two times the vote count",
       :check_scores_over_above_fifty => "Check that there are some scores above fifty and some below",
-      :generated_prompts_on_each_side_are_equal => "Verify that count of generated prompts on each side is equal"
+      :generated_prompts_on_each_side_are_equal => "Verify that count of generated prompts on each side is equal",
+      :appearances_have_same_session_as_answer => "Appearances have the same session of their answer"
     }
 
     # dynamically create tasks for each question task
@@ -205,6 +206,34 @@ namespace :test_api do
           puts send(taskname, question).inspect
         end
       end
+    end
+
+    def appearances_have_same_session_as_answer(question)
+      error_message   = ""
+      success_message = "All appearances have the same session as their respective answer"
+      votes_sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
+                    votes.id AS votes_id, votes.voter_id AS votes_voter_id
+                    FROM appearances
+                    LEFT JOIN votes ON (votes.id = appearances.answerable_id)
+                    WHERE appearances.answerable_type = 'Vote'
+                    AND (appearances.voter_id <> votes.voter_id OR votes.voter_id IS NULL OR appearances.voter_id IS NULL)
+                    AND appearances.question_id = #{question.id}"
+      bad_records = Vote.connection.select_all votes_sql
+      bad_records.each do |record|
+        error_message += "Appearance ##{record["id"]} session does not match the session of Vote ##{record["votes_id"]}\n"
+      end
+      skips_sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
+                    skips.id AS skips_id, skips.skipper_id AS skips_skipper_id
+                    FROM appearances
+                    LEFT JOIN skips ON (skips.id = appearances.answerable_id)
+                    WHERE appearances.answerable_type = 'Skip'
+                      AND (appearances.voter_id <> skips.skipper_id OR skips.skipper_id IS NULL OR appearances.voter_id IS NULL)
+                      AND appearances.question_id = #{question.id}"
+      bad_records = Skip.connection.select_all skips_sql
+      bad_records.each do |record|
+        error_message += "Appearance ##{record["id"]} session does not match the session of Skip ##{record["votes_id"]}\n"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
     end
 
     def generated_prompts_on_each_side_are_equal(question)
