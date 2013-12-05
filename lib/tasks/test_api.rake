@@ -193,6 +193,7 @@ namespace :test_api do
       :check_scores_over_above_fifty => "Check that there are some scores above fifty and some below",
       :generated_prompts_on_each_side_are_equal => "Verify that count of generated prompts on each side is equal",
       :every_answer_has_an_appearances => "Verify that all answers have an appearance",
+      :duplicate_answers_have_no_appearance => "Verify that duplicate answers have no appearance",
       :appearances_have_same_session_as_answer => "Appearances have the same session of their answer"
     }
 
@@ -209,6 +210,33 @@ namespace :test_api do
       end
     end
 
+    def duplicate_answers_have_no_appearance(question)
+      error_message   = ""
+      success_message = "All duplicate answers lack an appearance."
+      votes_sql = "SELECT votes.id, votes.valid_record, votes.validity_information
+                    FROM votes
+                    LEFT JOIN appearances
+                    ON (votes.question_id = appearances.question_id AND votes.id = appearances.answerable_id AND appearances.answerable_type = 'Vote')
+                    WHERE appearances.id IS NOT NULL
+                    AND votes.validity_information LIKE 'Appearance % already answered'
+                    AND votes.question_id = #{question.id}"
+      bad_records = Vote.connection.select_all votes_sql
+      bad_records.each do |record|
+        error_message += "Vote ##{record["id"]} has an appearance but should not\n"
+      end
+      skips_sql = "SELECT skips.id, skips.valid_record, skips.validity_information
+                    FROM skips
+                    LEFT JOIN appearances
+                    ON (skips.question_id = appearances.question_id AND skips.id = appearances.answerable_id AND appearances.answerable_type = 'Skip')
+                    WHERE appearances.id IS NOT NULL
+                    AND skips.validity_information LIKE 'Appearance % already answered'
+                    AND skips.question_id = #{question.id}"
+      bad_records = Skip.connection.select_all skips_sql
+      bad_records.each do |record|
+        error_message += "Skip ##{record["id"]} has an appearance but should not\n"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
     # every answer should have an appearance except for those that are attempts
     # to answer an already answered appearance.
     def every_answer_has_an_appearances(question)
