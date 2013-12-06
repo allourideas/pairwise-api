@@ -291,7 +291,7 @@ namespace :test_api do
                       AND appearances.question_id = #{question.id}"
       bad_records = Skip.connection.select_all skips_sql
       bad_records.each do |record|
-        error_message += "Appearance ##{record["id"]} session does not match the session of Skip ##{record["votes_id"]}\n"
+        error_message += "Appearance ##{record["id"]} session does not match the session of Skip ##{record["skips_id"]}\n"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true]
     end
