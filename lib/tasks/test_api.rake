@@ -272,7 +272,7 @@ namespace :test_api do
       error_message   = ""
       success_message = "All appearances have the same session as their respective answer"
       votes_sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
-                    votes.id AS votes_id, votes.voter_id AS votes_voter_id
+                    votes.id AS votes_id, votes.voter_id AS votes_voter_id, TIMESTAMPDIFF(SECOND, appearances.created_at, appearances.updated_at) as datediff
                     FROM appearances
                     LEFT JOIN votes ON (votes.id = appearances.answerable_id)
                     WHERE appearances.answerable_type = 'Vote'
@@ -280,10 +280,10 @@ namespace :test_api do
                     AND appearances.question_id = #{question.id}"
       bad_records = Vote.connection.select_all votes_sql
       bad_records.each do |record|
-        error_message += "Appearance ##{record["id"]} session does not match the session of Vote ##{record["votes_id"]}\n"
+        error_message += "Appearance ##{record["id"]} session does not match the session of Vote ##{record["votes_id"]} (#{(record["datediff"] / 60.0).round(2)})\n"
       end
       skips_sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
-                    skips.id AS skips_id, skips.skipper_id AS skips_skipper_id
+                    skips.id AS skips_id, skips.skipper_id AS skips_skipper_id, TIMESTAMPDIFF(SECOND, appearances.created_at, appearances.updated_at) as datediff
                     FROM appearances
                     LEFT JOIN skips ON (skips.id = appearances.answerable_id)
                     WHERE appearances.answerable_type = 'Skip'
@@ -291,7 +291,7 @@ namespace :test_api do
                       AND appearances.question_id = #{question.id}"
       bad_records = Skip.connection.select_all skips_sql
       bad_records.each do |record|
-        error_message += "Appearance ##{record["id"]} session does not match the session of Skip ##{record["skips_id"]}\n"
+        error_message += "Appearance ##{record["id"]} session does not match the session of Skip ##{record["skips_id"]} (#{(record["datediff"] / 60.0).round(2)})\n"
       end
       return error_message.blank? ? [success_message, false] : [error_message, true]
     end
