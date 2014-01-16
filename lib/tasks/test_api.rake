@@ -194,7 +194,7 @@ namespace :test_api do
       :generated_prompts_on_each_side_are_equal => "Verify that count of generated prompts on each side is equal",
       :every_valid_answer_has_an_appearances => "Verify that all valid answers have an appearance",
       :duplicate_answers_have_no_appearance => "Verify that duplicate answers have no appearance",
-      :appearances_have_same_session_as_answer => "Appearances have the same session of their answer"
+      #:appearances_have_same_session_as_answer => "Appearances have the same session of their answer"
     }
 
     # dynamically create tasks for each question task
