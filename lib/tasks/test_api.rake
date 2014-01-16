@@ -194,6 +194,7 @@ namespace :test_api do
       :generated_prompts_on_each_side_are_equal => "Verify that count of generated prompts on each side is equal",
       :every_valid_answer_has_an_appearances => "Verify that all valid answers have an appearance",
       :duplicate_answers_have_no_appearance => "Verify that duplicate answers have no appearance",
+      :session_mismatch => "Appearances have the same session of their answer",
       :appearances_have_same_session_as_answer => "Appearances have the same session of their answer"
     }
 
@@ -264,6 +265,69 @@ namespace :test_api do
       bad_records = Skip.connection.select_all skips_sql
       bad_records.each do |record|
         error_message += "Skip ##{record["id"]} does not have an appearance\n"
+      end
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
+
+    def trace_appearances_session(appearance)
+      return [] if appearance.nil?
+      appearances = [appearance.id]
+      answer = appearance.answerable
+      return appearances if answer.nil?
+
+      if answer.class == Skip
+        answer_user_id = answer.skipper_id
+      else
+        answer_user_id = answer.voter_id
+      end
+      if answer_user_id != appearance.voter_id
+        next_appearance = Appearance.find(:first, :conditions => {:voter_id => answer_user_id, :question_id => appearance.question_id})
+        appearances += trace_appearances_session(next_appearance)
+      end
+      return appearances
+    end
+
+    def session_mismatch(question)
+      error_message   = ""
+      success_message = "All appearances have the same session as their respective answer"
+      votes_sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
+                    votes.id AS votes_id, votes.voter_id AS votes_voter_id, TIMESTAMPDIFF(SECOND, appearances.created_at, appearances.updated_at) as datediff
+                    FROM appearances
+                    LEFT JOIN votes ON (votes.id = appearances.answerable_id)
+                    WHERE appearances.answerable_type = 'Vote'
+                    AND (appearances.voter_id <> votes.voter_id OR votes.voter_id IS NULL OR appearances.voter_id IS NULL)
+                    AND appearances.question_id = #{question.id}"
+      bad_records = Vote.connection.select_all votes_sql
+      traced_appearances = []
+      bad_records.each do |record|
+        next if record["datediff"] >= 600
+        next if traced_appearances.include? record["id"]
+        session_appearances = trace_appearances_session(Appearance.find(record["id"]))
+        traced_appearances += session_appearances if session_appearances.length > 1
+        if session_appearances.length > 1
+          puts "Traced #{session_appearances.length} sessions #{session_appearances.inspect}"
+        else
+          puts "No sessions traced for #{record["id"]}"
+        end
+      end
+      skips_sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
+                    skips.id AS skips_id, skips.skipper_id AS skips_skipper_id, TIMESTAMPDIFF(SECOND, appearances.created_at, appearances.updated_at) as datediff
+                    FROM appearances
+                    LEFT JOIN skips ON (skips.id = appearances.answerable_id)
+                    WHERE appearances.answerable_type = 'Skip'
+                      AND (appearances.voter_id <> skips.skipper_id OR skips.skipper_id IS NULL OR appearances.voter_id IS NULL)
+                      AND appearances.question_id = #{question.id}"
+      bad_records = Skip.connection.select_all skips_sql
+      bad_records.each do |record|
+        next if record["datediff"] >= 600
+        next if traced_appearances.include? record["id"]
+        session_appearances = trace_appearances_session(Appearance.find(record["id"]))
+        traced_appearances += session_appearances if session_appearances.length > 1
+        if session_appearances.length > 1
+          puts "Traced #{session_appearances.length} sessions #{session_appearances.inspect}"
+        else
+          puts "No sessions traced for #{record["id"]}"
+        end
       end
       return error_message.blank? ? [success_message, false] : [error_message, true]
     end
