@@ -92,7 +92,96 @@ describe Visitor do
     v.time_viewed.should == 213
     
   end
+
+  it "should not create a new appearance the vote's visitor is different from the appearances" do
+    @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+    @optional_vote_params = {:appearance_lookup => @appearance.lookup}
+    allparams = @required_vote_params.merge(@optional_vote_params)
+
+    @johndoe = Factory.create(:visitor)
+    vote = nil
+    vote = @johndoe.vote_for!(allparams)
+    new_appearance = vote.appearance
+
+    new_appearance.should == @appearance
+    new_appearance.voter_id.should_not == @johndoe.id
+  end
+
+  it "should create a new appearance the vote's visitor is different from the appearances and 11 minutes have elapsed" do
+    @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+    @optional_vote_params = {:appearance_lookup => @appearance.lookup}
+    allparams = @required_vote_params.merge(@optional_vote_params)
+
+    @johndoe = Factory.create(:visitor)
+    vote = nil
+    Timecop.travel(Time.now + 11.minutes) do
+      vote = @johndoe.vote_for!(allparams)
+    end
+    new_appearance = vote.appearance
+
+    new_appearance.should_not == @appearance
+    new_appearance.id.should_not == @appearance.id
+    new_appearance.answerable_id.should_not == @appearance.answerable_id
+    new_appearance.answerable_type.should_not == @appearance.answerable_type
+    new_appearance.prompt_id.should == @appearance.prompt_id
+    new_appearance.question_id.should == @appearance.question_id
+    new_appearance.lookup.should == @appearance.lookup
+    new_appearance.voter_id.should == @johndoe.id
+    @appearance.answerable_id.should be_nil
+    @appearance.answerable_type.should be_nil
+  end
+
+  it "should create a new appearance the vote's visitor is different from the appearances and 10 minutes have elapsed" do
+    @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+    @optional_vote_params = {:appearance_lookup => @appearance.lookup}
+    allparams = @required_vote_params.merge(@optional_vote_params)
+
+    @johndoe = Factory.create(:visitor)
+    vote = nil
+    Timecop.travel(Time.now + 10.minutes) do
+      vote = @johndoe.vote_for!(allparams)
+    end
+    new_appearance = vote.appearance
+
+    new_appearance.should_not == @appearance
+    new_appearance.id.should_not == @appearance.id
+    new_appearance.answerable_id.should_not == @appearance.answerable_id
+    new_appearance.answerable_type.should_not == @appearance.answerable_type
+    new_appearance.prompt_id.should == @appearance.prompt_id
+    new_appearance.question_id.should == @appearance.question_id
+    new_appearance.lookup.should == @appearance.lookup
+    new_appearance.voter_id.should == @johndoe.id
+    @appearance.answerable_id.should be_nil
+    @appearance.answerable_type.should be_nil
+  end
   
+  it "should create a new appearance the skip's visitor is different from the appearances and 10 minutes have elapsed" do
+    @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+    @optional_skip_params = {
+      :appearance_lookup => @appearance.lookup,
+      :time_viewed => 304,
+      :skip_reason => "some reason"
+    }
+    allparams = @required_skip_params.merge(@optional_skip_params)
+    @johndoe = Factory.create(:visitor)
+    s = nil
+    Timecop.travel(Time.now + 10.minutes) do
+      s = @johndoe.skip!(allparams)
+    end
+    new_appearance = s.appearance
+
+    new_appearance.should_not == @appearance
+    new_appearance.id.should_not == @appearance.id
+    new_appearance.answerable_id.should_not == @appearance.answerable_id
+    new_appearance.answerable_type.should_not == @appearance.answerable_type
+    new_appearance.prompt_id.should == @appearance.prompt_id
+    new_appearance.question_id.should == @appearance.question_id
+    new_appearance.lookup.should == @appearance.lookup
+    new_appearance.voter_id.should == @johndoe.id
+    @appearance.answerable_id.should be_nil
+    @appearance.answerable_type.should be_nil
+  end
+
   it "should be able to skip a prompt" do
     @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
     @optional_skip_params = {
