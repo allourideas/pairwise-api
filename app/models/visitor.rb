@@ -104,6 +104,8 @@ class Visitor < ActiveRecord::Base
     end
     new_appearance = appearance.clone
     new_appearance.voter_id = obj_voter_id
+    new_appearance.answerable_id = nil
+    new_appearance.answerable_type = nil
     new_appearance.save
     return new_appearance
   end
