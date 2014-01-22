@@ -272,7 +272,7 @@ namespace :test_api do
       error_message   = ""
       success_message = "All appearances have the same session as their respective answer"
       votes_sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
-                    votes.id AS votes_id, votes.voter_id AS votes_voter_id, TIMESTAMPDIFF(SECOND, appearances.created_at, appearances.updated_at) as datediff
+                    votes.id AS votes_id, votes.voter_id AS votes_voter_id, TIMESTAMPDIFF(SECOND, appearances.created_at, votes.created_at) as datediff
                     FROM appearances
                     LEFT JOIN votes ON (votes.id = appearances.answerable_id)
                     WHERE appearances.answerable_type = 'Vote'
@@ -534,7 +534,8 @@ namespace :test_api do
     @global_tasks = {
       :response_time_tests => "Verify all vote objects have accurate response time",
       :verify_appearance_vote_prompt_ids => "Ensure all appearance and votes have matching prompt_ids",
-      :verify_range_of_choices_scores => "Ensure that all choices have 0 <= score <= 100"
+      :verify_range_of_choices_scores => "Ensure that all choices have 0 <= score <= 100",
+      :verify_no_expired_session_mismatches => "Ensure there are now expired session mismatches",
     }
 
     # dynamically create tasks for each global task
@@ -546,6 +547,28 @@ namespace :test_api do
       end
     end
   
+    # look for any appearance / answer session mismatches where the created_at
+    # of the appearance is 10 minutes or more before the created_at of answer.
+    def verify_no_expired_session_mismatches
+      date = "2013-02-01 00:00:00".to_time
+      sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
+              votes.id AS votes_id, votes.voter_id AS votes_voter_id, TIMESTAMPDIFF(SECOND, appearances.created_at, votes.created_at) as datediff
+              FROM appearances
+              LEFT JOIN votes ON (votes.id = appearances.answerable_id)
+              WHERE appearances.answerable_type = 'Vote'
+              AND (appearances.voter_id <> votes.voter_id OR votes.voter_id IS NULL OR appearances.voter_id IS NULL)
+              AND votes.question_id = appearances.question_id
+              AND votes.created_at > '#{date.to_formatted_s(:db)}'"
+      mismatches = Appearance.connection.select_all sql
+      timeouts = mismatches.reject { |mismatch| mismatch["datediff"] < 700 }
+      success_message = "No expired session mismatches found after #{date.to_date.to_formatted_s(:long)}"
+      error_message = timeouts.map do |timeout|
+        "Vote ##{timeout["votes_id"]} does not match the session Appearance ##{timeout["id"]}"
+      end
+      error_message = error_message.join "\n"
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
+
     def verify_appearance_vote_prompt_ids
       bad_records = Vote.connection.select_all "
         SELECT votes.id
