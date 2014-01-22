@@ -99,7 +99,7 @@ class Visitor < ActiveRecord::Base
   # object may be Vote or Skip
   def expired_session_mismatch_fix(object, appearance)
     obj_voter_id = (object.class == Skip) ? object.skipper_id : object.voter_id
-    if obj_voter_id == appearance.voter_id || object.created_at - appearance.created_at < 10 * 60
+    if obj_voter_id == appearance.voter_id || object.created_at - appearance.created_at < 10 * 60 || !appearance.answerable.nil?
       return appearance
     end
     new_appearance = appearance.clone

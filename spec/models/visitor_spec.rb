@@ -155,32 +155,30 @@ describe Visitor do
     @appearance.answerable_type.should be_nil
   end
   
-  it "should accept a vote on a previously answered prompt if vote has different visitor" do
+  it "should not accept a vote on a previously answered prompt if vote has different visitor" do
     @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
     @optional_vote_params = {:appearance_lookup => @appearance.lookup}
     allparams = @required_vote_params.merge(@optional_vote_params)
 
     @johndoe = Factory.create(:visitor)
     first_vote = @visitor.vote_for!(allparams)
-    vote = nil
+    invalid_vote = nil
     allparams = @required_vote_params.merge(@optional_vote_params)
     Timecop.travel(Time.now + 10.minutes) do
-      vote = @johndoe.vote_for!(allparams)
+      invalid_vote = @johndoe.vote_for!(allparams)
     end
-    new_appearance = vote.appearance
 
     first_vote.appearance.should == @appearance
 
-    new_appearance.should_not == @appearance
-    new_appearance.id.should_not == @appearance.id
-    new_appearance.answerable_id.should_not == @appearance.answerable_id
-    new_appearance.answerable_type.should_not == @appearance.answerable_type
-    new_appearance.prompt_id.should == @appearance.prompt_id
-    new_appearance.question_id.should == @appearance.question_id
-    new_appearance.lookup.should == @appearance.lookup
-    new_appearance.voter_id.should == @johndoe.id
-    @appearance.answerable_id.should be_nil
-    @appearance.answerable_type.should be_nil
+    invalid_vote.should_not be_nil
+
+    invalid_vote.valid_record.should be_false
+    invalid_vote.validity_information.should == "Appearance #{@appearance.id} already answered"
+    invalid_vote.appearance.should be_nil
+    @appearance.reload.answerable.should == first_vote
+    @visitor.reload.votes.count.should == 1
+    @question.reload.votes.size.should == 1  #test counter cache works as well
+
   end
 
   it "should create a new appearance the skip's visitor is different from the appearances and 10 minutes have elapsed" do
