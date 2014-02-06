@@ -1,6 +1,8 @@
-source :rubygems
+#source :rubygems
+source 'https://www.rubygems.org'
 source "http://gems.github.com"
 
+gem 'postgres'
 gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
 gem "rails", "2.3.18"
