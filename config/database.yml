@@ -6,7 +6,6 @@ development: &default
   database: rebirth_development
   pool: 5
   timeout: 5000
-  password: r3dfr0g
 
 test: &test
   adapter: sqlite3
