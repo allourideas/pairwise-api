@@ -1,6 +1,5 @@
-source 'https://www.rubygems.org'
-#source :rubygems
-#source "http://gems.github.com"
+source :rubygems
+source "http://gems.github.com"
 
 gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
