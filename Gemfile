@@ -34,7 +34,7 @@ gem "test-unit", "1.2.3"
 gem "sendgrid", "0.1.4"
 gem "json_pure", "1.4.6"
 gem "rubaidh-google_analytics", "1.1.4", :require => "rubaidh/google_analytics"
-gem 'mysql2', '0.2.18'
+#gem 'mysql2', '0.2.18'
 
 group :production do
   gem 'ey_config'
@@ -55,7 +55,7 @@ group :test do
   gem "fakeweb", "1.2.5"
   gem "jferris-mocha", "0.9.5.0.1241126838",
     :require     => "mocha"
-  gem 'sqlite3'
+#  gem 'sqlite3'
 end
 
 group :test, :cucumber do
