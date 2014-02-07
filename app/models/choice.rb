@@ -70,7 +70,11 @@ class Choice < ActiveRecord::Base
   
   def compute_score!
     self.score = compute_score
-    Choice.connection.execute("UPDATE `choices` SET `score` = #{self.score}, `updated_at` = '#{Time.now.utc.to_s(:db)}' WHERE `id` = #{self.id}")
+    conn = Choice.connection
+    conn.execute("UPDATE #{conn.quote_table_name('choices')} SET
+      #{conn.quote_column_name('score')} = #{self.score},
+      #{conn.quote_column_name('updated_at')} = '#{Time.now.utc.to_s(:db)}' WHERE
+      #{conn.quote_column_name('id')} = #{self.id}")
   end
 
   def user_created
@@ -127,18 +131,12 @@ class Choice < ActiveRecord::Base
     previous_choices.each do |l|
 	inserts.push("(NULL, #{self.question_id}, NULL, #{l.id}, '#{timestring}', '#{timestring}', NULL, 0, #{self.id}, NULL, NULL)")
     end
-    sql = "INSERT INTO `prompts` (`algorithm_id`, `question_id`, `voter_id`, `left_choice_id`, `created_at`, `updated_at`, `tracking`, `votes_count`, `right_choice_id`, `active`, `randomkey`) VALUES #{inserts.join(', ')}"
+    conn = Prompts.connection
+    sql = "INSERT INTO #{conn.quote_table_name('prompts')} (#{conn.quote_column_name('algorithm_id')}, #{conn.quote_column_name('question_id')}, #{conn.quote_column_name('voter_id')}, #{conn.quote_column_name('left_choice_id')}, #{conn.quote_column_name('created_at')}, #{conn.quote_column_name('updated_at')}, #{conn.quote_column_name('tracking')}, #{conn.quote_column_name('votes_count')}, #{conn.quote_column_name('right_choice_id')}, #{conn.quote_column_name('active')}, #{conn.quote_column_name('randomkey')}) VALUES #{inserts.join(', ')}"
 
     Question.update_counters(self.question_id, :prompts_count => 2*previous_choices.size)
 
 
-    ActiveRecord::Base.connection.execute(sql)
-
-#VALUES (NULL, 108, NULL, 1892, '2010-03-16 11:12:37', '2010-03-16 11:12:37', NULL, 0, 1893, NULL, NULL)
-#    INSERT INTO `prompts` (`algorithm_id`, `question_id`, `voter_id`, `left_choice_id`, `created_at`, `updated_at`, `tracking`, `votes_count`, `right_choice_id`, `active`, `randomkey`) VALUES(NULL, 108, NULL, 1892, '2010-03-16 11:12:37', '2010-03-16 11:12:37', NULL, 0, 1893, NULL, NULL)
-    #previous_choices.each { |c|
-    #  question.prompts.create!(:left_choice => c, :right_choice => self)
-    #  question.prompts.create!(:left_choice => self, :right_choice => c)
-    #}
+    conn.execute(sql)
   end
 end
