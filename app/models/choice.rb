@@ -1,14 +1,14 @@
 class Choice < ActiveRecord::Base
   acts_as_versioned :if_changed => [:data, :creator_id, :question_id, :active]
-  
+
   belongs_to :question, :counter_cache => true
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
-  
+
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
   validates_presence_of :question, :on => :create, :message => "can't be blank"
   validates_presence_of :data
   #validates_length_of :item, :maximum => 140
-  
+
   has_many :votes
   has_many :losing_votes, :class_name => "Vote", :foreign_key => "loser_choice_id"
   has_many :flags
@@ -25,7 +25,7 @@ class Choice < ActiveRecord::Base
   named_scope :not_created_by, lambda { |creator_id|
     { :conditions => ["creator_id <> ?", creator_id] }
   }
- 
+
   after_save :update_questions_counter
   after_save :update_prompt_queue
 
@@ -37,7 +37,7 @@ class Choice < ActiveRecord::Base
     unless part_of_batch_create
       self.question.update_attribute(:inactive_choices_count, self.question.choices.inactive.length)
     end
-  end 
+  end
 
   # if changing a choice to active, we want to regenerate prompts
   def update_prompt_queue
@@ -50,7 +50,7 @@ class Choice < ActiveRecord::Base
       end
     end
   end
-  
+
   def before_create
     unless self.score
       self.score = 50.0
@@ -63,14 +63,19 @@ class Choice < ActiveRecord::Base
     end
     return true #so active record will save
   end
-  
+
   def compute_score
     (wins.to_f+1)/(wins+1+losses+1) * 100
   end
-  
+
   def compute_score!
     self.score = compute_score
-    Choice.connection.execute("UPDATE `choices` SET `score` = #{self.score}, `updated_at` = '#{Time.now.utc.to_s(:db)}' WHERE `id` = #{self.id}")
+    #changed to quote tables according the database type (wasn't working in postgres)
+    Choice.connection.execute("UPDATE #{connection.quote_table_name("choices")}
+      SET #{connection.quote_column_name("score")} = #{self.score},
+        #{connection.quote_column_name("updated_at")} = '#{Time.now.utc.to_s(:db)}'
+      WHERE
+        #{connection.quote_column_name("id")} = #{self.id}")
   end
 
   def user_created
@@ -101,15 +106,15 @@ class Choice < ActiveRecord::Base
     (self.active = true)
     self.save!
   end
-  
+
   def deactivate!
     (self.active = false)
     self.save!
   end
-  
+
   protected
 
-  
+
   def generate_prompts
     #once a choice is added, we need to generate the new prompts (possible combinations of choices)
     #do this in a new process (via delayed jobs)? Maybe just for uploaded ideas
@@ -123,11 +128,23 @@ class Choice < ActiveRecord::Base
     previous_choices.each do |r|
 	inserts.push("(NULL, #{self.question_id}, NULL, #{self.id}, '#{timestring}', '#{timestring}', NULL, 0, #{r.id}, NULL, NULL)")
     end
-    #add prompts with this choice on the right 
+    #add prompts with this choice on the right
     previous_choices.each do |l|
 	inserts.push("(NULL, #{self.question_id}, NULL, #{l.id}, '#{timestring}', '#{timestring}', NULL, 0, #{self.id}, NULL, NULL)")
     end
-    sql = "INSERT INTO `prompts` (`algorithm_id`, `question_id`, `voter_id`, `left_choice_id`, `created_at`, `updated_at`, `tracking`, `votes_count`, `right_choice_id`, `active`, `randomkey`) VALUES #{inserts.join(', ')}"
+    #changed to quote tables according the database type (wasn't working in postgres)
+    sql = "INSERT INTO #{connection.quote_table_name("prompts")}
+    (#{connection.quote_column_name("algorithm_id")},
+    #{connection.quote_column_name("question_id")},
+    #{connection.quote_column_name("voter_id")},
+    #{connection.quote_column_name("left_choice_id")},
+    #{connection.quote_column_name("created_at")},
+    #{connection.quote_column_name("updated_at")},
+    #{connection.quote_column_name("tracking")},
+    #{connection.quote_column_name("votes_count")},
+    #{connection.quote_column_name("right_choice_id")},
+    #{connection.quote_column_name("active")},
+    #{connection.quote_column_name("randomkey")}) VALUES #{inserts.join(', ')}"
 
     Question.update_counters(self.question_id, :prompts_count => 2*previous_choices.size)
 
@@ -142,3 +159,4 @@ class Choice < ActiveRecord::Base
     #}
   end
 end
+

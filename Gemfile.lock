@@ -1,6 +1,5 @@
 GEM
-  remote: http://rubygems.org/
-  remote: http://gems.github.com/
+  remote: https://www.rubygems.org/
   specs:
     actionmailer (2.3.18)
       actionpack (= 2.3.18)
@@ -77,6 +76,7 @@ GEM
       activesupport
     sendgrid (0.1.4)
     shoulda (2.10.3)
+    sqlite3 (1.3.8)
     term-ansicolor (1.0.7)
     test-unit (1.2.3)
       hoe (>= 1.5.1)
@@ -123,6 +123,7 @@ DEPENDENCIES
   rubaidh-google_analytics (= 1.1.4)
   sendgrid (= 0.1.4)
   shoulda (~> 2.10.1)
+  sqlite3
   test-unit (= 1.2.3)
   thoughtbot-clearance (= 0.8.2)
   webrat (= 0.5.3)
