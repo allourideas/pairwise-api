@@ -70,7 +70,7 @@ class Choice < ActiveRecord::Base
   
   def compute_score!
     self.score = compute_score
-    Choice.connection = conn
+    conn = Choice.connection
     conn.execute("UPDATE #{conn.quote_table_name('choices')} SET
       #{conn.quote_column_name('score')} = #{self.score},
       #{conn.quote_column_name('updated_at')} = '#{Time.now.utc.to_s(:db)}' WHERE
