@@ -2,7 +2,7 @@
 pid: tmp/pids/thin.pid
 address: 0.0.0.0
 timeout: 30
-wait: 30
+#wait: 30
 port: 5030
 log: log/thin.log
 max_conns: 1024
