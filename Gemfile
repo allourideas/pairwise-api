@@ -2,7 +2,11 @@
 source 'https://www.rubygems.org'
 source "http://gems.github.com"
 
-gem 'postgres'
+gem 'thin'
+#gem 'postgres', '~> 0.8.1'
+#gem 'activerecord-pg-adapter'
+gem 'pg', '~> 0.17.1'
+gem 'activerecord-postgresql-adapter'
 gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
 gem "rails", "2.3.18"
