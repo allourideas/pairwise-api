@@ -81,8 +81,9 @@ class Visitor < ActiveRecord::Base
   end
 
   # Safely associates appearance with object, but making sure no other object
-  # is already associated wit this appearance. object is either vote or skip.
+  # is already associated with this appearance. object is either vote or skip.
   def safely_associate_appearance(object, appearance)
+    appearance = expired_session_mismatch_fix(object, appearance)
     # Manually update Appearance with id to ensure no double votes for a
     # single appearance.  Only update the answerable_id if it is NULL.
     # If we can't find any rows to update, then this object should be invalid.
@@ -92,4 +93,20 @@ class Visitor < ActiveRecord::Base
     end
   end
 
+  # if the voter_id / skipper_id for the object and appearance don't match
+  # and vote.created_at > 10 minutes after appearance.created_at, which indicates
+  # a session expiration, then return a new copy of the appearance
+  # object may be Vote or Skip
+  def expired_session_mismatch_fix(object, appearance)
+    obj_voter_id = (object.class == Skip) ? object.skipper_id : object.voter_id
+    if obj_voter_id == appearance.voter_id || object.created_at - appearance.created_at < 10 * 60 || !appearance.answerable.nil?
+      return appearance
+    end
+    new_appearance = appearance.clone
+    new_appearance.voter_id = obj_voter_id
+    new_appearance.answerable_id = nil
+    new_appearance.answerable_type = nil
+    new_appearance.save
+    return new_appearance
+  end
 end
