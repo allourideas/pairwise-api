@@ -37,10 +37,18 @@ class Visitor < ActiveRecord::Base
       options.merge!(:validity_information => "API call forced invalid vote")
     end
 
+    old_visitor_identifier = options.delete(:old_visitor_identifier)
+
     associate_appearance = false
     if options[:appearance_lookup] 
-       @appearance = prompt.appearances.find_by_lookup(options.delete(:appearance_lookup))
-       return nil unless @appearance # don't allow people to fake appearance lookups
+      @appearance = prompt.appearances.find_by_lookup(options.delete(:appearance_lookup))
+      return nil unless @appearance # don't allow people to fake appearance lookups
+
+      # if the found appearance doesn't match this voter_id or the voter_id of
+      # the old_visitor_identifier then don't proceed any further
+      if @appearance.voter_id != self.id && @appearance.voter_id != Visitor.find_by_identifier(old_visitor_identifier).id
+        return nil
+      end
       associate_appearance = true
     end
     
@@ -51,7 +59,7 @@ class Visitor < ActiveRecord::Base
     options.merge!(:question_id => prompt.question_id, :prompt => prompt, :voter => self, :choice => choice, :loser_choice => loser_choice) 
 
     v = votes.create!(options)
-    safely_associate_appearance(v, @appearance) if associate_appearance
+    safely_associate_appearance(v, @appearance, old_visitor_identifier) if associate_appearance
     v
   end
 
@@ -60,10 +68,17 @@ class Visitor < ActiveRecord::Base
 
     prompt = options.delete(:prompt)
 
+    old_visitor_identifier = options.delete(:old_visitor_identifier)
+
     associate_appearance = false
     if options[:appearance_lookup]
       @appearance = prompt.appearances.find_by_lookup(options.delete(:appearance_lookup))
       return nil unless @appearance
+      # if the found appearance doesn't match this voter_id or the voter_id of
+      # the old_visitor_identifier then don't proceed any further
+      if @appearance.voter_id != self.id && @appearance.voter_id != Visitor.find_by_identifier(old_visitor_identifier).id
+        return nil
+      end
       associate_appearance = true
     end
 
@@ -75,14 +90,28 @@ class Visitor < ActiveRecord::Base
     options.merge!(:question_id => prompt.question_id, :prompt_id => prompt.id, :skipper_id => self.id)
     prompt_skip = skips.create!(options)
     if associate_appearance
-      safely_associate_appearance(prompt_skip, @appearance)
+      safely_associate_appearance(prompt_skip, @appearance, old_visitor_identifier)
     end
     prompt_skip
   end
 
+  def clone_expired_appearance(object, appearance)
+    obj_voter_id = (object.class == Skip) ? object.skipper_id : object.voter_id
+    if obj_voter_id == appearance.voter_id || !appearance.answerable.nil?
+      return appearance
+    end
+    new_appearance = appearance.clone
+    new_appearance.voter_id = obj_voter_id
+    new_appearance.answerable_id = nil
+    new_appearance.answerable_type = nil
+    new_appearance.save
+    return new_appearance
+  end
+
   # Safely associates appearance with object, but making sure no other object
   # is already associated wit this appearance. object is either vote or skip.
-  def safely_associate_appearance(object, appearance)
+  def safely_associate_appearance(object, appearance, old_visitor_identifier)
+    appearance = clone_expired_appearance(object, appearance) if old_visitor_identifier
     # Manually update Appearance with id to ensure no double votes for a
     # single appearance.  Only update the answerable_id if it is NULL.
     # If we can't find any rows to update, then this object should be invalid.
