@@ -46,7 +46,7 @@ class Visitor < ActiveRecord::Base
 
       # if the found appearance doesn't match this voter_id or the voter_id of
       # the old_visitor_identifier then don't proceed any further
-      if @appearance.voter_id != self.id && @appearance.voter_id != Visitor.find_by_identifier(old_visitor_identifier).id
+      if @appearance.voter_id != self.id && @appearance.voter_id != Visitor.find_by_identifier(old_visitor_identifier).try(:id)
         return nil
       end
       associate_appearance = true
@@ -76,7 +76,7 @@ class Visitor < ActiveRecord::Base
       return nil unless @appearance
       # if the found appearance doesn't match this voter_id or the voter_id of
       # the old_visitor_identifier then don't proceed any further
-      if @appearance.voter_id != self.id && @appearance.voter_id != Visitor.find_by_identifier(old_visitor_identifier).id
+      if @appearance.voter_id != self.id && @appearance.voter_id != Visitor.find_by_identifier(old_visitor_identifier).try(:id)
         return nil
       end
       associate_appearance = true
