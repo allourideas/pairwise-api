@@ -1,3 +1,3 @@
-if FileTest.exists?("#{shared_path}/config/redis.yml")
-  run "ln -nfs #{shared_path}/config/redis.yml #{release_path}/config/redis.yml"
+if FileTest.exists?("#{config.shared_path}/config/redis.yml")
+  run "ln -nfs #{config.shared_path}/config/redis.yml #{config.release_path}/config/redis.yml"
 end
