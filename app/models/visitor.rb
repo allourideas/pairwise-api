@@ -95,13 +95,15 @@ class Visitor < ActiveRecord::Base
     prompt_skip
   end
 
-  def clone_expired_appearance(object, appearance)
-    obj_voter_id = (object.class == Skip) ? object.skipper_id : object.voter_id
-    if obj_voter_id == appearance.voter_id || !appearance.answerable.nil?
+  # clone an expired appearance to match the voter_id of the Vote or Skip
+  def clone_expired_appearance(vote_or_skip, appearance)
+    voter_id = (vote_or_skip.class == Skip) ? vote_or_skip.skipper_id : vote_or_skip.voter_id
+    # if voter_id already matches or appearance is answered, we have nothing to do
+    if voter_id == appearance.voter_id || !appearance.answerable.nil?
       return appearance
     end
     new_appearance = appearance.clone
-    new_appearance.voter_id = obj_voter_id
+    new_appearance.voter_id = voter_id
     new_appearance.answerable_id = nil
     new_appearance.answerable_type = nil
     new_appearance.save
