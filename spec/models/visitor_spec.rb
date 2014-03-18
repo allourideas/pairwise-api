@@ -92,6 +92,93 @@ describe Visitor do
     v.time_viewed.should == 213
     
   end
+
+  it "should not create a new appearance if the answers's visitor is different from the appearance's" do
+    # test for both a vote and a skip
+    ['vote', 'skip'].each do |answer|
+      @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+      appearance_param = {:appearance_lookup => @appearance.lookup}
+
+      @johndoe = Factory.create(:visitor)
+      a = nil
+      if answer == 'skip'
+        a = @johndoe.skip!(@required_skip_params.merge(appearance_param))
+        a.should == nil
+      else
+        a = @johndoe.vote_for!(@required_vote_params.merge(appearance_param))
+        a.should == nil
+      end
+      @appearance.answerable.should == nil
+
+    end
+  end
+
+  it "should not accept a vote on a previously answered prompt if vote has different visitor" do
+    # test for both a vote and a skip
+    ['vote', 'skip'].each do |answer|
+      @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+      appearance_param = {:appearance_lookup => @appearance.lookup}
+
+      @johndoe = Factory.create(:visitor)
+      jd_appearance_param = appearance_param.merge({:old_visitor_identifier => @visitor.identifier})
+
+      first_vote = @visitor.vote_for!(@required_vote_params.merge(appearance_param))
+      invalid_answer = nil
+      visitor_votes_prev = @visitor.reload.votes.count
+      votes_prev = @question.reload.votes.size
+      skips_prev = @question.skips.size
+      if answer == 'skip'
+        invalid_answer = @johndoe.skip!(@required_skip_params.merge(jd_appearance_param))
+        invalid_answer.class.should == Skip
+      else
+        invalid_answer = @johndoe.vote_for!(@required_vote_params.merge(jd_appearance_param))
+        invalid_answer.class.should == Vote
+      end
+
+      first_vote.appearance.should == @appearance
+
+      invalid_answer.should_not be_nil
+
+      invalid_answer.valid_record.should be_false
+      invalid_answer.validity_information.should == "Appearance #{@appearance.id} already answered"
+      invalid_answer.appearance.should be_nil
+      @appearance.reload.answerable.should == first_vote
+      @visitor.reload.votes.count.should == visitor_votes_prev
+      @question.reload.votes.size.should == votes_prev  #test counter cache works as well
+      @question.reload.skips.size.should == skips_prev  #test counter cache works as well
+    end
+  end
+
+  it "should create a new appearance if the answer's visitor is different from the appearance's and the answer passed in the old_visitor_identifier" do
+    # test for both a vote and a skip
+    ['vote', 'skip'].each do |answer|
+      @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
+      appearance_param = { :appearance_lookup => @appearance.lookup }
+
+      @johndoe = Factory.create(:visitor)
+      jd_appearance_param = appearance_param.merge({:old_visitor_identifier => @visitor.identifier})
+      a = nil
+      if answer == "skip"
+        a = @johndoe.skip!(@required_skip_params.merge(jd_appearance_param))
+        a.class.should == Skip
+      else
+        a = @johndoe.vote_for!(@required_vote_params.merge(jd_appearance_param))
+        a.class.should == Vote
+      end
+      new_appearance = a.appearance
+
+      new_appearance.should_not == @appearance
+      new_appearance.id.should_not == @appearance.id
+      new_appearance.answerable_id.should_not == @appearance.answerable_id
+      new_appearance.answerable_type.should_not == @appearance.answerable_type
+      new_appearance.prompt_id.should == @appearance.prompt_id
+      new_appearance.question_id.should == @appearance.question_id
+      new_appearance.lookup.should == @appearance.lookup
+      new_appearance.voter_id.should == @johndoe.id
+      @appearance.answerable_id.should be_nil
+      @appearance.answerable_type.should be_nil
+    end
+  end
   
   it "should be able to skip a prompt" do
     @appearance = @aoi_clone.record_appearance(@visitor, @prompt)
