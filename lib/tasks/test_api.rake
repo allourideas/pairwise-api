@@ -506,8 +506,8 @@ namespace :test_api do
       :response_time_tests => "Verify all vote objects have accurate response time",
       :verify_appearance_vote_prompt_ids => "Ensure all appearance and votes have matching prompt_ids",
       :verify_range_of_choices_scores => "Ensure that all choices have 0 <= score <= 100",
-      :verify_no_vote_session_mismatches => "Verify no vote session mismatches after March 18, 2014",
-      :verify_no_skip_session_mismatches => "Verify no skip session mismatches after March 18, 2014",
+      :verify_no_vote_session_mismatches => "Verify no vote session mismatches after March 19, 2014",
+      :verify_no_skip_session_mismatches => "Verify no skip session mismatches after March 19, 2014",
     }
 
     # dynamically create tasks for each global task
@@ -522,7 +522,7 @@ namespace :test_api do
     # look for any appearance / answer session mismatches after the date specified.
     # we deployed fixes to prevent session mismatches on that date.
     def verify_no_skip_session_mismatches
-      date = "2014-03-18 00:00:00".to_time
+      date = "2014-03-19 00:00:00".to_time
       sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
               skips.id AS skips_id, skips.skipper_id AS skips_skipper_id
               FROM appearances
@@ -543,7 +543,7 @@ namespace :test_api do
     # look for any appearance / answer session mismatches after the date specified.
     # we deployed fixes to prevent session mismatches on that date.
     def verify_no_vote_session_mismatches
-      date = "2014-03-18 00:00:00".to_time
+      date = "2014-03-19 00:00:00".to_time
       sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
               votes.id AS votes_id, votes.voter_id AS votes_voter_id
               FROM appearances
