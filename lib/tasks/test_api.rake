@@ -441,7 +441,13 @@ namespace :test_api do
 
       question.expire_prompt_cache_tracking_keys(yesterday)
 
-      yesterday_appearances = Appearance.count_with_exclusive_scope(:conditions => ['created_at >= ? AND created_at < ? AND question_id = ?', Time.now.utc.yesterday.midnight, Time.now.utc.midnight, question.id])
+      # Only count rows with distinct lookup column values. When sessions
+      # expire, an appearance will get cloned creating an appearance with the
+      # same lookup. However, this cloned appearance didn't hit the prompt cache.
+      yesterday_appearances = Appearance.count_with_exclusive_scope(
+        :distinct => true,
+        :select => 'lookup',
+        :conditions => ['created_at >= ? AND created_at < ? AND question_id = ?', Time.now.utc.yesterday.midnight, Time.now.utc.midnight, question.id])
 
       if misses + hits != yesterday_appearances
         error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}, Hits: #{hits}, Misses: #{misses}\n"
