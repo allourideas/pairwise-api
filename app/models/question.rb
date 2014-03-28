@@ -656,13 +656,17 @@ class Question < ActiveRecord::Base
       zlib.close
 
       conn = Export.connection
-      export_id = conn.insert("INSERT INTO #{conn.quote_table_name("exports")} (
+      export_sql = "INSERT INTO #{conn.quote_table_name("exports")} (
           #{conn.quote_column_name("name")},
           #{conn.quote_column_name("question_id")},
           #{conn.quote_column_name("data")},
           #{conn.quote_column_name("compressed")})
         VALUES (#{conn.quote(options[:key])}, #{self.id}, #{conn.quote(zlibcsv)}, 1)
-      ".force_encoding("binary"))
+      "
+      if export_sql.methods.include? :force_encoding
+        export_sql.force_encoding('binary')
+      end
+      export_id = conn.insert(export_sql)
       Delayed::Job.enqueue DestroyOldExportJob.new(export_id), 20, 3.days.from_now
     end
 
