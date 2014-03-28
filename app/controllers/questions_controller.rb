@@ -56,31 +56,19 @@ class QuestionsController < InheritedResources::Base
 
   def export
     type = params[:type]
-    response_type = params[:response_type]
+    key  = params[:key]
 
-    if response_type == 'redis'
-      redis_key = params[:redis_key]
-    else
-      render :text => "Error! The only export type supported currently is local through redis!" and return
+    if key.nil?
+      render :text => "Error! Specify a key for the export" and return
     end
-
     if type.nil?
       render :text => "Error! Specify a type of export" and return
     end
 
     @question = current_user.questions.find(params[:id])
-
-    # puts "redis key is::::: #{redis_key}"
-
-    @question.delay(:priority => 15).export(type,
-            :response_type => response_type,
-            :redis_key => redis_key)
-
+    @question.delay(:priority => 15).export(type, :key => key)
 
     render :text => "Ok! Please wait for the response (as specified by your response_type)"
-
-#    export_type = params[:export_type]
-#    export_format = params[:export_format] #CSV always now, could expand to xml later
   end
 
   def median_votes_per_session

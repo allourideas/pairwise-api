@@ -172,7 +172,7 @@ describe "Questions" do
     end
 
     it "should succeed given valid parameters" do
-      params = { :type => "ideas", :response_type => "redis", :redis_key => "foo" }
+      params = { :type => "ideas", :key => "foo" }
       post_auth export_question_path(@question,  :format => 'xml'), params
       response.should be_success
       response.body.should =~ /Ok!/

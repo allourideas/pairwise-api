@@ -23,6 +23,7 @@ class Question < ActiveRecord::Base
   has_many :skips
   has_many :densities
   has_many :appearances
+  has_many :exports
 
   attr_accessor :ideas
   after_create :create_choices_from_ideas
@@ -569,7 +570,6 @@ class Question < ActiveRecord::Base
 
 
   def export(type, options = {})
-
     case type
       when 'votes'
         outfile = "ideamarketplace_#{self.id}_votes"
@@ -648,23 +648,25 @@ class Question < ActiveRecord::Base
 
     end
 
-
-    if options[:response_type] == 'redis'
-      # let's compress this for redis
-      # it should get removed from redis relatively quickly
+    # if a key is passed in, save it to the database under that key
+    if !options[:key].nil?
+      # compress data before saving to the database
       zlib = Zlib::Deflate.new
       zlibcsv = zlib.deflate(csv_data, Zlib::FINISH)
       zlib.close
 
-      if options[:redis_key].nil?
-        raise "No :redis_key specified"
-      end
-      #The client should use blpop to listen for a key
-      #The client is responsible for deleting the redis key (auto expiration results failure in testing)
-      $redis.lpush(options[:redis_key], zlibcsv)
-    else
-      return csv_data
+      conn = Export.connection
+      export_id = conn.insert("INSERT INTO #{conn.quote_table_name("exports")} (
+          #{conn.quote_column_name("name")},
+          #{conn.quote_column_name("question_id")},
+          #{conn.quote_column_name("data")},
+          #{conn.quote_column_name("compressed")})
+        VALUES (#{conn.quote(options[:key])}, #{self.id}, #{conn.quote(zlibcsv)}, 1)
+      ".force_encoding("binary"))
+      Delayed::Job.enqueue DestroyOldExportJob.new(export_id), 20, 3.days.from_now
     end
+
+    return csv_data
   end
 
   def get_first_unanswered_appearance(visitor, offset=0)

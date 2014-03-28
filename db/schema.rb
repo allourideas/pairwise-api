@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120426144214) do
+ActiveRecord::Schema.define(:version => 20140327170621) do
 
   create_table "appearances", :force => true do |t|
     t.integer  "voter_id"
@@ -113,6 +113,15 @@ ActiveRecord::Schema.define(:version => 20120426144214) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "exports", :force => true do |t|
+    t.string  "name",                              :default => ""
+    t.integer "question_id"
+    t.binary  "data",        :limit => 2147483647
+    t.boolean "compressed",                        :default => false
+  end
+
+  add_index "exports", ["name"], :name => "index_exports_on_name"
 
   create_table "flags", :force => true do |t|
     t.string   "explanation", :default => ""
