@@ -68,7 +68,7 @@ class QuestionsController < InheritedResources::Base
     @question = current_user.questions.find(params[:id])
     @question.delay(:priority => 15).export(type, :key => key)
 
-    render :text => "Ok! Please wait for the response (as specified by your response_type)"
+    render :text => "Ok! Please wait for the response"
   end
 
   def median_votes_per_session
