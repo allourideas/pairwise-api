@@ -1,3 +1,6 @@
+## Pairwise 3.2.0 (Mar 31, 2014) ##
+ * Save CSV exports to a database table instead of redis.
+
 ## Pairwise 3.1.0 (Mar 20, 2014) ##
  * handle votes or skips that happen after an expired session
  * don't allow votes / skips on appearances if their session ids don't match
