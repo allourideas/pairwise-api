@@ -534,7 +534,13 @@ namespace :test_api do
 
       question.expire_prompt_cache_tracking_keys(yesterday)
 
-      yesterday_appearances = Appearance.count_with_exclusive_scope(:conditions => ['created_at >= ? AND created_at < ? AND question_id = ?', Time.now.utc.yesterday.midnight, Time.now.utc.midnight, question.id])
+      # Only count rows with distinct lookup column values. When sessions
+      # expire, an appearance will get cloned creating an appearance with the
+      # same lookup. However, this cloned appearance didn't hit the prompt cache.
+      yesterday_appearances = Appearance.count_with_exclusive_scope(
+        :distinct => true,
+        :select => 'lookup',
+        :conditions => ['created_at >= ? AND created_at < ? AND question_id = ?', Time.now.utc.yesterday.midnight, Time.now.utc.midnight, question.id])
 
       if misses + hits != yesterday_appearances
         error_message += "Error! Question #{question.id} isn't tracking prompt cache hits and misses accurately! Expected #{yesterday_appearances}, Actual: #{misses+hits}, Hits: #{hits}, Misses: #{misses}\n"
@@ -598,7 +604,9 @@ namespace :test_api do
     @global_tasks = {
       :response_time_tests => "Verify all vote objects have accurate response time",
       :verify_appearance_vote_prompt_ids => "Ensure all appearance and votes have matching prompt_ids",
-      :verify_range_of_choices_scores => "Ensure that all choices have 0 <= score <= 100"
+      :verify_range_of_choices_scores => "Ensure that all choices have 0 <= score <= 100",
+      :verify_no_vote_session_mismatches => "Verify no vote session mismatches after March 19, 2014",
+      :verify_no_skip_session_mismatches => "Verify no skip session mismatches after March 19, 2014",
     }
 
     # dynamically create tasks for each global task
@@ -610,6 +618,48 @@ namespace :test_api do
       end
     end
   
+    # look for any appearance / answer session mismatches after the date specified.
+    # we deployed fixes to prevent session mismatches on that date.
+    def verify_no_skip_session_mismatches
+      date = "2014-03-19 00:00:00".to_time
+      sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
+              skips.id AS skips_id, skips.skipper_id AS skips_skipper_id
+              FROM appearances
+              LEFT JOIN skips ON (skips.id = appearances.answerable_id)
+              WHERE appearances.answerable_type = 'Skip'
+              AND (appearances.voter_id <> skips.skipper_id OR skips.skipper_id IS NULL OR appearances.voter_id IS NULL)
+              AND skips.question_id = appearances.question_id
+              AND skips.created_at > '#{date.to_formatted_s(:db)}'"
+      mismatches = Appearance.connection.select_all sql
+      success_message = "No skip session mismatches found after #{date.to_date.to_formatted_s(:long)}"
+      error_message = mismatches.map do |mismatch|
+        "Skip ##{mismatch["skips_id"]} does not match the session Appearance ##{mismatch["id"]}"
+      end
+      error_message = error_message.join "\n"
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
+
+    # look for any appearance / answer session mismatches after the date specified.
+    # we deployed fixes to prevent session mismatches on that date.
+    def verify_no_vote_session_mismatches
+      date = "2014-03-19 00:00:00".to_time
+      sql = "SELECT appearances.id, appearances.voter_id, appearances.answerable_id, appearances.answerable_type,
+              votes.id AS votes_id, votes.voter_id AS votes_voter_id
+              FROM appearances
+              LEFT JOIN votes ON (votes.id = appearances.answerable_id)
+              WHERE appearances.answerable_type = 'Vote'
+              AND (appearances.voter_id <> votes.voter_id OR votes.voter_id IS NULL OR appearances.voter_id IS NULL)
+              AND votes.question_id = appearances.question_id
+              AND votes.created_at > '#{date.to_formatted_s(:db)}'"
+      mismatches = Appearance.connection.select_all sql
+      success_message = "No vote session mismatches found after #{date.to_date.to_formatted_s(:long)}"
+      error_message = mismatches.map do |mismatch|
+        "Vote ##{mismatch["votes_id"]} does not match the session Appearance ##{mismatch["id"]}"
+      end
+      error_message = error_message.join "\n"
+      return error_message.blank? ? [success_message, false] : [error_message, true]
+    end
+
     def verify_appearance_vote_prompt_ids
       bad_records = Vote.connection.select_all "
         SELECT votes.id

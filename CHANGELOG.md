@@ -1,3 +1,17 @@
+## Pairwise 3.2.0 (Mar 31, 2014) ##
+ * Save CSV exports to a database table instead of redis.
+
+## Pairwise 3.1.0 (Mar 20, 2014) ##
+ * handle votes or skips that happen after an expired session
+ * don't allow votes / skips on appearances if their session ids don't match
+
+## Pairwise 3.0.3 (Feb 07, 2014) ##
+ * use ActiveRecord quoting for table, column names
+ * add appearance id to votes and nonvote csv
+ * update cache hit/miss counters to use utc
+ * optimize objects_by_session_id
+ * disable catchup on surveys with more than 999 active choices
+
 ## Pairwise 3.0.2 (Jun 11, 2013) ##
  * Optimize voting API call
  * Upgrade to Rails 2.3.16

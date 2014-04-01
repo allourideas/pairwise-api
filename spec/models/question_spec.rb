@@ -546,18 +546,16 @@ describe Question do
     end
 
     it "should export zlibed csv to redis after completing an export, if redis option set" do
-      redis_key = "test_key123"
-      $redis.del(redis_key) # clear if key exists already
+      key = "test_key123"
       csv = @aoi_question.export('votes')
-      @aoi_question.export('votes', :response_type => 'redis', :redis_key => redis_key)
+      @aoi_question.export('votes', :key => key)
 
-      zlibcsv = $redis.lpop(redis_key)
+      export = Export.find_by_name(key)
       zstream = Zlib::Inflate.new
-      buf = zstream.inflate(zlibcsv)
+      buf = zstream.inflate(export.data)
       zstream.finish
       zstream.close
       buf.should == csv
-      $redis.del(redis_key) # clean up
 
     end
     it "should email question owner after completing an export, if email option set" do

@@ -16,7 +16,7 @@ module Clearance
         flash[:failure] = flash_message if flash_message
         respond_to do |format|
           format.html { redirect_to new_session_url }
-          format.any(:json, :xml) do
+          format.any(:json, :xml, :csv) do
             authenticate_or_request_with_http_basic('Pairwise API') do |login, password|
               @_current_user = ::User.authenticate(login, password)
             end
