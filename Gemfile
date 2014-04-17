@@ -30,9 +30,6 @@ gem "json_pure", "1.4.6"
 gem "rubaidh-google_analytics", "1.1.4", :require => "rubaidh/google_analytics"
 gem 'mysql2', '0.2.18'
 
-group :production do
-  gem 'ey_config'
-end
 group :cucumber do
   gem 'cucumber', '1.1.0'
   gem 'cucumber-rails', '0.3.2'
@@ -56,3 +53,4 @@ group :test, :cucumber do
   gem 'mock_redis', '0.4.1'
 end
 gem "newrelic_rpm"
+gem 'ey_config'
