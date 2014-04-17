@@ -52,5 +52,5 @@ group :test, :cucumber do
   gem 'factory_girl', '1.2.3'
   gem 'mock_redis', '0.4.1'
 end
-gem "newrelic_rpm"
 gem 'ey_config'
+gem "newrelic_rpm"
