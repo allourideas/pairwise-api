@@ -20,7 +20,6 @@ gem "has_scope",  "0.4.2"
 gem "responders",  "0.4.8"
 gem "thoughtbot-clearance", "0.8.2",
     :require     => "clearance"
-gem "fastercsv", "1.5.1", :platforms => :mri_18
 gem "delayed_job", "2.0.6"
 gem "redis", "~> 3.0.1"
 gem "test-unit", "1.2.3"
@@ -29,6 +28,10 @@ gem "sendgrid", "0.1.4"
 gem "json_pure", "1.4.6"
 gem "rubaidh-google_analytics", "1.1.4", :require => "rubaidh/google_analytics"
 gem 'mysql2', '0.2.18'
+
+platforms :ruby_18 do
+  gem "fastercsv", "1.5.1"
+end
 
 group :cucumber do
   gem 'cucumber', '1.1.0'
