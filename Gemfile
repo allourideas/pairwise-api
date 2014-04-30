@@ -20,7 +20,7 @@ gem "has_scope",  "0.4.2"
 gem "responders",  "0.4.8"
 gem "thoughtbot-clearance", "0.8.2",
     :require     => "clearance"
-gem "fastercsv", "1.5.1", :platforms => :ruby_18
+gem "fastercsv", "1.5.1"
 gem "delayed_job", "2.0.6"
 gem "redis", "~> 3.0.1"
 gem "test-unit", "1.2.3"
