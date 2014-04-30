@@ -1,3 +1,5 @@
+ * Alter response for all_object_info_totals_by_date to be valid XML.
+
 ## Pairwise 3.2.0 (Mar 31, 2014) ##
  * Save CSV exports to a database table instead of redis.
 
