@@ -283,6 +283,7 @@ class QuestionsController < InheritedResources::Base
   def all_object_info_totals_by_date
     object_type = params[:object_type]
 
+    hash = {}
     if object_type == 'votes'
       hash = Vote.count(:group => "date(created_at)")
     elsif object_type == 'user_submitted_ideas'
@@ -298,8 +299,12 @@ class QuestionsController < InheritedResources::Base
       end
     end
 
+    array = []
+    hash.each do |key, value|
+      array << {:date => key, :count => value}
+    end
     respond_to do |format|
-      format.xml { render :xml => hash.to_xml and return}
+      format.xml { render :xml => array.to_xml and return}
     end
   end
 
