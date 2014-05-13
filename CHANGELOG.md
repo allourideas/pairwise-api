@@ -1,3 +1,4 @@
+ * Remove votes from vote CSV file that have NA for Appearance ID.
  * Alter response for all_object_info_totals_by_date to be valid XML.
 
 ## Pairwise 3.2.0 (Mar 31, 2014) ##
