@@ -592,14 +592,16 @@ class Question < ActiveRecord::Base
         when 'votes'
 
           Vote.find_each_without_default_scope(:conditions => {:question_id => self}, :include => [:prompt, :choice, :loser_choice, :voter, :appearance]) do |v|
+            # Skip votes without an appearances.
+            # Typically, this would be votes on an already answered appearance.
+            next if v.appearance.nil?
             valid = v.valid_record ? "TRUE" : "FALSE"
-            prompt = v.prompt
             # these may not exist
             loser_data = v.loser_choice.nil? ? "" : v.loser_choice.data.strip
             left_id = v.prompt.nil? ? "" : v.prompt.left_choice_id
             right_id = v.prompt.nil? ? "" : v.prompt.right_choice_id
 
-            appearance_id = v.appearance.nil? ? "NA" : v.appearance.id
+            appearance_id = v.appearance.id
             time_viewed = v.time_viewed.nil? ? "NA": v.time_viewed.to_f / 1000.0
 
             csv << [ v.id, v.voter_id, v.question_id, v.choice_id, v.choice.data.strip, v.loser_choice_id, loser_data,
