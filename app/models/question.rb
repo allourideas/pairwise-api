@@ -678,6 +678,11 @@ class Question < ActiveRecord::Base
     return csv_data
   end
 
+  # Gets the user n'th unanswered appearance where n is the value of offset.
+  #
+  # Lock is set to true for the SELECT query because this method is called
+  # inside a transaction that will add a row matching these parameters if one
+  # doesn't already exist.
   def get_first_unanswered_appearance(visitor, offset=0)
     unanswered_appearances = visitor.appearances.find(:all,
       :conditions => {
