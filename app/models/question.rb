@@ -186,28 +186,31 @@ class Question < ActiveRecord::Base
       if params[:with_appearance] && visitor_identifier.present?
         visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
 
-        last_appearance = get_first_unanswered_appearance(visitor)
-
-        if last_appearance.nil?
-          @prompt = choose_prompt(:algorithm => params[:algorithm])
-          @appearance = current_user.record_appearance(visitor, @prompt)
-        else
-        #only display a new prompt and new appearance if the old prompt has not been voted on
-          @appearance = last_appearance
-          @prompt= @appearance.prompt
+        Appearance.transaction do
+          last_appearance = get_first_unanswered_appearance(visitor)
+          if last_appearance.nil?
+            @prompt = choose_prompt(:algorithm => params[:algorithm])
+            @appearance = current_user.record_appearance(visitor, @prompt)
+          else
+            #only display a new prompt and new appearance if the old prompt has not been voted on
+            @appearance = last_appearance
+            @prompt= @appearance.prompt
+          end
         end
 
         if params[:future_prompts]
           num_future = params[:future_prompts][:number].to_i rescue 1
           num_future.times do |number|
             offset = number + 1
-            last_appearance = get_first_unanswered_appearance(visitor, offset)
-            if last_appearance.nil?
-              @future_prompt = choose_prompt(:algorithm => params[:algorithm])
-              @future_appearance = current_user.record_appearance(visitor, @future_prompt)
-            else
-              @future_appearance = last_appearance
-              @future_prompt= @future_appearance.prompt
+            Appearance.transaction do
+              last_appearance = get_first_unanswered_appearance(visitor, offset)
+              if last_appearance.nil?
+                @future_prompt = choose_prompt(:algorithm => params[:algorithm])
+                @future_appearance = current_user.record_appearance(visitor, @future_prompt)
+              else
+                @future_appearance = last_appearance
+                @future_prompt= @future_appearance.prompt
+              end
             end
 
             result.merge!({"future_appearance_id_#{offset}".to_sym => @future_appearance.lookup})
@@ -676,14 +679,15 @@ class Question < ActiveRecord::Base
   end
 
   def get_first_unanswered_appearance(visitor, offset=0)
-    last_appearance = visitor.appearances.find(:first,
+    unanswered_appearances = visitor.appearances.find(:all,
       :conditions => {
         :question_id => self.id,
         :answerable_id => nil
       },
       :order => 'id ASC',
-      :offset => offset
+      :lock => true
     )
+    last_appearance = unanswered_appearances[offset]
     if last_appearance && !last_appearance.prompt.active?
       last_appearance.valid_record = false
       last_appearance.validity_information = "Deactivated Prompt"
