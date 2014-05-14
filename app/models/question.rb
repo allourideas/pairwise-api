@@ -676,20 +676,21 @@ class Question < ActiveRecord::Base
   end
 
   def get_first_unanswered_appearance(visitor, offset=0)
-       last_appearance = visitor.appearances.find(:first, 
-              :conditions => {:question_id => self.id,
-                        :answerable_id => nil
-                                   },
-              :order => 'id ASC',
-              :offset => offset)
-       if last_appearance && !last_appearance.prompt.active?
+    last_appearance = visitor.appearances.find(:first,
+      :conditions => {
+        :question_id => self.id,
+        :answerable_id => nil
+      },
+      :order => 'id ASC',
+      :offset => offset
+    )
+    if last_appearance && !last_appearance.prompt.active?
       last_appearance.valid_record = false
       last_appearance.validity_information = "Deactivated Prompt"
       last_appearance.save
-
       return get_first_unanswered_appearance(visitor)
-       end
-       last_appearance
+    end
+    last_appearance
   end
 
   def votes_per_uploaded_choice(only_active=false)
