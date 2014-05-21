@@ -1,3 +1,4 @@
+ * Create transaction and lock when creating a new appearance.
  * Remove votes from vote CSV file that have NA for Appearance ID.
  * Alter response for all_object_info_totals_by_date to be valid XML.
 
