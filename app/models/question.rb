@@ -186,74 +186,14 @@ class Question < ActiveRecord::Base
       if params[:with_appearance] && visitor_identifier.present?
         visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
 
-        # We'll rety this block at most 2 times due to deadlocks.
-        max_retries = 2
-        retry_count = 0
-
-        begin
-          Appearance.transaction do
-            last_appearance = get_first_unanswered_appearance(visitor)
-            if last_appearance.nil?
-              # Only choose prompt if we don't already have one. If we had to
-              # retry this transaction due to a deadlock, a prompt may have been
-              # selected previously.
-              @prompt = choose_prompt(:algorithm => params[:algorithm]) unless @prompt
-              @appearance = current_user.record_appearance(visitor, @prompt)
-            else
-              #only display a new prompt and new appearance if the old prompt has not been voted on
-              @appearance = last_appearance
-              @prompt= @appearance.prompt
-            end
-          end
-        rescue ActiveRecord::StatementInvalid => error
-          # Only retry the block above if the error is a deadlock and we haven't
-          # already retried this block max_retries times.
-          if error.message =~ /Deadlock found when trying to get lock/
-            raise if retry_count >= max_retries
-            retry_count += 1
-            logger.info "Retry ##{retry_count} after deadlock: #{error.inspect}"
-            retry
-          else
-            raise
-          end
-        end
+        @prompt, @appearance = create_or_find_next_appearance(visitor, params)
 
         if params[:future_prompts]
           num_future = params[:future_prompts][:number].to_i rescue 1
           num_future.times do |number|
             offset = number + 1
-            @future_prompt = nil
 
-            # We'll rety this block at most 2 times due to deadlocks.
-            max_retries = 2
-            retry_count = 0
-
-            begin
-              Appearance.transaction do
-                last_appearance = get_first_unanswered_appearance(visitor, offset)
-                if last_appearance.nil?
-                  # Only choose prompt if we don't already have one. If we had to
-                  # retry this transaction due to a deadlock, a prompt may have been
-                  # selected previously.
-                  @future_prompt = choose_prompt(:algorithm => params[:algorithm]) unless @future_prompt
-                  @future_appearance = current_user.record_appearance(visitor, @future_prompt)
-                else
-                  @future_appearance = last_appearance
-                  @future_prompt= @future_appearance.prompt
-                end
-              end
-            rescue ActiveRecord::StatementInvalid => error
-              # Only retry the block above if the error is a deadlock and we haven't
-              # already retried this block max_retries times.
-              if error.message =~ /Deadlock found when trying to get lock/
-                raise if retry_count >= max_retries
-                retry_count += 1
-                logger.info "Retry ##{retry_count} after deadlock: #{error.inspect}"
-                retry
-              else
-                raise
-              end
-            end
+            @future_prompt, @future_appearance = create_or_find_next_appearance(visitor, params, offset)
 
             result.merge!({"future_appearance_id_#{offset}".to_sym => @future_appearance.lookup})
             result.merge!({"future_prompt_id_#{offset}".to_sym => @future_prompt.id})
@@ -718,6 +658,53 @@ class Question < ActiveRecord::Base
     end
 
     return csv_data
+  end
+
+
+  # In the typical case where offset=0, this method checks if the user has an
+  # unanswered appearance. If they do, then it returns that appearance and its
+  # prompt. If not, we'll choose a new prompt and create a new appearance and
+  # return the new prompt and appearance.
+  #
+  # When offset > 0, that just means that we're ensuring the user has at least
+  # offset number of unanswered appearances. If not, then we'll create at most
+  # one new appearance.
+  #
+  # On success, this method always returns a prompt and appearance.
+  def create_or_find_next_appearance(visitor, params, offset=0)
+    prompt = appearance = nil
+    # We'll retry this block at most 2 times due to deadlocks.
+    max_retries = 2
+    retry_count = 0
+
+    begin
+      Appearance.transaction do
+        last_appearance = get_first_unanswered_appearance(visitor, offset)
+        if last_appearance.nil?
+          # Only choose prompt if we don't already have one. If we had to
+          # retry this transaction due to a deadlock, a prompt may have been
+          # selected previously.
+          prompt = choose_prompt(:algorithm => params[:algorithm]) unless prompt
+          appearance = self.site.record_appearance(visitor, prompt)
+        else
+          # only display a new prompt and new appearance if the old prompt has not been voted on
+          appearance = last_appearance
+          prompt = appearance.prompt
+        end
+      end
+    rescue ActiveRecord::StatementInvalid => error
+      # Only retry the block above if the error is a deadlock and we haven't
+      # already retried this block max_retries times.
+      if error.message =~ /Deadlock found when trying to get lock/
+        raise if retry_count >= max_retries
+        retry_count += 1
+        logger.info "Retry ##{retry_count} after deadlock: #{error.inspect}"
+        retry
+      else
+        raise
+      end
+    end
+    return prompt, appearance
   end
 
   # Gets the user n'th unanswered appearance where n is the value of offset.
