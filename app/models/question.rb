@@ -82,15 +82,19 @@ class Question < ActiveRecord::Base
         if next_prompt.nil?
           logger.info("DEBUG Catchup prompt cache miss! Nothing in prompt_queue")
           next_prompt = self.simple_random_choose_prompt
+          next_prompt.algorithm = "simple-random"
           record_prompt_cache_miss
         else
+          next_prompt.algorithm = "catchup"
           record_prompt_cache_hit
         end
         self.delay.add_prompt_to_queue
         return next_prompt
     else
         #Standard choose prompt at random
-        return self.simple_random_choose_prompt
+        next_prompt = self.simple_random_choose_prompt
+        next_prompt.algorithm = "simple-random"
+        return next_prompt
     end
           
   end
