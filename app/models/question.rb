@@ -684,17 +684,13 @@ class Question < ActiveRecord::Base
     # entirety. We've only seen deadlocks in the call to record_appearnce.
     begin
       Appearance.transaction do
-        last_appearance = get_first_unanswered_appearance(visitor, offset)
-        if last_appearance.nil?
+        appearance = get_first_unanswered_appearance(visitor, offset)
+        if appearance.nil?
           # Only choose prompt if we don't already have one. If we had to
           # retry this transaction due to a deadlock, a prompt may have been
           # selected previously.
           prompt = choose_prompt(:algorithm => params[:algorithm]) unless prompt
           appearance = self.site.record_appearance(visitor, prompt)
-        else
-          # only display a new prompt and new appearance if the old prompt has not been voted on
-          appearance = last_appearance
-          prompt = appearance.prompt
         end
       end
     rescue ActiveRecord::StatementInvalid => error
