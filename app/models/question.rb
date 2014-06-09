@@ -82,19 +82,15 @@ class Question < ActiveRecord::Base
         if next_prompt.nil?
           logger.info("DEBUG Catchup prompt cache miss! Nothing in prompt_queue")
           next_prompt = self.simple_random_choose_prompt
-          next_prompt.algorithm = "simple-random"
           record_prompt_cache_miss
         else
-          next_prompt.algorithm = "catchup"
           record_prompt_cache_hit
         end
         self.delay.add_prompt_to_queue
         return next_prompt
     else
         #Standard choose prompt at random
-        next_prompt = self.simple_random_choose_prompt
-        next_prompt.algorithm = "simple-random"
-        return next_prompt
+        return self.simple_random_choose_prompt
     end
           
   end
@@ -106,6 +102,7 @@ class Question < ActiveRecord::Base
     choice_id_array = distinct_array_of_choice_ids(:rank => rank, :only_active => true)
     prompt = prompts.find_or_initialize_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1])
     prompt.save
+    prompt.algorithm = 'simple-random'
     prompt
   end
 
@@ -546,6 +543,7 @@ class Question < ActiveRecord::Base
        prompt = prompt_id.nil? ? nil : Prompt.find(prompt_id.to_i)
     end until (prompt.nil? || prompt.active?)
     $redis.expire(self.pq_key, @@expire_prompt_cache_in_seconds)
+    prompt.algorithm = 'catchup' if prompt
     prompt
   end
 
