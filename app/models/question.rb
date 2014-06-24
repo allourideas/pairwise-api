@@ -186,32 +186,16 @@ class Question < ActiveRecord::Base
       if params[:with_appearance] && visitor_identifier.present?
         visitor = current_user.visitors.find_or_create_by_identifier(visitor_identifier)
 
-        Appearance.transaction do
-          last_appearance = get_first_unanswered_appearance(visitor)
-          if last_appearance.nil?
-            @prompt = choose_prompt(:algorithm => params[:algorithm])
-            @appearance = current_user.record_appearance(visitor, @prompt)
-          else
-            #only display a new prompt and new appearance if the old prompt has not been voted on
-            @appearance = last_appearance
-            @prompt= @appearance.prompt
-          end
-        end
+        @appearance = create_or_find_next_appearance(visitor, params)
+        @prompt = @appearance.prompt
 
         if params[:future_prompts]
           num_future = params[:future_prompts][:number].to_i rescue 1
           num_future.times do |number|
             offset = number + 1
-            Appearance.transaction do
-              last_appearance = get_first_unanswered_appearance(visitor, offset)
-              if last_appearance.nil?
-                @future_prompt = choose_prompt(:algorithm => params[:algorithm])
-                @future_appearance = current_user.record_appearance(visitor, @future_prompt)
-              else
-                @future_appearance = last_appearance
-                @future_prompt= @future_appearance.prompt
-              end
-            end
+
+            @future_appearance = create_or_find_next_appearance(visitor, params, offset)
+            @future_prompt = @future_appearance.prompt
 
             result.merge!({"future_appearance_id_#{offset}".to_sym => @future_appearance.lookup})
             result.merge!({"future_prompt_id_#{offset}".to_sym => @future_prompt.id})
@@ -676,6 +660,52 @@ class Question < ActiveRecord::Base
     end
 
     return csv_data
+  end
+
+
+  # In the typical case where offset=0, this method checks if the user has an
+  # unanswered appearance. If they do, then it returns that appearance. If not,
+  # we'll choose a new prompt and create a new appearance and return the new
+  # appearance.
+  #
+  # When offset > 0, that just means that we're ensuring the user has at least
+  # offset number of unanswered appearances. If not, then we'll create at most
+  # one new appearance.
+  #
+  # On success, this method always an appearance.
+  def create_or_find_next_appearance(visitor, params, offset=0)
+    prompt = appearance = nil
+    # We'll retry this block at most 2 times due to deadlocks.
+    max_retries = 2
+    retry_count = 0
+
+    # The entire transaction is wrapped in this block because if it failed due
+    # to a deadlock, we want to rollback the transaction and retry it in its
+    # entirety. We've only seen deadlocks in the call to record_appearnce.
+    begin
+      Appearance.transaction do
+        appearance = get_first_unanswered_appearance(visitor, offset)
+        if appearance.nil?
+          # Only choose prompt if we don't already have one. If we had to
+          # retry this transaction due to a deadlock, a prompt may have been
+          # selected previously.
+          prompt = choose_prompt(:algorithm => params[:algorithm]) unless prompt
+          appearance = self.site.record_appearance(visitor, prompt)
+        end
+      end
+    rescue ActiveRecord::StatementInvalid => error
+      # Only retry the block above if the error is a deadlock and we haven't
+      # already retried this block max_retries times.
+      deadlock_msg = "Deadlock found when trying to get lock"
+      if error.message =~ /#{deadlock_msg}/ && retry_count < max_retries
+        retry_count += 1
+        logger.info "Retry ##{retry_count} after deadlock: #{error.inspect}"
+        retry
+      else
+        raise
+      end
+    end
+    return appearance
   end
 
   # Gets the user n'th unanswered appearance where n is the value of offset.
