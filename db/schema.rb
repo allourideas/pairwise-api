@@ -23,7 +23,7 @@ ActiveRecord::Schema.define(:version => 20140609193423) do
     t.string   "answerable_type"
     t.boolean  "valid_record",         :default => true
     t.string   "validity_information"
-    t.string   "algorithm"
+    t.text     "algorithm"
   end
 
   add_index "appearances", ["answerable_id", "answerable_type"], :name => "index_appearances_on_answerable_id_and_answerable_type"
