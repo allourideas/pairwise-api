@@ -1,3 +1,5 @@
+ * Retry transaction when creating appearance if get deadlocked.
+
 ## Pairwise 3.2.1 (May 21, 2014) ##
  * Create transaction and lock when creating a new appearance.
  * Remove votes from vote CSV file that have NA for Appearance ID.
