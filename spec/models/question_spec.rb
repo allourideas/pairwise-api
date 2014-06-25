@@ -77,7 +77,7 @@ describe Question do
 
   it "should set the algorithm attribute on prompt after choice" do
     prompt = @question.choose_prompt()
-    prompt.algorithm.should == {:name => 'simple-random'}.to_json
+    prompt.algorithm.should == {:name => 'simple-random'}
   end
 
   it "should raise runtime exception if there is no possible prompt to choose" do
@@ -436,13 +436,13 @@ describe Question do
     it "should set the algorithm attribute on prompt after choice" do
       @catchup_q.add_prompt_to_queue
       prompt = @catchup_q.choose_prompt(:algorithm => 'catchup')
-      prompt.algorithm.should == {:name => 'catchup'}.to_json
+      prompt.algorithm.should == {:name => 'catchup'}
     end
 
     it "should set the algorithm attribute to simple-random on prompt after choice if prompt queue is empty" do
       @catchup_q.clear_prompt_queue
       prompt = @catchup_q.choose_prompt(:algorithm => 'catchup')
-      prompt.algorithm.should == {:name => 'simple-random'}.to_json
+      prompt.algorithm.should == {:name => 'simple-random'}
     end
 
     it "should create a delayed job after requesting a prompt" do
