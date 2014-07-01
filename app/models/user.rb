@@ -41,7 +41,8 @@ class User < ActiveRecord::Base
   end
 
   def record_appearance(visitor, prompt)
-    Appearance.create(:voter => visitor, :prompt => prompt, :question_id => prompt.question_id, :site_id => self.id, :lookup =>  Digest::MD5.hexdigest(rand(10000000000).to_s + visitor.id.to_s + prompt.id.to_s), :algorithm => prompt.algorithm.to_json )
+    algorithm_name = prompt.algorithm[:name] || prompt.algorithm['name']
+    Appearance.create(:voter => visitor, :prompt => prompt, :question_id => prompt.question_id, :site_id => self.id, :lookup =>  Digest::MD5.hexdigest(rand(10000000000).to_s + visitor.id.to_s + prompt.id.to_s), :algorithm_metadata => prompt.algorithm.to_json, :algorithm_name => algorithm_name )
   end
 
   
