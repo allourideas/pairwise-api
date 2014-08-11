@@ -1,3 +1,4 @@
+ * Add similar choice method to find similar (currently only identical) choices.
  * Retry transaction when creating appearance if get deadlocked.
 
 ## Pairwise 3.2.1 (May 21, 2014) ##

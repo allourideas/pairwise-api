@@ -125,6 +125,24 @@ describe ChoicesController do
       end
     end
   
+    describe "GET similar" do
+      it "returns all choices with identical data" do
+        question = Factory(:question, :site => @user)
+        choice = Factory(:choice, :question => question)
+        choice1 = choice.clone
+        choice2 = choice.clone
+        choice1.save
+        choice2.save
+
+        get :similar, :question_id => question.id, :id => choice.id, :format => "xml"
+
+        assigns[:similar].should include(choice1, choice2)
+        assigns[:similar].should_not include(choice)
+        response.code.should == "200"
+        response.body.should_not have_tag("versions")
+      end
+    end
+
     describe "GET show" do
       it "doesn't returns all versions by default" do
         question = Factory(:question, :site => @user)
