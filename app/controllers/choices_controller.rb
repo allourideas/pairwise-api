@@ -44,7 +44,7 @@ class ChoicesController < InheritedResources::Base
   def similar
     @question = current_user.questions.find(params[:question_id])
     choice = @question.choices.find(params[:id])
-    @similar = @question.choices.find(:all, :conditions => ["data = ? and id <> ?", choice.data, choice.id])
+    @similar = @question.choices.active.find(:all, :conditions => ["data = ? and id <> ?", choice.data, choice.id])
     render :xml => @similar.to_xml
   end
 
