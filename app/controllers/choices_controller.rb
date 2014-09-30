@@ -39,6 +39,15 @@ class ChoicesController < InheritedResources::Base
     render :xml => @choice.votes.to_xml
   end
 
+  # Similar finds similar choices as the choice given for the question.
+  # Currently, it only returns choices that are identical.
+  def similar
+    @question = current_user.questions.find(params[:question_id])
+    choice = @question.choices.find(params[:id])
+    @similar = @question.choices.active.find(:all, :conditions => ["data = ? and id <> ?", choice.data, choice.id])
+    render :xml => @similar.to_xml
+  end
+
   def create
     
     visitor_identifier = params[:choice].delete(:visitor_identifier)

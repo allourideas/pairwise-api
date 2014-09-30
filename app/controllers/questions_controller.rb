@@ -10,7 +10,8 @@ class QuestionsController < InheritedResources::Base
 
     begin
         @question_optional_information = @question.get_optional_information(params)
-    rescue RuntimeError
+    rescue RuntimeError => e
+      log_error(e)
       respond_to do |format|
         format.xml { render :xml => @question.to_xml, :status => :conflict and return}
       end

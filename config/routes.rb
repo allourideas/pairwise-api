@@ -21,7 +21,7 @@ ActionController::Routing::Routes.draw do |map|
       question.resources :prompts, :only => :show,
                                    :member => {:skip => :post, :vote => :post}
       question.resources :choices, :only => [:show, :index, :create, :update, :new],
-                                   :member => {:flag => :put, :votes => :get}
+                                   :member => {:flag => :put, :votes => :get, :similar => :get}
     end
 
   map.root :controller => "clearance/sessions", :action => "new"
