@@ -130,14 +130,18 @@ describe ChoicesController do
         question = Factory(:question, :site => @user)
         choice = Factory(:choice, :question => question)
         choice1 = choice.clone
+        choice1.active = true
         choice2 = choice.clone
+        choice2.active = true
+        choice3 = choice.clone
         choice1.save
         choice2.save
+        choice3.save
 
         get :similar, :question_id => question.id, :id => choice.id, :format => "xml"
 
         assigns[:similar].should include(choice1, choice2)
-        assigns[:similar].should_not include(choice)
+        assigns[:similar].should_not include(choice, choice3)
         response.code.should == "200"
         response.body.should_not have_tag("versions")
       end
