@@ -102,6 +102,7 @@ class Question < ActiveRecord::Base
     choice_id_array = distinct_array_of_choice_ids(:rank => rank, :only_active => true)
     prompt = prompts.find_or_initialize_by_left_choice_id_and_right_choice_id(choice_id_array[0], choice_id_array[1])
     prompt.save
+    prompt.algorithm = {:name => 'simple-random'}
     prompt
   end
 
@@ -526,6 +527,7 @@ class Question < ActiveRecord::Base
        prompt = prompt_id.nil? ? nil : Prompt.find(prompt_id.to_i)
     end until (prompt.nil? || prompt.active?)
     $redis.expire(self.pq_key, @@expire_prompt_cache_in_seconds)
+    prompt.algorithm = {:name => 'catchup'} if prompt
     prompt
   end
 

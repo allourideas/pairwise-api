@@ -26,6 +26,12 @@ class Prompt < ActiveRecord::Base
   attr_protected :votes_count, :left_choice_id, :right_choice_id
   attr_readonly :question_id
 
+  # Algorithm used to select this prompt.
+  #
+  # This is not saved to the prompt table and only lives as long as this prompt
+  # instance. We use this to save the algorithm to the appearances table.
+  attr_accessor :algorithm
+
   def self.voted_on_by(u)
     select {|z| z.voted_on_by_user?(u)}
   end
