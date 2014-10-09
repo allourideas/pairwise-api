@@ -108,7 +108,7 @@ class Question < ActiveRecord::Base
 
   # adapted from ruby cookbook(2006): section 5-11
   def catchup_choose_prompt(num=1000)
-    weighted = catchup_prompts_weights
+    weighted = catchup_prompts_weights(0.05, 1)
     # Rand returns a number from 0 - 1, so weighted needs to be normalized
     generated_prompts = []
 
@@ -134,9 +134,9 @@ class Question < ActiveRecord::Base
   end
 
 
-  def catchup_prompts_weights
+  def catchup_prompts_weights(tau=0.05, alpha=1)
     weights = Hash.new(0)
-    throttle_min = 0.05
+    throttle_min = tau
     sum = 0.0
 
     # get weights of all existing prompts that have two active choices
@@ -149,7 +149,7 @@ class Question < ActiveRecord::Base
     # objects here.  It may be a good idea to update this to grab these in
     # batches.
     ActiveRecord::Base.connection.select_all(sql).each do |p|
-      value = [(1.0/ (p['votes_count'].to_i + 1).to_f).to_f, throttle_min].min
+      value = [(1.0/ ((p['votes_count'].to_i + 1) ** alpha).to_f).to_f, throttle_min].min
       weights[p['left_choice_id'].to_s+", "+p['right_choice_id'].to_s] = value
       sum += value
     end
