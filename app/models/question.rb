@@ -108,7 +108,9 @@ class Question < ActiveRecord::Base
 
   # adapted from ruby cookbook(2006): section 5-11
   def catchup_choose_prompt(num=1000)
-    weighted = catchup_prompts_weights(0.05, 1)
+    tau = 0.05
+    alpha = 1
+    weighted = catchup_prompts_weights(tau, alpha)
     # Rand returns a number from 0 - 1, so weighted needs to be normalized
     generated_prompts = []
 
@@ -128,6 +130,7 @@ class Question < ActiveRecord::Base
         prompt = prompts.find_or_initialize_by_left_choice_id_and_right_choice_id(left_choice_id, right_choice_id)
         prompt.save
       end
+      prompt.algorithm = {:name => 'catchup', :tau => tau, :alpha => alpha}
       generated_prompts.push prompt
     end
     generated_prompts
@@ -514,7 +517,7 @@ class Question < ActiveRecord::Base
       $redis.ltrim(self.pq_key, 0, 0)
       $redis.lpop(self.pq_key)
       prompts.each do |prompt|
-        $redis.rpush(self.pq_key, prompt.id)
+        $redis.rpush(self.pq_key, {:id => prompt.id, :algorithm => prompt.algorithm}.to_json)
       end
       $redis.expire(self.pq_key, @@expire_prompt_cache_in_seconds)
       return prompts
@@ -522,12 +525,22 @@ class Question < ActiveRecord::Base
   end
 
   def pop_prompt_queue
+    algorithm = {"name" => "catchup"}
     begin
-       prompt_id = $redis.lpop(self.pq_key)
-       prompt = prompt_id.nil? ? nil : Prompt.find(prompt_id.to_i)
+      selected_prompt = $redis.lpop(self.pq_key)
+
+      # if it starts with { decode as JSON
+      if !selected_prompt.nil? && selected_prompt.start_with?("{")
+        p_json = ActiveSupport::JSON.decode(selected_prompt)
+        prompt_id = p_json["id"]
+        algorithm = p_json["algorithm"]
+      else
+        prompt_id = selected_prompt
+      end
+      prompt = prompt_id.nil? ? nil : Prompt.find(prompt_id.to_i)
     end until (prompt.nil? || prompt.active?)
     $redis.expire(self.pq_key, @@expire_prompt_cache_in_seconds)
-    prompt.algorithm = {:name => 'catchup'} if prompt
+    prompt.algorithm = algorithm if prompt
     prompt
   end
 
