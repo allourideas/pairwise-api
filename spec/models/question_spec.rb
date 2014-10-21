@@ -436,7 +436,7 @@ describe Question do
     it "should set the algorithm attribute on prompt after choice" do
       @catchup_q.add_prompt_to_queue
       prompt = @catchup_q.choose_prompt(:algorithm => 'catchup')
-      prompt.algorithm.should == {:name => 'catchup'}
+      prompt.algorithm.should == {"name" => "catchup", "tau" => 0.05, "alpha" => 1}
     end
 
     it "should set the algorithm attribute to simple-random on prompt after choice if prompt queue is empty" do
