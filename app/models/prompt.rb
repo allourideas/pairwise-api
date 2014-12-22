@@ -57,5 +57,11 @@ class Prompt < ActiveRecord::Base
   def right_choice_text(prompt = nil)
     right_choice.data
   end
+
+  def as_json(options={})
+    hash = super(options)
+    hash['prompt'].merge!(options[:merge]) if options.has_key? :merge
+    return hash
+  end
   
 end

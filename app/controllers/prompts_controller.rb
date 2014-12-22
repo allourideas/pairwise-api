@@ -39,7 +39,7 @@ class PromptsController < InheritedResources::Base
     respond_to do |format|
       if !successful.nil?
         format.xml { render :xml => object.to_xml(:procs => optional_information , :methods => [:left_choice_text, :right_choice_text]), :status => :ok }
-        format.json { render :json => object.to_json(:procs => optional_information, :methods => [:left_choice_text, :right_choice_text]), :status => :ok }
+        format.json { render :json => object.as_json(:merge => @question_optional_information, :methods => [:left_choice_text, :right_choice_text]), :status => :ok }
       else
         format.xml { render :xml => @prompt.to_xml, :status => :unprocessable_entity }
         format.json { render :json => @prompt.to_xml, :status => :unprocessable_entity }
