@@ -5,9 +5,10 @@ gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
 gem "rails", "2.3.18"
 gem "airbrake", :require => 'airbrake/rails'
-gem "libxml-ruby", "2.2.2", :require => "libxml"
+gem "libxml-ruby", "2.4.0", :require => "libxml"
 gem "ambethia-smtp-tls", "1.1.2", :require => "smtp-tls"
 gem "paperclip", "2.3.1"
+gem "acts_as_versioned", :git => 'https://github.com/lucaspirola/acts_as_versioned.git'
 gem "mime-types", "1.16",
     :require => "mime/types"
 gem "xml-simple", "1.0.12",
