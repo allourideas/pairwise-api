@@ -615,10 +615,10 @@ namespace :test_api do
         end
 
         if v.time_viewed && v.time_viewed/1000 > server_response_time 
-          the_error_msg = "Warning! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Server roundtrip time is: #{v.created_at.to_f - v.appearance.created_at.to_f} seconds, but client side response time is: #{v.time_viewed.to_f / 1000.0} seconds\n\n"
+          #the_error_msg = "Warning! Vote #{v.id} with Appearance #{v.appearance.id}, has a longer client response time than is possible. Server roundtrip time is: #{v.created_at.to_f - v.appearance.created_at.to_f} seconds, but client side response time is: #{v.time_viewed.to_f / 1000.0} seconds\n\n"
 
-          error_message += the_error_msg
-          print the_error_msg
+          #error_message += the_error_msg
+          #print the_error_msg
 
         elsif v.time_viewed.nil?
           if v.created_at > recording_client_time_start_date && v.missing_response_time_exp != 'invalid'
