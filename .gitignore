@@ -10,4 +10,4 @@ todo
 .rvmrc
 .bundle
 bin/
-vendor/ruby
+vendor
