@@ -552,7 +552,10 @@ describe Question do
     
 
     it "should export vote data to a csv file" do
-      csv = @aoi_question.export('votes')
+      csv = ''
+      @aoi_question.to_csv('votes').each do |row|
+        csv << row
+      end
 
       # Not specifying exact file syntax, it's likely to change frequently
       #
@@ -564,7 +567,10 @@ describe Question do
 
     it "should export zlibed csv to redis after completing an export, if redis option set" do
       key = "test_key123"
-      csv = @aoi_question.export('votes')
+      csv = ''
+      @aoi_question.to_csv('votes').each do |row|
+        csv << row
+      end
       @aoi_question.export('votes', :key => key)
 
       export = Export.find_by_name(key)
@@ -580,7 +586,10 @@ describe Question do
     end
 
     it "should export non vote data to a string" do 
-      csv = @aoi_question.export('non_votes')
+      csv = ''
+      @aoi_question.to_csv('non_votes').each do |row|
+        csv << row
+      end
 
       rows = CSVBridge.parse(csv)
       rows.first.should include("Skip ID")
@@ -592,7 +601,10 @@ describe Question do
     end
 
     it "should export idea data to a string" do
-      csv = @aoi_question.export('ideas')
+      csv = ''
+      @aoi_question.to_csv('ideas').each do |row|
+        csv << row
+      end
 
       # Not specifying exact file syntax, it's likely to change frequently
       #
@@ -660,7 +672,10 @@ describe Question do
     end
 
     it "should export idea data to a string with proper escaping" do
-      csv = @aoi_question.export('ideas')
+      csv = ''
+      @aoi_question.to_csv('ideas').each do |row|
+        csv << row
+      end
 
       # Not specifying exact file syntax, it's likely to change frequently
       #
@@ -676,7 +691,10 @@ describe Question do
     end
 
     it "should export vote data to a string with proper escaping" do
-      csv = @aoi_question.export('votes')
+      csv = ''
+      @aoi_question.to_csv('votes').each do |row|
+        csv << row
+      end
 
       # Not specifying exact file syntax, it's likely to change frequently
       #
