@@ -570,25 +570,21 @@ class Question < ActiveRecord::Base
     $redis.expire(self.pq_key + "_" + date.to_s + "_"+ "misses", expire_time)
   end
 
-
-  def export(type, options = {})
+  def to_csv(type)
     case type
       when 'votes'
-        outfile = "ideamarketplace_#{self.id}_votes"
 
         headers = ['Vote ID', 'Session ID', 'Wikisurvey ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text', 'Prompt ID', 'Appearance ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
     
       when 'ideas'
-        outfile = "ideamarketplace_#{self.id}_ideas"
         headers = ['Wikisurvey ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score', 'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active', 'Appearances on Left', 'Appearances on Right', 'Session Identifier']
       when 'non_votes'
-        outfile = "ideamarketplace_#{self.id}_non_votes"
         headers = ['Record Type', 'Skip ID', 'Appearance ID', 'Session ID', 'Wikisurvey ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
       else 
         raise "Unsupported export type: #{type}"
     end
 
-    csv_data = CSVBridge.generate do |csv|
+    CSVBridge.generate do |csv|
       csv << headers 
       case type
         when 'votes'
@@ -649,8 +645,11 @@ class Question < ActiveRecord::Base
           end
         end
       end
-
     end
+  end
+
+  def export(type, options = {})
+    csv_data = self.to_csv(type)
 
     # if a key is passed in, save it to the database under that key
     if !options[:key].nil?
