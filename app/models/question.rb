@@ -570,26 +570,22 @@ class Question < ActiveRecord::Base
     $redis.expire(self.pq_key + "_" + date.to_s + "_"+ "misses", expire_time)
   end
 
-
-  def export(type, options = {})
+  def to_csv(type)
     case type
       when 'votes'
-        outfile = "ideamarketplace_#{self.id}_votes"
 
         headers = ['Vote ID', 'Session ID', 'Wikisurvey ID','Winner ID', 'Winner Text', 'Loser ID', 'Loser Text', 'Prompt ID', 'Appearance ID', 'Left Choice ID', 'Right Choice ID', 'Created at', 'Updated at',  'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
     
       when 'ideas'
-        outfile = "ideamarketplace_#{self.id}_ideas"
         headers = ['Wikisurvey ID','Idea ID', 'Idea Text', 'Wins', 'Losses', 'Times involved in Cant Decide', 'Score', 'User Submitted', 'Session ID', 'Created at', 'Last Activity', 'Active', 'Appearances on Left', 'Appearances on Right', 'Session Identifier']
       when 'non_votes'
-        outfile = "ideamarketplace_#{self.id}_non_votes"
         headers = ['Record Type', 'Skip ID', 'Appearance ID', 'Session ID', 'Wikisurvey ID','Left Choice ID', 'Left Choice Text', 'Right Choice ID', 'Right Choice Text', 'Prompt ID', 'Reason', 'Created at', 'Updated at', 'Response Time (s)', 'Missing Response Time Explanation', 'Session Identifier', 'Valid']
       else 
         raise "Unsupported export type: #{type}"
     end
 
-    csv_data = CSVBridge.generate do |csv|
-      csv << headers 
+    Enumerator.new do |y|
+      y.yield headers.to_csv
       case type
         when 'votes'
 
@@ -606,9 +602,9 @@ class Question < ActiveRecord::Base
             appearance_id = v.appearance.id
             time_viewed = v.time_viewed.nil? ? "NA": v.time_viewed.to_f / 1000.0
 
-            csv << [ v.id, v.voter_id, v.question_id, v.choice_id, v.choice.data.strip, v.loser_choice_id, loser_data,
+            y.yield [ v.id, v.voter_id, v.question_id, v.choice_id, v.choice.data.strip, v.loser_choice_id, loser_data,
             v.prompt_id, appearance_id, left_id, right_id, v.created_at, v.updated_at,
-            time_viewed, v.missing_response_time_exp , v.voter.identifier, valid] 
+            time_viewed, v.missing_response_time_exp , v.voter.identifier, valid].to_csv
           end
 
         when 'ideas'
@@ -623,7 +619,7 @@ class Question < ActiveRecord::Base
 
             num_skips = self.skips.count(:conditions => {:prompt_id => left_prompts_ids + right_prompts_ids})
 
-            csv << [c.question_id, c.id, c.data.strip, c.wins, c.losses, num_skips, c.score, user_submitted , c.creator_id, c.created_at, c.updated_at, active, left_appearances, right_appearances, c.creator.identifier]
+            y.yield [c.question_id, c.id, c.data.strip, c.wins, c.losses, num_skips, c.score, user_submitted , c.creator_id, c.created_at, c.updated_at, active, left_appearances, right_appearances, c.creator.identifier].to_csv
 
           end
         when 'non_votes'
@@ -636,7 +632,7 @@ class Question < ActiveRecord::Base
             valid = s.valid_record ? 'TRUE' : 'FALSE'
             time_viewed = s.time_viewed.nil? ? "NA": s.time_viewed.to_f / 1000.0
             prompt = s.prompt
-            csv << [ "Skip", s.id, a.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.skip_reason, s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier,valid]
+            y.yield [ "Skip", s.id, a.id, s.skipper_id, s.question_id, s.prompt.left_choice.id, s.prompt.left_choice.data.strip, s.prompt.right_choice.id, s.prompt.right_choice.data.strip, s.prompt_id, s.skip_reason, s.created_at, s.updated_at, time_viewed , s.missing_response_time_exp, s.skipper.identifier,valid].to_csv
         
           else
             # If no skip and no vote, this is an orphaned appearance
@@ -645,19 +641,25 @@ class Question < ActiveRecord::Base
               ["voter_id = ? AND question_id = ? AND answerable_type IS NOT ?",
                 a.voter_id, a.question_id, nil])
             appearance_type = (action_appearances > 0) ? 'Stopped_Voting_Or_Skipping' : 'Bounce'
-            csv << [ appearance_type, 'NA', a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'NA', a.created_at, a.updated_at, 'NA', '', a.voter.identifier, 'TRUE'] 
+            y.yield [ appearance_type, 'NA', a.id, a.voter_id, a.question_id, a.prompt.left_choice.id, a.prompt.left_choice.data.strip, a.prompt.right_choice.id, a.prompt.right_choice.data.strip, a.prompt_id, 'NA', a.created_at, a.updated_at, 'NA', '', a.voter.identifier, 'TRUE'].to_csv
           end
         end
       end
-
     end
+  end
+
+  def export(type, options = {})
+    zlib = Zlib::Deflate.new
+    zlibcsv = ''
+    self.to_csv(type).each do |row|
+      zlibcsv << zlib.deflate(row)
+    end
+    zlibcsv << zlib.finish
+    zlib.close
 
     # if a key is passed in, save it to the database under that key
     if !options[:key].nil?
       # compress data before saving to the database
-      zlib = Zlib::Deflate.new
-      zlibcsv = zlib.deflate(csv_data, Zlib::FINISH)
-      zlib.close
 
       conn = Export.connection
       export_sql = "INSERT INTO #{conn.quote_table_name("exports")} (
@@ -673,8 +675,6 @@ class Question < ActiveRecord::Base
       export_id = conn.insert(export_sql)
       Delayed::Job.enqueue DestroyOldExportJob.new(export_id), 20, 3.days.from_now
     end
-
-    return csv_data
   end
 
 
