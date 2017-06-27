@@ -5,7 +5,7 @@ gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
 gem "rails", "2.3.18"
 gem "airbrake", :require => 'airbrake/rails'
-gem "libxml-ruby", "2.2.2", :require => "libxml"
+gem "libxml-ruby", "2.9.0", :require => "libxml"
 gem "ambethia-smtp-tls", "1.1.2", :require => "smtp-tls"
 gem "paperclip", "2.3.1"
 gem "mime-types", "1.16",
