@@ -1,3 +1,6 @@
+ * Drop support for Ruby 1.8.7.
+ * Add tau and alpha as parameters to catchup algorithm.
+ * Record which algorithm was used to select a prompt.
  * Add similar choice method to find similar (currently only identical) choices.
  * Retry transaction when creating appearance if get deadlocked.
 
