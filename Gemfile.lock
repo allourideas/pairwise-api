@@ -1,5 +1,5 @@
 GEM
-  remote: http://rubygems.org/
+  remote: https://rubygems.org/
   remote: http://gems.github.com/
   specs:
     actionmailer (2.3.18)
@@ -13,6 +13,7 @@ GEM
       activesupport (= 2.3.18)
     activesupport (2.3.18)
     ambethia-smtp-tls (1.1.2)
+    bugsnag (5.5.0)
     builder (3.2.2)
     cucumber (1.1.0)
       builder (>= 2.1.2)
@@ -89,6 +90,7 @@ PLATFORMS
 
 DEPENDENCIES
   ambethia-smtp-tls (= 1.1.2)
+  bugsnag (~> 5.5.0)
   cucumber (= 1.1.0)
   cucumber-rails (= 0.3.2)
   delayed_job (= 2.0.6)

@@ -1,6 +1,7 @@
-source :rubygems
+source "https://rubygems.org"
 source "http://gems.github.com"
 
+gem "bugsnag", "~> 5.5.0"
 gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
 gem "rails", "2.3.18"
