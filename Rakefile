@@ -8,6 +8,7 @@ require 'rake/testtask'
 require 'rdoc/task'
 
 require 'tasks/rails'
+require 'bugsnag/tasks'
 
 task :default => [:test, :features]
 
