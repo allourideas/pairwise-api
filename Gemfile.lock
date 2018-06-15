@@ -48,7 +48,7 @@ GEM
     libxml-ruby (2.9.0)
     mime-types (1.16)
     mock_redis (0.4.1)
-    mysql2 (0.2.18)
+    mysql2 (0.2.24)
     newrelic_rpm (3.5.5.38)
     nokogiri (1.5.5)
     paperclip (2.3.1)
@@ -107,7 +107,7 @@ DEPENDENCIES
   libxml-ruby (= 2.9.0)
   mime-types (= 1.16)
   mock_redis (= 0.4.1)
-  mysql2 (= 0.2.18)
+  mysql2 (= 0.2.24)
   newrelic_rpm
   paperclip (= 2.3.1)
   rails (= 2.3.18)
