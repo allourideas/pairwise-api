@@ -12,12 +12,12 @@ describe Question do
   it {should have_many :appearances}
   it {should validate_presence_of :site}
   it {should validate_presence_of :creator}
-  
+
   before(:each) do
     @question = Factory.create(:aoi_question)
     @aoi_clone = @question.site
   end
-  
+
   it "should have 2 active choices" do
     @question.choices.active.reload.size.should == 2
   end
@@ -42,12 +42,12 @@ describe Question do
     # Factory.attributes_for does not return associations, this is a good enough substitute
     Question.create!(Factory.build(:question).attributes.symbolize_keys)
   end
-  
+
   it "should not create two default choices if none are provided" do
     q = @aoi_clone.create_question("foobarbaz", {:name => 'foo'})
     q.choices(true).size.should == 0
   end
-  
+
   #it "should generate prompts after choices are added" do
     #@question.prompts(true).size.should == 2
   #end
@@ -67,10 +67,10 @@ describe Question do
         c.active?.should == true
       end
     end
-    
+
   end
 
-  it "should choose an active prompt using catchup algorithm" do 
+  it "should choose an active prompt using catchup algorithm" do
     prompt = @question.catchup_choose_prompt(1).first
     prompt.active?.should == true
   end
@@ -87,7 +87,7 @@ describe Question do
 
   end
 
-  it "should return nil if optional parameters are empty" do 
+  it "should return nil if optional parameters are empty" do
     @question_optional_information = @question.get_optional_information(nil)
     @question_optional_information.should be_empty
   end
@@ -98,42 +98,42 @@ describe Question do
     @question_optional_information.should be_empty
   end
 
-  it "should return a hash with an prompt id when optional parameters contains 'with_prompt'" do 
+  it "should return a hash with an prompt id when optional parameters contains 'with_prompt'" do
     params = {:id => 124, :with_prompt => true}
     @question_optional_information = @question.get_optional_information(params)
-    @question_optional_information.should include(:picked_prompt_id) 
+    @question_optional_information.should include(:picked_prompt_id)
     @question_optional_information[:picked_prompt_id].should be_an_instance_of(Fixnum)
   end
 
   it "should return a hash with an appearance hash when optional parameters contains 'with_appearance'" do
     params = {:id => 124, :with_prompt => true, :with_appearance=> true, :visitor_identifier => 'jim'}
     @question_optional_information = @question.get_optional_information(params)
-    @question_optional_information.should include(:appearance_id) 
+    @question_optional_information.should include(:appearance_id)
     @question_optional_information[:appearance_id].should be_an_instance_of(String)
   end
 
   it "should return a hash with two visitor stats when optional parameters contains 'with_visitor_stats'" do
     params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim"}
     @question_optional_information = @question.get_optional_information(params)
-    @question_optional_information.should include(:visitor_votes) 
-    @question_optional_information.should include(:visitor_ideas) 
+    @question_optional_information.should include(:visitor_votes)
+    @question_optional_information.should include(:visitor_ideas)
     @question_optional_information[:visitor_votes].should be_an_instance_of(Fixnum)
     @question_optional_information[:visitor_ideas].should be_an_instance_of(Fixnum)
   end
-  
+
   it "should return a hash when optional parameters have more than one optional param " do
     params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true}
     @question_optional_information = @question.get_optional_information(params)
-    @question_optional_information.should include(:visitor_votes) 
-    @question_optional_information.should include(:visitor_ideas) 
+    @question_optional_information.should include(:visitor_votes)
+    @question_optional_information.should include(:visitor_ideas)
     @question_optional_information[:visitor_votes].should be_an_instance_of(Fixnum)
     @question_optional_information[:visitor_ideas].should be_an_instance_of(Fixnum)
-    @question_optional_information.should include(:picked_prompt_id) 
+    @question_optional_information.should include(:picked_prompt_id)
     @question_optional_information[:picked_prompt_id].should be_an_instance_of(Fixnum)
-    @question_optional_information.should include(:appearance_id) 
+    @question_optional_information.should include(:appearance_id)
     @question_optional_information[:appearance_id].should be_an_instance_of(String)
   end
-  
+
   it "should return the same appearance when a visitor requests two prompts without voting" do
     params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true}
     @question_optional_information = @question.get_optional_information(params)
@@ -146,15 +146,15 @@ describe Question do
     @question_optional_information[:appearance_id].should == saved_appearance_id
     @question_optional_information[:picked_prompt_id].should == saved_prompt_id
   end
-  
+
   it "should return future prompts for a given visitor when future prompt param is passed" do
     params = {:id => 124, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true, :future_prompts => {:number => 1} }
     @question_optional_information = @question.get_optional_information(params)
     appearance_id= @question_optional_information[:appearance_id]
     future_appearance_id_1 = @question_optional_information[:future_appearance_id_1]
     future_prompt_id_1 = @question_optional_information[:future_prompt_id_1]
-    
-    #check that required attributes are included 
+
+    #check that required attributes are included
     appearance_id.should be_an_instance_of(String)
     future_appearance_id_1.should be_an_instance_of(String)
     future_prompt_id_1.should be_an_instance_of(Fixnum)
@@ -171,18 +171,18 @@ describe Question do
     end
 
   end
-  
+
   it "should return the same appearance for future prompts when future prompt param is passed" do
     params = {:id => 124, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true, :future_prompts => {:number => 1} }
     @question_optional_information = @question.get_optional_information(params)
     saved_appearance_id = @question_optional_information[:appearance_id]
     saved_future_appearance_id_1 = @question_optional_information[:future_appearance_id_1]
-    
+
     @question_optional_information = @question.get_optional_information(params)
     @question_optional_information[:appearance_id].should == saved_appearance_id
     @question_optional_information[:future_appearance_id_1].should == saved_future_appearance_id_1
   end
-  
+
   it "should return the next future appearance in future prompts sequence after a vote is made" do
     params = {:id => 124, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true, :future_prompts => {:number => 1} }
     @question_optional_information = @question.get_optional_information(params)
@@ -190,27 +190,27 @@ describe Question do
     prompt_id = @question_optional_information[:picked_prompt_id]
     future_appearance_id_1 = @question_optional_information[:future_appearance_id_1]
     future_prompt_id_1 = @question_optional_information[:future_prompt_id_1]
-    
+
     vote_options = {:visitor_identifier => "jim",
         :appearance_lookup => appearance_id,
         :prompt => Prompt.find(prompt_id),
         :direction => "left"}
 
     @aoi_clone.record_vote(vote_options)
-    
+
     @question_optional_information = @question.get_optional_information(params)
     @question_optional_information[:appearance_id].should_not == appearance_id
     @question_optional_information[:appearance_id].should == future_appearance_id_1
     @question_optional_information[:picked_prompt_id].should == future_prompt_id_1
     @question_optional_information[:future_appearance_id_1].should_not == future_appearance_id_1
   end
-  
+
   it "should provide average voter information" do
     params = {:id => 124, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true, :with_average_votes => true }
     @question_optional_information = @question.get_optional_information(params)
     @question_optional_information[:average_votes].should be_an_instance_of(Fixnum)
     @question_optional_information[:average_votes].should be_close(0.0, 0.1)
-    
+
     vote_options = {:visitor_identifier => "jim",
         :appearance_lookup => @question_optional_information[:appearance_id],
         :prompt => Prompt.find(@question_optional_information[:picked_prompt_id]),
@@ -220,7 +220,7 @@ describe Question do
     @question_optional_information = @question.get_optional_information(params)
     @question_optional_information[:average_votes].should be_close(1.0, 0.1)
   end
-  
+
   it "should properly handle tracking the prompt cache hit rate when returning the same appearance when a visitor requests two prompts without voting" do
     params = {:id => 124, :with_visitor_stats=> true, :visitor_identifier => "jim", :with_prompt => true, :with_appearance => true}
     @question.clear_prompt_queue
@@ -230,7 +230,7 @@ describe Question do
     @question.get_optional_information(params)
     @question.get_prompt_cache_misses(Date.today).should == "1"
   end
-  
+
   it "should auto create ideas when 'ideas' attribute is set" do
       @question = Factory.build(:question)
       @question.ideas = %w(one two three)
@@ -417,7 +417,21 @@ describe Question do
       @q.vote_rate.should == 0.4
     end
   end
-  context "catchup algorithm" do 
+  context "all combinations algorithm" do
+    before(:all) do
+      @all_combos_q = Factory.create(:aoi_question)
+      user = @all_combos_q.site
+      @voter = user.visitors.find_or_create_by_identifier('voter visitor identifier')
+    end
+
+    it "should set the algorithm attribute on prompt after choice" do
+      @all_combos_q.add_prompt_to_queue
+      prompt = @all_combos_q.choose_prompt(:algorithm => 'all-combos', :visitor => @voter)
+      prompt.algorithm.should == {:name => "all-combos"}
+    end
+
+  end
+  context "catchup algorithm" do
     before(:all) do
       @catchup_q = Factory.create(:aoi_question)
 
@@ -450,7 +464,7 @@ describe Question do
     end
 
 
-    it "should choose an active prompt using catchup algorithm on a large number of choices" do 
+    it "should choose an active prompt using catchup algorithm on a large number of choices" do
       @catchup_q.reload
       # Sanity check
       @catchup_q.choices.size.should == 100
@@ -499,10 +513,10 @@ describe Question do
       @catchup_q.clear_prompt_queue
       @catchup_q.pop_prompt_queue.should == nil
       prompt1 = @catchup_q.add_prompt_to_queue.first
-            
+
       prompt = Prompt.find(prompt1)
       prompt.left_choice.deactivate!
-      @catchup_q.choose_prompt.should_not == prompt1 
+      @catchup_q.choose_prompt.should_not == prompt1
           end
     after(:all) { truncate_all }
   end
@@ -531,7 +545,7 @@ describe Question do
             :prompt => @p,
             :time_viewed => rand(1000),
             :direction => (rand(2) == 0) ? "left" : "right"}
-        
+
                           skip_options = {:visitor_identifier => visitor.identifier,
                                           :appearance_lookup => @a.lookup,
                                           :prompt => @p,
@@ -549,7 +563,7 @@ describe Question do
         end
       end
     end
-    
+
 
     it "should export vote data to a csv file" do
       csv = ''
@@ -582,10 +596,10 @@ describe Question do
 
     end
     it "should email question owner after completing an export, if email option set" do
-      #TODO 
+      #TODO
     end
 
-    it "should export non vote data to a string" do 
+    it "should export non vote data to a string" do
       csv = ''
       @aoi_question.to_csv('non_votes').each do |row|
         csv << row
@@ -651,7 +665,7 @@ describe Question do
             :time_viewed => rand(1000),
             :direction => (rand(2) == 0) ? "left" : "right"
         }
-        
+
         skip_options = {:visitor_identifier => visitor.identifier,
                         :appearance_lookup => @a.lookup,
                         :prompt => @p,
