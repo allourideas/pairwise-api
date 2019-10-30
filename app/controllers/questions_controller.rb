@@ -14,12 +14,15 @@ class QuestionsController < InheritedResources::Base
       log_error(e)
       respond_to do |format|
         format.xml { render :xml => @question.to_xml, :status => :conflict and return}
+        format.json { render :json => @question.to_json, :status => :conflict and return}
       end
     end
 
     optional_information = []
+    json_optional = {}
     @question_optional_information.each do |key, value|
       optional_information << Proc.new { |options| options[:builder].tag!(key, value)}
+      json_optional[key] = value
     end
     response_options = { :methods => [:item_count], :procs => optional_information }
     response_options[:include] = :versions if params[:version] == "all"
@@ -28,8 +31,14 @@ class QuestionsController < InheritedResources::Base
       format.xml {
         render :xml => @question.to_xml(response_options)
       }
-      format.js{
-        render :json => @question.to_json(response_options)
+      format.json{
+        # to_json doesn't support procs!
+        json_options = {methods: [:item_count]}
+        json_options[:include] = [:versions] if params[:version] == "all"
+        q_json = @question.as_json(json_options)
+        q_json["question"].merge!(json_optional)
+
+        render :json => q_json
       }
     end
   end
@@ -47,10 +56,12 @@ class QuestionsController < InheritedResources::Base
          )
       respond_to do |format|
         format.xml { render :xml => @question.to_xml}
+        format.json { render :json => @question.to_json}
       end
     else
       respond_to do |format|
         format.xml { render :xml => @question.errors.to_xml}
+        format.json { render :json => @question.errors.to_json}
       end
     end
   end
