@@ -44,6 +44,16 @@ class Question < ActiveRecord::Base
   named_scope :created_by, lambda { |id|
     {:conditions => { :local_identifier => id } }
   }
+  REDACTED_TEXT = "Redacted"
+
+  def redact!
+    self.name = REDACTED_TEXT
+    self.save!
+    choices.each do |choice|
+      choice.data = REDACTED_TEXT
+      choice.save!
+    end
+  end
 
   def create_choices_from_ideas
     if ideas && ideas.any?

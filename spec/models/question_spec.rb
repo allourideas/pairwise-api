@@ -252,6 +252,26 @@ describe Question do
       @question.reload.prompts.count.should == 0
   end
 
+  context "redaction" do
+    before(:all) do
+      truncate_all
+      @q = Factory.create(:aoi_question)
+    end
+
+    it "should redact all choices and question text" do
+      @q.redact!
+      @q.name.should == Question::REDACTED_TEXT
+      latest = @q.versions.latest
+      latest.previous.name.should_not == Question::REDACTED_TEXT
+      @q.choices.each do |choice|
+        choice.data.should == Question::REDACTED_TEXT
+        latest = choice.versions.latest
+        latest.previous.data.should_not == Question::REDACTED_TEXT
+      end
+    end
+  end
+
+
   context "median response per session" do
     before(:all) do
       truncate_all
