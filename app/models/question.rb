@@ -44,7 +44,7 @@ class Question < ActiveRecord::Base
   named_scope :created_by, lambda { |id|
     {:conditions => { :local_identifier => id } }
   }
-  REDACTED_TEXT = "Redacted"
+  REDACTED_TEXT = "Redacted at request of wiki survey owner"
 
   def redact!
     self.name = REDACTED_TEXT
