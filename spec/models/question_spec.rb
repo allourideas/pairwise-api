@@ -262,11 +262,11 @@ describe Question do
       @q.redact!
       @q.name.should == Question::REDACTED_TEXT
       latest = @q.versions.latest
-      latest.previous.name.should_not == Question::REDACTED_TEXT
+      latest.previous.name.should == Question::REDACTED_TEXT
       @q.choices.each do |choice|
         choice.data.should == Question::REDACTED_TEXT
         latest = choice.versions.latest
-        latest.previous.data.should_not == Question::REDACTED_TEXT
+        latest.previous.data.should == Question::REDACTED_TEXT
       end
     end
   end

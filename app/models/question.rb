@@ -49,9 +49,17 @@ class Question < ActiveRecord::Base
   def redact!
     self.name = REDACTED_TEXT
     self.save!
+    self.versions.each do |q_ver|
+      q_ver.name = REDACTED_TEXT
+      q_ver.save!
+    end
     choices.each do |choice|
       choice.data = REDACTED_TEXT
       choice.save!
+      choice.versions.each do |c_ver|
+        c_ver.data = REDACTED_TEXT
+        c_ver.save!
+      end
     end
   end
 
