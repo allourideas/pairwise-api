@@ -44,6 +44,24 @@ class Question < ActiveRecord::Base
   named_scope :created_by, lambda { |id|
     {:conditions => { :local_identifier => id } }
   }
+  REDACTED_TEXT = "Redacted at request of wiki survey owner"
+
+  def redact!
+    self.name = REDACTED_TEXT
+    self.save!
+    self.versions.each do |q_ver|
+      q_ver.name = REDACTED_TEXT
+      q_ver.save!
+    end
+    choices.each do |choice|
+      choice.data = REDACTED_TEXT
+      choice.save!
+      choice.versions.each do |c_ver|
+        c_ver.data = REDACTED_TEXT
+        c_ver.save!
+      end
+    end
+  end
 
   def create_choices_from_ideas
     if ideas && ideas.any?
