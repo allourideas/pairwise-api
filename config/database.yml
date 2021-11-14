@@ -3,9 +3,12 @@
 
 development: &default
   adapter: mysql2
-  database: rebirth_development
+  database: fantasy_questions
   pool: 5
   timeout: 5000
+  host: localhost
+  username: fantasy
+  password: janisdylan
 
 test: &test
   <<: *default
@@ -13,4 +16,13 @@ test: &test
 
 cucumber:
   <<: *test
+
+production:
+  <<: *default
+  database: <%= ENV['RDS_DB_NAME'] %>
+  username: <%= ENV['RDS_USERNAME'] %>
+  password: <%= ENV['RDS_PASSWORD'] %>
+  host: <%= ENV['RDS_HOSTNAME'] %>
+  port: <%= ENV['RDS_PORT'] %>
+
 

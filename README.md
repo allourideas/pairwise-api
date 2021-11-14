@@ -5,7 +5,21 @@ Pairwise web service 2.0.  This provides the API utilized by [photocracy.org](ht
 
 Installing
 -------------------
+CFLAGS="-Wno-error=implicit-function-declaration"  before rbenv install
 <https://github.com/allourideas/pairwise-api/wiki/Installing>
+
+We've installed your MySQL database without a root password. To secure it run:
+mysql_secure_installation
+
+MySQL is configured to only allow connections from localhost by default
+
+To connect run:
+mysql -uroot
+
+To have launchd start mysql now and restart at login:
+brew services start mysql
+Or, if you don't want/need a background service you can just run:
+mysql.server start
 
 API Documentation
 -------------------

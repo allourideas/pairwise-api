@@ -11,3 +11,4 @@ todo
 .bundle
 bin/
 vendor/ruby
+.idea/*

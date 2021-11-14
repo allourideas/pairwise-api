@@ -27,7 +27,8 @@ gem "test-unit", "1.2.3"
 gem "sendgrid", "0.1.4"
 gem "json_pure", "1.4.6"
 gem "rubaidh-google_analytics", "1.1.4", :require => "rubaidh/google_analytics"
-gem 'mysql2', '0.2.24'
+gem 'mysql2', '0.4.10'
+gem 'activerecord-mysql2-adapter'
 
 group :cucumber do
   gem 'cucumber', '1.1.0'
