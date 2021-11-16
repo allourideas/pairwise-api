@@ -3,7 +3,16 @@ source "https://rubygems.org"
 gem "bugsnag", "~> 5.5.0"
 gem "rake", "~> 0.9.2.2"
 gem "rdoc", "~> 3.12"
-gem "rails", "2.3.18"
+git 'https://github.com/makandra/rails.git', :branch => '2-3-lts' do
+  gem 'rails', '~>2.3.18'
+  gem 'actionmailer',     :require => false
+  gem 'actionpack',       :require => false
+  gem 'activerecord',     :require => false
+  gem 'activeresource',   :require => false
+  gem 'activesupport',    :require => false
+  gem 'railties',         :require => false
+  gem 'railslts-version', :require => false
+  end
 gem "libxml-ruby", "2.9.0", :require => "libxml"
 gem "ambethia-smtp-tls", "1.1.2", :require => "smtp-tls"
 gem "paperclip", "2.3.1"
@@ -53,4 +62,4 @@ group :test, :cucumber do
   gem 'mock_redis', '0.4.1'
 end
 gem 'ey_config'
-gem "newrelic_rpm"
+gem 'iconv'

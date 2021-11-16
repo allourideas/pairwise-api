@@ -18,3 +18,4 @@ rescue Bundler::GemNotFound
   raise RuntimeError, "Bundler couldn't find some gems." +
     "Did you run `bundle install`?"
 end
+Encoding.default_external = Encoding::UTF_8
